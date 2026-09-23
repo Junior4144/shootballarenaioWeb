@@ -1,0 +1,14 @@
+{
+  "name": "shootball-arena",
+  "private": true,
+  "type": "module",
+  "workspaces": ["apps/*", "packages/*"],
+  "engines": { "node": ">=22.12.0" },
+  "scripts": {
+    "dev": "npm run dev --workspace @shootball/web",
+    "build": "npm run build --workspace @shootball/web",
+    "preview": "npm run preview --workspace @shootball/web",
+    "typecheck": "npm run typecheck --workspace @shootball/web",
+    "test": "npm run test --workspace @shootball/web"
+  }
+}
