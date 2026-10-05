@@ -1,5 +1,7 @@
-# Protocol
+﻿# Protocol
 
-Reserved for future client/server message definitions. The local input type is
-not a network protocol. See [the networking spec](../../docs/specs/networking.md)
-before adding any transport or messages.
+Version 1 wire types, room/rate constants and strict input/reset validation for
+the first Colyseus multiplayer slice. Both apps import this workspace.
+The browser submits intent; the server publishes complete authoritative snapshots.
+
+See the [networking spec](../../docs/specs/networking.md).

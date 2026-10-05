@@ -1,27 +1,24 @@
-# Frontend
+﻿# Frontend
 
-## Purpose
-Deliver the smallest playable browser version of ShootBall Arena.
+TypeScript strict mode, Vite and Phaser 3 remain the frontend stack. Preserve
+the 960 x 640 FIT-scaled arena, generated textures, WASD/mouse/click controls,
+health bars and target counter. Shared simulation lives in `packages/shared`;
+the browser renders server snapshots and never advances gameplay.
 
-## Scope and responsibilities
-`apps/web` owns bootstrap, Phaser scene, keyboard/mouse input, local simulation, and readable UI. `packages/shared` owns only platform-neutral constants and basic state/input types used today.
+Automatically join shared practice. Accessible DOM status displays connecting,
+connected (room/player count), reconnecting, disconnected and errors. Provide
+leave and retry/join buttons. R requests shared reset. Local avatar says YOU;
+remote guests have labels and blue tint. Disconnected avatars are dimmed.
 
-## Technical decisions and assumptions
-- TypeScript strict mode, Vite, Phaser 3, HTML/CSS; npm workspaces (allowed by the architecture). No UI framework or monorepo build orchestrator.
-- One game scene maps input to intent, advances plain local state, and synchronizes visuals. Keep local simulation in the frontend until a server actually exists.
-- Fixed logical resolution with Phaser FIT scaling and centered canvas; desktop keyboard and mouse are the supported controls. Resize must preserve pointer accuracy.
-- Generate small pixel textures in code. No downloaded art, Unity assets, or asset pipeline required.
-- Handle focus loss by clearing keys and queued firing. R resets practice; on-screen instructions explain controls and remaining targets.
-- Reserve `apps/game-server` and `packages/protocol` with README files only; no dummy server, transport interface, or speculative network implementation.
+Send intent at 30 Hz; clear keys/queued shots on blur, visibility loss and
+connection changes. Disable input outside connected state. No prediction or
+interpolation. Clear visuals on permanent leave; clean up listeners on shutdown.
 
-## Initial MVP requirements
-Root install/dev/typecheck/test/build commands work. Production output is `apps/web/dist`. The game starts immediately without login, credentials, external APIs, or loading assets from third-party hosts. Verify movement, aiming after resize, shooting, target destruction, reset, and focus recovery.
+Acceptance: two clients, movement, resize aiming, shared shooting/destruction,
+reset, focus recovery, failure/retry and reconnect. Root npm scripts must work
+without accounts/credentials. Auth, ads, cosmetics, touch and effects are deferred.
 
-## Out of scope now
-Authentication UI, menus, ads, cosmetics, leaderboards, mobile/touch controls, multiplayer clients, advanced effects, and frontend framework abstractions.
-
-## Future upgrades
-Add loading/menu scenes only when needed. Replace local authority with server state and add presentation interpolation once networking is specified. Revisit bundle size and accessible alternative controls before public release.
-
-## API references
-[Phaser scaling](https://docs.phaser.io/phaser/concepts/scale-manager), [Phaser input](https://docs.phaser.io/phaser/concepts/input), [Vite setup](https://vite.dev/guide/).
+Implemented: server snapshot rendering, multi-avatar labels, connection states,
+join/leave/retry and focus clearing. Typecheck/build and connection-controller
+integration passed. Visual two-tab, resize/aim and focus smoke tests still need a
+browser; none was available during implementation.

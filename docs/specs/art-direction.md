@@ -10,6 +10,9 @@ Top-down, fixed-camera rectangular arena; simple generated pixel textures for a 
 Use a dark navy floor with a subtle grid and clear solid walls. Cyan player, pale cannon, warm yellow projectiles, coral targets; shapes and target health bars supplement color. Tiny raster textures use nearest-neighbor sampling and pixel-art rendering. Keep floor detail low contrast and gameplay silhouettes distinct. Placeholder textures are code-generated; no image generation or Unity art import is needed.
 
 ## Initial MVP requirements
+
+Multiplayer: label the local avatar YOU, label peers as guests, tint peers blue
+and dim disconnected avatars. Connection status appears above the canvas.
 Player reads as a ball with one short cannon. Cannon rotates about the ball toward the mouse. Shots remain visible over the floor. Three-segment health bars communicate target damage; removed targets and a remaining-target counter communicate destruction. Arena remains readable when the canvas scales.
 
 ## Out of scope now

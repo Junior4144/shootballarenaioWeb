@@ -10,6 +10,14 @@
 - Only link or operate on that Supabase project for this repository. Do not use
   another accessible project as a fallback. Where supported, pass the explicit
   project reference; otherwise verify the local link before running commands.
-- Supabase linking is pending access: the saved CLI login rejected this target
-  on 2026-10-05. Once a login with access is available, run
-  `supabase link --project-ref lkgxpgcmspxekggndzih` and verify SQL access.
+- Supabase linking and SQL access were verified on 2026-10-05. The CLI connects
+  as `postgres`, with CREATE permission in `public` and read/write transactions.
+
+# Development and production
+
+- Run development directly with Node.js/npm. Do not require Docker, Compose,
+  dev containers, or a local Supabase container stack for development.
+- Use the scoped hosted Supabase project when backend integration is needed.
+- Reserve Docker for production game-server packaging and release validation.
+  The frontend builds to static assets; the game server and its
+  production image are not implemented yet.

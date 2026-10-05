@@ -1,12 +1,16 @@
 import Phaser from 'phaser';
 import { ARENA, GAME } from '@shootball/shared';
-import { createWorld, stepWorld } from './simulation';
+import { NETWORK, type Snapshot } from '@shootball/protocol';
+import { PracticeConnection } from '../network/PracticeConnection';
 
 export class ArenaScene extends Phaser.Scene {
-  private world = createWorld();
+  private world: Snapshot = { tick: 0, generation: 0, players: [], targets: [], projectiles: [] };
+  private connection!: PracticeConnection;
+  private sendElapsed = 0;
+  private focused = true;
+  private connectionState = '';
   private keys!: Record<'W' | 'A' | 'S' | 'D' | 'R', Phaser.Input.Keyboard.Key>;
-  private ball!: Phaser.GameObjects.Image;
-  private cannon!: Phaser.GameObjects.Image;
+  private players = new Map<string, { ball: Phaser.GameObjects.Image; cannon: Phaser.GameObjects.Image; label: Phaser.GameObjects.Text }>();
   private health!: Phaser.GameObjects.Graphics;
   private status!: Phaser.GameObjects.Text;
   private targets = new Map<number, Phaser.GameObjects.Image>();
@@ -23,49 +27,106 @@ export class ArenaScene extends Phaser.Scene {
     for (let x = ARENA.left; x <= ARENA.right; x += 32) floor.lineBetween(x, ARENA.top, x, ARENA.bottom);
     for (let y = ARENA.top; y <= ARENA.bottom; y += 32) floor.lineBetween(ARENA.left, y, ARENA.right, y);
     floor.lineStyle(8, 0x415867).strokeRect(ARENA.left - 4, ARENA.top - 4, ARENA.right - ARENA.left + 8, ARENA.bottom - ARENA.top + 8);
-    this.add.text(48, 30, '01 / PRACTICE ARENA', { fontFamily: 'monospace', fontSize: '16px', color: '#9db2bf' });
+    this.add.text(48, 30, '01 / SHARED PRACTICE', { fontFamily: 'monospace', fontSize: '16px', color: '#9db2bf' });
     this.status = this.add.text(912, 30, '', { fontFamily: 'monospace', fontSize: '16px', color: '#69e2ce' }).setOrigin(1, 0);
     this.add.text(48, 610, 'WASD  MOVE     /     MOUSE  AIM     /     CLICK  FIRE', { fontFamily: 'monospace', fontSize: '12px', color: '#819dab' });
-    this.ball = this.add.image(0, 0, 'player').setDepth(2);
-    this.cannon = this.add.image(0, 0, 'cannon').setOrigin(0, 0.5).setDepth(3);
     this.health = this.add.graphics().setDepth(4);
     this.keys = this.input.keyboard!.addKeys('W,A,S,D,R') as typeof this.keys;
     const fire = (pointer: Phaser.Input.Pointer) => {
       if (pointer.leftButtonDown() && pointer.x >= ARENA.left && pointer.x <= ARENA.right && pointer.y >= ARENA.top && pointer.y <= ARENA.bottom) this.fireQueued = true;
     };
     const clearInput = () => { this.fireQueued = false; this.input.keyboard!.resetKeys(); };
+    const neutral = () => {
+      clearInput();
+      this.focused = false;
+      this.connection.send({ moveX: 0, moveY: 0, aim: { x: 480, y: 336 }, fire: false });
+    };
+    const focus = () => { clearInput(); this.focused = !document.hidden; };
+    const visibility = () => { if (document.hidden) neutral(); else focus(); };
+    const status = document.querySelector<HTMLElement>('#connection-status')!;
+    const join = document.querySelector<HTMLButtonElement>('#join')!;
+    const leave = document.querySelector<HTMLButtonElement>('#leave')!;
+    let storage: Storage | undefined;
+    try { storage = sessionStorage; } catch { /* Storage is optional. */ }
+    this.connection = new PracticeConnection(import.meta.env.VITE_GAME_SERVER_URL || 'ws://127.0.0.1:2567', () => {
+      const connection = this.connection;
+      if (connection.state !== this.connectionState) {
+        clearInput();
+        this.connectionState = connection.state;
+      }
+      this.world = connection.snapshot ?? { tick: 0, generation: 0, players: [], targets: [], projectiles: [] };
+      const count = this.world.players.filter(p => p.connected).length;
+      status.textContent = connection.state === 'connected'
+        ? `Room ${connection.room?.roomId} · ${count}/8 players · You are cyan`
+        : connection.message;
+      join.hidden = !['error', 'disconnected'].includes(connection.state);
+      leave.hidden = ['error', 'disconnected'].includes(connection.state);
+    }, storage);
+    const onJoin = () => { void this.connection.join(); };
+    const onLeave = () => this.connection.leave();
+    join.addEventListener('click', onJoin);
+    leave.addEventListener('click', onLeave);
     this.input.on('pointerdown', fire);
-    this.game.events.on(Phaser.Core.Events.BLUR, clearInput);
+    this.game.events.on(Phaser.Core.Events.BLUR, neutral);
+    this.game.events.on(Phaser.Core.Events.FOCUS, focus);
+    document.addEventListener('visibilitychange', visibility);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.input.off('pointerdown', fire);
-      this.game.events.off(Phaser.Core.Events.BLUR, clearInput);
+      this.game.events.off(Phaser.Core.Events.BLUR, neutral);
+      this.game.events.off(Phaser.Core.Events.FOCUS, focus);
+      document.removeEventListener('visibilitychange', visibility);
+      join.removeEventListener('click', onJoin);
+      leave.removeEventListener('click', onLeave);
+      this.connection.leave();
     });
     this.syncVisuals();
+    void this.connection.join();
   }
 
   update(_time: number, delta: number): void {
     if (Phaser.Input.Keyboard.JustDown(this.keys.R)) {
-      this.world = createWorld();
-      for (const image of this.shots.values()) image.destroy();
-      this.shots.clear();
+      this.connection.reset();
       this.fireQueued = false;
     }
     const pointer = this.input.activePointer;
     // FIT scaling already converts pointer positions into logical canvas coordinates.
-    stepWorld(this.world, {
+    this.sendElapsed += delta;
+    if (this.sendElapsed >= NETWORK.inputMs && this.connection.state === 'connected' && this.focused) {
+      this.sendElapsed = 0;
+      this.connection.send({
       moveX: Number(this.keys.D.isDown) - Number(this.keys.A.isDown),
       moveY: Number(this.keys.S.isDown) - Number(this.keys.W.isDown),
-      aim: pointer.position,
+      aim: { x: Phaser.Math.Clamp(pointer.x, 0, GAME.width), y: Phaser.Math.Clamp(pointer.y, 0, GAME.height) },
       fire: this.fireQueued,
-    }, delta / 1000);
-    this.fireQueued = false;
+      });
+      this.fireQueued = false;
+    }
+    if (this.connection.state !== 'connected' || !this.focused) this.fireQueued = false;
     this.syncVisuals();
   }
 
   private syncVisuals(): void {
-    const p = this.world.player;
-    this.ball.setPosition(p.x, p.y);
-    this.cannon.setPosition(p.x, p.y).setRotation(p.angle);
+    for (const [id, visual] of this.players) {
+      if (!this.world.players.some(p => p.id === id)) {
+        visual.ball.destroy(); visual.cannon.destroy(); visual.label.destroy();
+        this.players.delete(id);
+      }
+    }
+    for (const p of this.world.players) {
+      if (!this.players.has(p.id)) {
+        this.players.set(p.id, {
+          ball: this.add.image(0, 0, 'player').setDepth(2),
+          cannon: this.add.image(0, 0, 'cannon').setOrigin(0, 0.5).setDepth(3),
+          label: this.add.text(0, 0, '', { fontFamily: 'monospace', fontSize: '11px', color: '#dbe8ed' }).setOrigin(0.5).setDepth(4),
+        });
+      }
+      const v = this.players.get(p.id)!;
+      const local = p.id === this.connection?.sessionId;
+      const alpha = p.connected ? 1 : 0.35;
+      v.ball.setPosition(p.x, p.y).setTint(local ? 0xffffff : 0x86b8ff).setAlpha(alpha);
+      v.cannon.setPosition(p.x, p.y).setRotation(p.angle).setAlpha(alpha);
+      v.label.setPosition(p.x, p.y + 28).setText((local ? 'YOU' : 'GUEST ' + p.id.slice(0, 4)) + (p.connected ? '' : ' (away)')).setAlpha(alpha);
+    }
     this.health.clear();
     for (const [id, image] of this.targets) {
       if (!this.world.targets.some(target => target.id === id)) { image.destroy(); this.targets.delete(id); }
@@ -83,7 +144,7 @@ export class ArenaScene extends Phaser.Scene {
       if (!this.shots.has(shot.id)) this.shots.set(shot.id, this.add.image(shot.x, shot.y, 'shot').setDepth(5));
       this.shots.get(shot.id)!.setPosition(shot.x, shot.y);
     }
-    this.status.setText(this.world.targets.length ? `TARGETS LEFT  ${this.world.targets.length} / 4` : 'ARENA CLEAR!  /  R TO RESET');
+    this.status.setText(!this.world.players.length ? 'JOIN TO PLAY' : this.world.targets.length ? `TARGETS LEFT  ${this.world.targets.length} / 4` : 'ARENA CLEAR!  /  R TO RESET');
   }
 
   private createTextures(): void {

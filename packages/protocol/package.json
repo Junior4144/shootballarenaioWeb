@@ -1,0 +1,8 @@
+{
+  "name": "@shootball/protocol",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "dependencies": { "@shootball/shared": "0.0.0" }
+}
