@@ -63,8 +63,10 @@ movement after 250 ms without accepted input.
 
 The server owns all gameplay. Clients send validated movement/aim/fire intent
 at 30 Hz; the server simulates at 60 Hz and publishes snapshots at 20 Hz.
-Rendering currently uses the latest snapshot without prediction/interpolation,
-so internet latency will be noticeable. Players cannot damage/block each other.
+Rendering interpolates players, projectiles and cannon angles through a 100 ms
+snapshot buffer to smooth the 20 Hz updates at the display frame rate. This adds
+about 100 ms visual delay; input prediction remains deferred, so internet latency
+will still be noticeable. Players cannot damage/block each other.
 Keyboard and mouse are required.
 
 ## Verify and build
@@ -107,6 +109,10 @@ Verification on 2026-10-05:
 - Visual browser verification was unavailable in the implementation session.
   Manual checks still to run: two-tab rendering, resize/aim, focus recovery,
   visible connection states, and the Leave/Retry buttons.
+
+Smoothing follow-up: four interpolation tests bring the total to 13 passing
+tests. Typechecking and both builds also pass. The 100 ms presentation buffer
+smooths movement between server updates without changing gameplay authority.
 
 ## Structure and scope
 

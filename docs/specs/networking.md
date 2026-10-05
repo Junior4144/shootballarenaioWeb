@@ -15,9 +15,16 @@ Colyseus messages at 20 Hz and on join/reconnect; schema patches are unnecessary
 for this small bounded initial arena.
 
 Client sends input at 30 Hz, consumes queued clicks once and sends neutral input
-on blur/hidden tab. Server expires input after 250 ms. Render latest snapshots;
-no prediction or interpolation yet. Localhost movement should appear within
-200 ms. Measure internet latency before implementing prediction.
+on blur/hidden tab. Server expires input after 250 ms. Render through a bounded
+100 ms snapshot buffer, interpolating player/projectile positions and shortest-path
+cannon angles each display frame. Interpolation uses local snapshot receipt times;
+network jitter can still vary apparent speed. Hold the newest state on underrun,
+never extrapolate gameplay. Entity creation/removal and target health use the same
+delayed timeline, so shots and hits remain consistent. Reset generations, connection
+changes, focus recovery and snapshot gaps over 250 ms discard history instead of
+animating across discontinuities. This adds about 100 ms presentation latency;
+prediction/reconciliation remains deferred. Transport visibility on localhost
+should remain under 200 ms (separate from the presentation delay).
 
 Unexpected loss disables input and displays reconnecting. Retry within the
 ten-second reservation with the SDK token, stored only in tab-local session

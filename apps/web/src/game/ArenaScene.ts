@@ -2,10 +2,12 @@ import Phaser from 'phaser';
 import { ARENA, GAME } from '@shootball/shared';
 import { NETWORK, type Snapshot } from '@shootball/protocol';
 import { PracticeConnection } from '../network/PracticeConnection';
+import { SnapshotBuffer } from '../network/SnapshotBuffer';
 
 export class ArenaScene extends Phaser.Scene {
   private world: Snapshot = { tick: 0, generation: 0, players: [], targets: [], projectiles: [] };
   private connection!: PracticeConnection;
+  private snapshots = new SnapshotBuffer();
   private sendElapsed = 0;
   private focused = true;
   private connectionState = '';
@@ -41,7 +43,7 @@ export class ArenaScene extends Phaser.Scene {
       this.focused = false;
       this.connection.send({ moveX: 0, moveY: 0, aim: { x: 480, y: 336 }, fire: false });
     };
-    const focus = () => { clearInput(); this.focused = !document.hidden; };
+    const focus = () => { clearInput(); this.snapshots.clear(); this.focused = !document.hidden; };
     const visibility = () => { if (document.hidden) neutral(); else focus(); };
     const status = document.querySelector<HTMLElement>('#connection-status')!;
     const join = document.querySelector<HTMLButtonElement>('#join')!;
@@ -52,9 +54,13 @@ export class ArenaScene extends Phaser.Scene {
       const connection = this.connection;
       if (connection.state !== this.connectionState) {
         clearInput();
+        this.snapshots.clear();
         this.connectionState = connection.state;
       }
       this.world = connection.snapshot ?? { tick: 0, generation: 0, players: [], targets: [], projectiles: [] };
+      if (connection.snapshot && connection.state === 'connected') {
+        this.snapshots.push(connection.snapshot, performance.now());
+      }
       const count = this.world.players.filter(p => p.connected).length;
       status.textContent = connection.state === 'connected'
         ? `Room ${connection.room?.roomId} · ${count}/8 players · You are cyan`
@@ -92,7 +98,7 @@ export class ArenaScene extends Phaser.Scene {
     // FIT scaling already converts pointer positions into logical canvas coordinates.
     this.sendElapsed += delta;
     if (this.sendElapsed >= NETWORK.inputMs && this.connection.state === 'connected' && this.focused) {
-      this.sendElapsed = 0;
+      this.sendElapsed %= NETWORK.inputMs;
       this.connection.send({
       moveX: Number(this.keys.D.isDown) - Number(this.keys.A.isDown),
       moveY: Number(this.keys.S.isDown) - Number(this.keys.W.isDown),
@@ -102,6 +108,7 @@ export class ArenaScene extends Phaser.Scene {
       this.fireQueued = false;
     }
     if (this.connection.state !== 'connected' || !this.focused) this.fireQueued = false;
+    this.world = this.snapshots.sample(performance.now()) ?? this.world;
     this.syncVisuals();
   }
 

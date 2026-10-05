@@ -11,8 +11,11 @@ leave and retry/join buttons. R requests shared reset. Local avatar says YOU;
 remote guests have labels and blue tint. Disconnected avatars are dimmed.
 
 Send intent at 30 Hz; clear keys/queued shots on blur, visibility loss and
-connection changes. Disable input outside connected state. No prediction or
-interpolation. Clear visuals on permanent leave; clean up listeners on shutdown.
+connection changes. Disable input outside connected state. Interpolate snapshots
+with a 100 ms presentation buffer; do not predict gameplay. Clear buffer on
+connection/focus changes and reset generations. Preserve input interval remainder
+between frames to avoid reducing the intended 30 Hz send rate through rounding.
+Clear visuals on permanent leave; clean up listeners on shutdown.
 
 Acceptance: two clients, movement, resize aiming, shared shooting/destruction,
 reset, focus recovery, failure/retry and reconnect. Root npm scripts must work
@@ -22,3 +25,9 @@ Implemented: server snapshot rendering, multi-avatar labels, connection states,
 join/leave/retry and focus clearing. Typecheck/build and connection-controller
 integration passed. Visual two-tab, resize/aim and focus smoke tests still need a
 browser; none was available during implementation.
+
+Smoothing follow-up: a bounded 100 ms buffer now interpolates presentation each
+frame. Tests cover intermediate positions, angle wrapping, uneven arrivals,
+underruns, authoritative-state immutability and reset/lifecycle discontinuities.
+Typechecking, all 13 tests and production builds pass. Visual feel still needs
+browser playtesting; local prediction remains a separate latency improvement.
