@@ -1,0 +1,923 @@
+{
+  "version": 1,
+  "skills": {
+    "agent-platform-alert-configuration": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/agent-platform-alert-configuration/SKILL.md",
+      "computedHash": "90fef319435ddc9230d7770159dfe6626e4bdcc716bf545319e7d1e37273a495"
+    },
+    "agent-platform-deploy": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/agent-platform-deploy/SKILL.md",
+      "computedHash": "23415860045164119cec1f2d5c686bd1fce62e7c33b8370e370eb03ab96af401"
+    },
+    "agent-platform-endpoint-management": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/agent-platform-endpoint-management/SKILL.md",
+      "computedHash": "5a2eeb0a55d0e792e13c5134309c8e5f5ba5727de4a2d890293b575050458e2f"
+    },
+    "agent-platform-eval-flywheel": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/agent-platform-eval-flywheel/SKILL.md",
+      "computedHash": "d2e31a07dc0d19b6700af219d919ab788415787373476bdafeea05084c99e13a"
+    },
+    "agent-platform-inference": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/agent-platform-inference/SKILL.md",
+      "computedHash": "613a3270661f2ac01611427188d92091e4670c7654a6e15cbccb4171eff07c0b"
+    },
+    "agent-platform-migrate-from-ai-studio": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/agent-platform-migrate-from-ai-studio/SKILL.md",
+      "computedHash": "8922ebad9d8a8f1d4473aa42be2fe7a5ebd31d6eee5bb80014a9684ec2e938c1"
+    },
+    "agent-platform-model-registry": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/agent-platform-model-registry/SKILL.md",
+      "computedHash": "ab18b26f234658e474adbf67607f9a9912ed7f5dd8b87e69cffd42cd897c4a50"
+    },
+    "agent-platform-prompt-management": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/agent-platform-prompt-management/SKILL.md",
+      "computedHash": "7661a7ce5642632a63aa08a96dfa886a2c6ba7f66ef36932113bb17c0274b6bf"
+    },
+    "agent-platform-rag-engine-management": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/agent-platform-rag-engine-management/SKILL.md",
+      "computedHash": "8631952398f3942df5b57abcf063e4fd837780d2eae6707e0cfa4c06f1e0c1ca"
+    },
+    "agent-platform-skill-registry": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/agent-platform-skill-registry/SKILL.md",
+      "computedHash": "4c5dedb28749b89198dfe8c60a2dbb9d868662fb2e9d263c01c85977b14cad47"
+    },
+    "agent-platform-troubleshooting": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/agent-platform-troubleshooting/SKILL.md",
+      "computedHash": "b48ba979e6130843e527cba12436b01ccfdcfb53c366dc23bfee5da71827a64b"
+    },
+    "agent-platform-tuning": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/agent-platform-tuning/SKILL.md",
+      "computedHash": "53b45dcbe632f8eddb10d3912d249b5c302b2e26ad966868f450caeccda44c17"
+    },
+    "agent-platform-tuning-management": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/agent-platform-tuning-management/SKILL.md",
+      "computedHash": "c975a902ec322f588b99bf56bb1a7f0c300d8b788d602d488a5680e1787a6d92"
+    },
+    "alloydb-basics": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/alloydb-basics/SKILL.md",
+      "computedHash": "c3bc5c916b5b23c1ee4f23a24debebe20b5ea4ec1d004a3bb907740fdd5902fe"
+    },
+    "application-design-center-design-deploy": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/application-design-center-design-deploy/SKILL.md",
+      "computedHash": "8117ea721e7215b53a3a9b55ce45904ef80780c37f2e7d6d57ba6a812b9b91c4"
+    },
+    "bigquery-ai-ml": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/bigquery-ai-ml/SKILL.md",
+      "computedHash": "7e20b8f6a74c41d36b3cf1ff170bb805422314e22492ea8766072df6b2438aac"
+    },
+    "bigquery-basics": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/bigquery-basics/SKILL.md",
+      "computedHash": "937d6e23317c2a4b0eed4a1a2c8e1fcb502320f3e86d0724b52a416522be6532"
+    },
+    "bigquery-bigframes": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/bigquery-bigframes/SKILL.md",
+      "computedHash": "755487ae4ca6448104e62467f2d8e500e93d02c9eb02909cad57b8f5df845c41"
+    },
+    "bigquery-observability": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/bigquery-observability/SKILL.md",
+      "computedHash": "d1734a972c6648621ce57bd499892761e3c913176fbb944b9cd6f4b57cdbccd8"
+    },
+    "bigquery-optimization": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/bigquery-optimization/SKILL.md",
+      "computedHash": "602093f343d6fb1b60d8abed7b5f0543e7c713c9cf4a3cf22ec7f7dd43539526"
+    },
+    "bigquery-slot-cost-optimizer": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/bigquery-slot-cost-optimizer/SKILL.md",
+      "computedHash": "374b82a941fed7a1601ab17e285a8885529d3c6655f2e640f3743ac91ae13541"
+    },
+    "bigquery-troubleshooting": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/bigquery-troubleshooting/SKILL.md",
+      "computedHash": "c3c6d5a5228fcabd10a5d1b5a9e184878203f97e414d52c917b227a10d795767"
+    },
+    "bigtable-basics": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/bigtable-basics/SKILL.md",
+      "computedHash": "efafeacd08081cf4c61aa069bafd07371d499b4456b90b446c46e468d4390e45"
+    },
+    "cloud-build-basics": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/cloud-build-basics/SKILL.md",
+      "computedHash": "5994a2543ab77c1fd010412963ec6ec443d2a4003416703b2f3fd8535abee425"
+    },
+    "cloud-databases-onboarding": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/cloud-databases-onboarding/SKILL.md",
+      "computedHash": "82598e86d280b43edbd23b34336167dfa9711733490a2e833c27d7526657a116"
+    },
+    "cloud-logging-configuration-basics": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/cloud-logging-configuration-basics/SKILL.md",
+      "computedHash": "d205dbafe663782f71e319592943235594c5b944b7e801431ffa877d27041929"
+    },
+    "cloud-logging-cross-project-configuration": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/cloud-logging-cross-project-configuration/SKILL.md",
+      "computedHash": "21eccdba092f23a78279558079fa8a8e1cc0fd10e9aefbc08066769aab187340"
+    },
+    "cloud-logging-query-generation": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/cloud-logging-query-generation/SKILL.md",
+      "computedHash": "0a9abf1c68c37e93bfe2813ebceaa6a359b1618925e93da8099c40fd42d6fe2a"
+    },
+    "cloud-monitoring-chart-generation": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/cloud-monitoring-chart-generation/SKILL.md",
+      "computedHash": "e2f85f708a53cbb908a88fce86a93718ced2baa2716311737d6dc9bf17ac14bf"
+    },
+    "cloud-monitoring-list-time-series-request": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/cloud-monitoring-list-time-series-request/SKILL.md",
+      "computedHash": "081aacda81371eb3663665c9c8e46551076e46d23fe8963c76122f9f74669189"
+    },
+    "cloud-monitoring-metric-selection": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/cloud-monitoring-metric-selection/SKILL.md",
+      "computedHash": "ec8e3d3ff335b9fcd41fd4d430c5de5e8e5e4b33c9d4939309272c57b13369f5"
+    },
+    "cloud-monitoring-promql-query": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/cloud-monitoring-promql-query/SKILL.md",
+      "computedHash": "4f1982cff2ad14eb6069da447699fd0267d849f826ff6f2a30052b845dcb60c5"
+    },
+    "cloud-run-alert-configuration": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/cloud-run-alert-configuration/SKILL.md",
+      "computedHash": "654557c1b1ea6b17ec061a7e755cf1598eeb5b3f898549975cce900b05d266e1"
+    },
+    "cloud-run-basics": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/cloud-run-basics/SKILL.md",
+      "computedHash": "bf911e2a1ac860a5264d753ca01254e1186c7a33c1163263e6c0c2549dd0f9bd"
+    },
+    "cloud-sql-basics": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/cloud-sql-basics/SKILL.md",
+      "computedHash": "6bbe5e3f7228088729c744f1e44e710ae9f3d89c7dfc67d5f6c419459713023e"
+    },
+    "data-manager-api-audience-ingestion": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/data-manager-api-audience-ingestion/SKILL.md",
+      "computedHash": "b49930337358c0db17246e512f6fdf028d44f99ff9d50b0c7b4ae5a4e0dd3a8f"
+    },
+    "data-manager-api-event-ingestion": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/data-manager-api-event-ingestion/SKILL.md",
+      "computedHash": "8d9817794bb3241684309da12b1fb07aba5a01c313ed94c178f3d1b8a92e0d41"
+    },
+    "data-manager-api-setup": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/data-manager-api-setup/SKILL.md",
+      "computedHash": "068dd5035f79e85ebc9cb7e1de03d8efb8bf2a7fee31bfb6f835d1faea19eb6d"
+    },
+    "datalineage-bigquery-asset-impact-analysis": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/datalineage-bigquery-asset-impact-analysis/SKILL.md",
+      "computedHash": "e61221887342058ebf03b932e843aafff1c7bd9b70dd186f56e4230d00a5cf8f"
+    },
+    "datalineage-summary": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/datalineage-summary/SKILL.md",
+      "computedHash": "398dfff24d8ca2a48b41824f96209c7f3dc71fc1aeebcf7ef30ab38065a83987"
+    },
+    "dbt-sf-to-bq-translator": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/dbt-sf-to-bq-translator/SKILL.md",
+      "computedHash": "420b8c3a74d76ed6d85258ace8329df9fefe2a3da75eff5d3f7f504c806095a0"
+    },
+    "detection-engineering-coverage-evaluation": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/detection-engineering-coverage-evaluation/SKILL.md",
+      "computedHash": "13c0aec85183174d8c9938284b622656b49cad6d17ae079c1c192b2d74ae5785"
+    },
+    "developer-device-platform-basics": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/developer-device-platform-basics/SKILL.md",
+      "computedHash": "29729adc5016c2cd9d5992496e79732f6cc733fcfacf4b1c0c55b5eb15363979"
+    },
+    "developing-genkit-dart": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/developing-genkit-dart/SKILL.md",
+      "computedHash": "7bee2209916a6fe673c1f47b8b00e8dfc92d0c690270012b85ced3077ba3597e"
+    },
+    "developing-genkit-go": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/developing-genkit-go/SKILL.md",
+      "computedHash": "1fe9b4183909cf51b6f9753512d86f09d43ede87cb13c2dd4742c4ca5f5a04ec"
+    },
+    "developing-genkit-js": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/developing-genkit-js/SKILL.md",
+      "computedHash": "6848922a47221eb8de4e608e0953bc09c1ff51651eecaa5216c81ac7d0596955"
+    },
+    "developing-genkit-python": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/developing-genkit-python/SKILL.md",
+      "computedHash": "397507170d3b3c4af9d8923957c2265b80ead914e7d19fbc3beee949684b1cc7"
+    },
+    "dpop-adoption": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/identity/dpop-adoption/SKILL.md",
+      "computedHash": "194428463db05e5fb4e3e5819b51a57d06eba037c1b6514fb8ab89b6de6caa57"
+    },
+    "finding-google-skills": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/developers/finding-google-skills/SKILL.md",
+      "computedHash": "1b75085cafbf7443219dd15c65ff6095e29c99c5f688833a88a16e9345ed35f4"
+    },
+    "firebase-basics": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/firebase-basics/SKILL.md",
+      "computedHash": "12e54a6dde0e9deda65494062a1aa178b37018895df219434ba5686db94008e0"
+    },
+    "gcloud": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gcloud/SKILL.md",
+      "computedHash": "9f2d1986e0033565ad0cdea611eb2759718e049af8422ea3d64f1bb768518cdd"
+    },
+    "gemini-agents-api": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gemini-agents-api/SKILL.md",
+      "computedHash": "916da48262ddf24e4736e0ad88525edbe910dfd783333a37f07ebbbbbf66dd09"
+    },
+    "gemini-api": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gemini-api/SKILL.md",
+      "computedHash": "20eb66949da6456349187938ecaae8d361f99486a18122af9cb4079f5ecbe47b"
+    },
+    "gemini-interactions-api": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gemini-interactions-api/SKILL.md",
+      "computedHash": "c883c528fdd33c592fbaa520e4d71efcbf341ad18d38c78ce17692fb38941e67"
+    },
+    "gemini-live-api": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gemini-live-api/SKILL.md",
+      "computedHash": "1681cc97dd23bf11c086437b47ae44af90a14b13fabab45363d2a70693e43843"
+    },
+    "gke-ai-troubleshooting-handle-disruption-gpu-tpu": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-ai-troubleshooting-handle-disruption-gpu-tpu/SKILL.md",
+      "computedHash": "06b68ffd5563042457125fcfa0807120f1fdabe457c643a26c6c6fe803b38a6c"
+    },
+    "gke-ai-troubleshooting-jobset-interruption": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-ai-troubleshooting-jobset-interruption/SKILL.md",
+      "computedHash": "ec00c70fe2858c17b9cdc0092275f23aa164b90d4062e99e24480ae24dd08e78"
+    },
+    "gke-ai-troubleshooting-tpu-dynamic-slices-monitoring": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-ai-troubleshooting-tpu-dynamic-slices-monitoring/SKILL.md",
+      "computedHash": "910d3ef0faf15c97d2f77c633ef35971bae2f7c2b5400d443e93119fb15c5cb2"
+    },
+    "gke-ai-troubleshooting-tpu-metrics-monitoring": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-ai-troubleshooting-tpu-metrics-monitoring/SKILL.md",
+      "computedHash": "4975dad4cfefc3e5456790d192aae12abad71b8c79a45a92205ef38265edb856"
+    },
+    "gke-ai-troubleshooting-tpu-vbar-oom": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-ai-troubleshooting-tpu-vbar-oom/SKILL.md",
+      "computedHash": "042f4ef44a7b0b979d1ec1e52125652db3ed974c7ed0b5f103c22b3a6dc0a9d3"
+    },
+    "gke-alert-configuration": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-alert-configuration/SKILL.md",
+      "computedHash": "2370373757c7f5d4770b3f04f8eab1f9731afd39c9cb030ffb4afd4bc561753d"
+    },
+    "gke-app-onboarding": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-app-onboarding/SKILL.md",
+      "computedHash": "e69415237914e4deb1e0f663c4d167d37a0b3723bcc66245c50397a54f6ebe09"
+    },
+    "gke-backup-dr": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-backup-dr/SKILL.md",
+      "computedHash": "99bf7f94c856fcc7ba7b37618c211146769a49cdf133a99df1032cece65cb266"
+    },
+    "gke-basics": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-basics/SKILL.md",
+      "computedHash": "8b5a254394730d9fca541ebf8bf26f0645edb164964134a84926bd4be5b1ddcf"
+    },
+    "gke-batch-hpc": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-batch-hpc/SKILL.md",
+      "computedHash": "f8c97226bd9489b45b49b5e3e1f9b2f29c1997a0b22cd41e61ffe44de64bdebc"
+    },
+    "gke-cluster-autoscaler": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-cluster-autoscaler/SKILL.md",
+      "computedHash": "7bb575918daebbd2dfb3faf8b03993bc44b47cbb952c1ce2394ccdc11e58dc9f"
+    },
+    "gke-cluster-creation": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-cluster-creation/SKILL.md",
+      "computedHash": "386c66f00bff4962c9e6ab0f152634ebe405f9b2de49864ae05112ff496fe662"
+    },
+    "gke-compute-classes": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-compute-classes/SKILL.md",
+      "computedHash": "d3f166cf39d26479e82b13101c6ce660d6cd022496b1db8b7bb1821bc148ee67"
+    },
+    "gke-cost-analysis": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-cost-analysis/SKILL.md",
+      "computedHash": "576a3e5ffed71cdfcd8c68e2f763c6c9d99f77a62817cc69e56b6cebe34e013c"
+    },
+    "gke-cost-optimization": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-cost-optimization/SKILL.md",
+      "computedHash": "a45dadeb4302a46367c7ae92b0a216ae3d55b7832a8e9db6ee1aeb2a3522ea06"
+    },
+    "gke-custom-golden-image-discovery": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-custom-golden-image-discovery/SKILL.md",
+      "computedHash": "a3e0b2ce1cedb510084cb09fa7e43d9b3b18beecd803c0ebb6a357942425105f"
+    },
+    "gke-golden-path": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-golden-path/SKILL.md",
+      "computedHash": "e744876fce3212306bb8367e0a38972d8b9bf5ee03eec1d47d918c07c4d5341f"
+    },
+    "gke-inference": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-inference/SKILL.md",
+      "computedHash": "4b9c13fdffbd5d2584d6264475687963e400d86c4d2c45d6ab6cf729d9d3065a"
+    },
+    "gke-manifest-generation": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-manifest-generation/SKILL.md",
+      "computedHash": "c5eaffbe0a8d6f12a0d0f3dc9801826941e355e29b9cde3bf52565fe6c131f11"
+    },
+    "gke-multitenancy": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-multitenancy/SKILL.md",
+      "computedHash": "e9ac9d945476bba8218d024b40fe8610cfe75cc0b8202d05b185bfcbc19830ab"
+    },
+    "gke-networking": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-networking/SKILL.md",
+      "computedHash": "3b49ea72d51f23aacd276537985675b052d97940b90b3857227eee70ca20c218"
+    },
+    "gke-node-notready": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-node-notready/SKILL.md",
+      "computedHash": "e4e300d36f5c0b9b788bca63645415261bf2862f7e976cf3e69e1f5189c4afae"
+    },
+    "gke-observability": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-observability/SKILL.md",
+      "computedHash": "75b54a113a63518d63b045988f01c67ebd3ab3aaf644f66d45de602ff235aee2"
+    },
+    "gke-platform-security": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-platform-security/SKILL.md",
+      "computedHash": "943db9108d06439aa341f54ee1e27d2d58eec977b24b92b3da8c59a63dfa7c40"
+    },
+    "gke-productionize": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-productionize/SKILL.md",
+      "computedHash": "8d0a8d45db68c08ca855c1e92c67f8caf95916ae5861dc00794432039d1d10af"
+    },
+    "gke-reliability": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-reliability/SKILL.md",
+      "computedHash": "659bf3e1d0071669c989277ee16f65bb2e85f896790ebbdcebbc8e21633976c5"
+    },
+    "gke-service-networking": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-service-networking/SKILL.md",
+      "computedHash": "c05b80e41eebc2266db086fa45b2fff47fb68aa25d4156f9714829d99a828ec0"
+    },
+    "gke-storage": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-storage/SKILL.md",
+      "computedHash": "a55c8ddf72c030fa85296fe1b5381b4bbc669ad96c18e10f24bc5f7bee6cab9f"
+    },
+    "gke-storage-troubleshooting": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-storage-troubleshooting/SKILL.md",
+      "computedHash": "8f08a95960e5c4a771a55e941e6ceb192c3dd6d3cfde52de2a85fc08fda119d2"
+    },
+    "gke-upgrades": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-upgrades/SKILL.md",
+      "computedHash": "5fd0bef50f567544e0a074de3e742791a72f6bfdfc9b3d574278ce45b08563e3"
+    },
+    "gke-workload-identity": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-workload-identity/SKILL.md",
+      "computedHash": "f1e2dd6b2e926885fab7b02d80583bfe17f7aeec1a26766a9d2d200bd143c248"
+    },
+    "gke-workload-scaling": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-workload-scaling/SKILL.md",
+      "computedHash": "15b8caddf58dbe8e015be7b31f4593558e6d0d784e14f2c0e19dfb20b5829ab2"
+    },
+    "gke-workload-scaling-troubleshooting": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-workload-scaling-troubleshooting/SKILL.md",
+      "computedHash": "6082d592b586f85fb9ce473bf759a3b3805232080023274264e47b25555b5327"
+    },
+    "gke-workload-security": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-workload-security/SKILL.md",
+      "computedHash": "bc3ba89209ad9dbf2763ad94c67184a41a79b46ff87d9bd1ff72a2d250f46170"
+    },
+    "gke-workload-troubleshooting": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gke-workload-troubleshooting/SKILL.md",
+      "computedHash": "ded5a01a7828bd7dc9ac9b367e55813adb13e29da63d313925c0a513c9af9843"
+    },
+    "google-ads-api-account-diagnostics": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/google-ads-api-account-diagnostics/SKILL.md",
+      "computedHash": "b65c11d0980157eab735fed2869c02d3a929ba8015b0fb369ccfcdd74a06fe17"
+    },
+    "google-ads-api-mcp-setup": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/google-ads-api-mcp-setup/SKILL.md",
+      "computedHash": "8183c6cd3fe36e6513831c181833757aae3eaa4dd1f8f76a31191148e5caa961"
+    },
+    "google-ads-api-quickstart": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/google-ads-api-quickstart/SKILL.md",
+      "computedHash": "7b9d715d7f4e29f52c0a4781a5be3b66adbb6afbea72d1af3082d0556e48af42"
+    },
+    "google-agents-cli-onboarding": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-agents-cli-onboarding/SKILL.md",
+      "computedHash": "a7e3b614275187a1d58de84c7cbaaefd83b0ae1b0648f6bad9392f51ce8883d5"
+    },
+    "google-analytics-admin-api-basics": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/analytics/google-analytics-admin-api-basics/SKILL.md",
+      "computedHash": "c38719af0b32189b464ad0ca3431364ab9f34d6ece9d13956a671ccf5c73439b"
+    },
+    "google-analytics-data-api-basics": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/analytics/google-analytics-data-api-basics/SKILL.md",
+      "computedHash": "1de06b84080369f3c3df1f1f8ff0de6e60f528986e8aeb5d6fb9da466796e687"
+    },
+    "google-cloud-filestore-auditing": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-filestore-auditing/SKILL.md",
+      "computedHash": "5afb27e45ee1e5f2543e53bb5003d5318e57588fb97ded343df918139c62a48f"
+    },
+    "google-cloud-filestore-autoscale": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-filestore-autoscale/SKILL.md",
+      "computedHash": "a58f8e8dff7e6941710d7d869a7a44bef465f6e6c71ffbde3f14b7edfdc656a7"
+    },
+    "google-cloud-filestore-log-troubleshooting": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-filestore-log-troubleshooting/SKILL.md",
+      "computedHash": "86e38a2132cc3c641fa9f1e1a76fd08c873d33890dbef74eff6f380f30010ed9"
+    },
+    "google-cloud-filestore-nfs-browser": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-filestore-nfs-browser/SKILL.md",
+      "computedHash": "1b95686778f793b99a9f50cf3f1be81b9a33048cb48cfe41f2b1fbe90498a1ba"
+    },
+    "google-cloud-global-frontend-configuration": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-global-frontend-configuration/SKILL.md",
+      "computedHash": "7a829ab80fa20862040d22f21cc1ac256481f95ca9bed776e464fbaf19b0d396"
+    },
+    "google-cloud-networking-observability": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-networking-observability/SKILL.md",
+      "computedHash": "29cec41e331425ee599b1b4afc1b28ad7e7e077f2d1c321ba7a8b80f935a0d50"
+    },
+    "google-cloud-recipe-auth": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-recipe-auth/SKILL.md",
+      "computedHash": "51bb0e12d358ea2c018bf859c451624307077e2ab29ee56f370d8849a3d04730"
+    },
+    "google-cloud-recipe-foundation-builder": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-recipe-foundation-builder/SKILL.md",
+      "computedHash": "5ea1476ed20fa17bd20f9e85c608f6eb19eff466d1f8edc0b33177616084db05"
+    },
+    "google-cloud-recipe-onboarding": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-recipe-onboarding/SKILL.md",
+      "computedHash": "5f1001efcb167f23ccf6b6de2ea497b334b7172b352092bef86fa4151680155a"
+    },
+    "google-cloud-scc-query": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-scc-query/SKILL.md",
+      "computedHash": "a4bb5d4f34458347e8ad3a95186487d924864c7acd69da12187e82fab47abafe"
+    },
+    "google-cloud-slo-alert-configuration": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-slo-alert-configuration/SKILL.md",
+      "computedHash": "8d0d7bceecf08dac5e5718d6d21d8d79a42a0d9e84905d6bf8cc1af1a15cd6ca"
+    },
+    "google-cloud-solution-agentic-ai-bidirectional-streaming": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-solution-agentic-ai-bidirectional-streaming/SKILL.md",
+      "computedHash": "3bd3539aebc239e0043ec9f82ae02efad6323b159d5824366eda0198072080e1"
+    },
+    "google-cloud-solution-agentic-ai-borderless-data-lakehouse": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-solution-agentic-ai-borderless-data-lakehouse/SKILL.md",
+      "computedHash": "e4dbfdb3a746dfb25f65ef8db1d29ef9a196a108897a0d45b71529fdd96f23ca"
+    },
+    "google-cloud-solution-agentic-ai-data-science-workflow": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-solution-agentic-ai-data-science-workflow/SKILL.md",
+      "computedHash": "42cbf26b4f7cb8ae9f635d77c29d24daa491a2f351389edec7220994136296b3"
+    },
+    "google-cloud-solution-agentic-analytics-spark-knowledge-catalog": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-solution-agentic-analytics-spark-knowledge-catalog/SKILL.md",
+      "computedHash": "2f418bf7e785e1afb5f242193d7e57a4bc46891195fc54721c7c181358a3db9d"
+    },
+    "google-cloud-solution-architecture": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-solution-architecture/SKILL.md",
+      "computedHash": "fb3ee242c2642fa43f9b0505ebc46f03d9d635d2b853b52144a114996dafc299"
+    },
+    "google-cloud-solution-build-deploy-agents": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-solution-build-deploy-agents/SKILL.md",
+      "computedHash": "35a830abaa8ce1e9a0d8ac576c70284dfb66cb095d099e7cb47e42421ef88b87"
+    },
+    "google-cloud-solution-guided-gke-ai-migration": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-solution-guided-gke-ai-migration/SKILL.md",
+      "computedHash": "e7073062a056c6f4bd22fa7825b685d730a4b0fcc10e6166781667c771191099"
+    },
+    "google-cloud-solution-hybrid-search-alloydb": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-solution-hybrid-search-alloydb/SKILL.md",
+      "computedHash": "96e5fc88db90d15664b88e5aa6ab6944b923885fde7a52d934e7c1ac81fbe84c"
+    },
+    "google-cloud-solution-multi-agent-security": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-solution-multi-agent-security/SKILL.md",
+      "computedHash": "fcd9d1b1bcc739b52231f158cc48c26ef83e01c0e7e9dc527f1144c51f752c6d"
+    },
+    "google-cloud-solution-n-tier-serverless-web-app": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-solution-n-tier-serverless-web-app/SKILL.md",
+      "computedHash": "504710cbf08355b52ed4cecd78e95519a3033ec340de7b8ea481cd42e87c5e9e"
+    },
+    "google-cloud-solution-rag-enterprise-search-gke-sqldb": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-solution-rag-enterprise-search-gke-sqldb/SKILL.md",
+      "computedHash": "e2169ed8964e900e3fba72c1c07469087eb24763c109f7d525c8175a2421099b"
+    },
+    "google-cloud-storage-basics": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-storage-basics/SKILL.md",
+      "computedHash": "f33c761c39213257b99d71dea31716714cebec6fc74f775564061c6b41beb444"
+    },
+    "google-cloud-storage-bucket-architect": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-storage-bucket-architect/SKILL.md",
+      "computedHash": "068a19de6c98e67dcf2315668a30c047cc01c8b5780ddbe9ed74b58fcf5b55d0"
+    },
+    "google-cloud-storage-fuse": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-storage-fuse/SKILL.md",
+      "computedHash": "175fc1282781fec7781f39e0ac59be091fb819c149ce2dead062f476f2a9579b"
+    },
+    "google-cloud-waf-cost-optimization": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-waf-cost-optimization/SKILL.md",
+      "computedHash": "9db22cd0b4c5b5524c973c4b7cfba954ce2d66f3f049f71774c6555dff77d909"
+    },
+    "google-cloud-waf-operational-excellence": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-waf-operational-excellence/SKILL.md",
+      "computedHash": "1200eedb9db932b65c36e6d26bbf42ddc156425802c6ea159417fde3ba29dd3c"
+    },
+    "google-cloud-waf-performance-optimization": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-waf-performance-optimization/SKILL.md",
+      "computedHash": "ad1ad0348d452233abb2e6444c0ed612f3325d06e5b826e17621ee075f008a50"
+    },
+    "google-cloud-waf-reliability": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-waf-reliability/SKILL.md",
+      "computedHash": "973dd6ea86a475f8707a0abe1772bb412a8a86132a670b231045723271bdefb9"
+    },
+    "google-cloud-waf-security": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-waf-security/SKILL.md",
+      "computedHash": "2b61a6e346af9815f2565d85aa103948bbeed08a3341f80597df54f31c7c16cc"
+    },
+    "google-cloud-waf-sustainability": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-waf-sustainability/SKILL.md",
+      "computedHash": "7b701ea8df4730bcdd57d90b41fc1c0d2e4c0d037eeefc2369da54758a2dd81a"
+    },
+    "google-mobile-ads-android-migrate-to-next-gen": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/google-mobile-ads-android-migrate-to-next-gen/SKILL.md",
+      "computedHash": "f7444b4cc6cc173fc44c62cba668cba583ccf3c100bde6daab2b5aa046b79fd3"
+    },
+    "google-mobile-ads-banner": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/google-mobile-ads-banner/SKILL.md",
+      "computedHash": "242591538953d1b1a620deaa752ff473005aa42ca1401120123a92c986b3de80"
+    },
+    "google-mobile-ads-get-started": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/google-mobile-ads-get-started/SKILL.md",
+      "computedHash": "5c791c8b3046fd0a6221a7452cfd999fceb58d75c4159df011bdc77fb0c9b416"
+    },
+    "google-mobile-ads-interstitial": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/google-mobile-ads-interstitial/SKILL.md",
+      "computedHash": "d02831f795ee679b39aa05ef6f4b1028aced778ccf8d18f27909aee3bd22d173"
+    },
+    "google-mobile-ads-rewarded": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/google-mobile-ads-rewarded/SKILL.md",
+      "computedHash": "f1f4e6ce2cbd23e67150a01d428dd9eb7b40572db1c352596b27ecc96727118d"
+    },
+    "google-mobile-ads-validate": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/google-mobile-ads-validate/SKILL.md",
+      "computedHash": "3e8741a898dfb71dc8091105a4e36801b5ca4cd557799c0f8d7216096cc13ad1"
+    },
+    "iam-helper-for-policy-management": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/iam-helper-for-policy-management/SKILL.md",
+      "computedHash": "ba6e08793aa2d6c5338d6e7a9b267dd49b7de704ea0c5aef7135b5e9a5430e5e"
+    },
+    "iam-helper-for-policy-simulator": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/iam-helper-for-policy-simulator/SKILL.md",
+      "computedHash": "c4e026e0bb01929d654fb52b0d0dcc536c75027f966420cba8756995515957c7"
+    },
+    "iam-helper-for-privileged-access-management": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/iam-helper-for-privileged-access-management/SKILL.md",
+      "computedHash": "75b2d89b5c430df74c8a44bd18a317b45799d3757232b6fe61d38949a27ad0b9"
+    },
+    "iam-helper-for-troubleshooting": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/iam-helper-for-troubleshooting/SKILL.md",
+      "computedHash": "7b366b6247ce15bea350758edf0e117b26a580b651518fa46ad4045eea7423aa"
+    },
+    "ima-dai-sdk": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/ima-dai-sdk/SKILL.md",
+      "computedHash": "1a906da07dc1fc2b7ab9964866a4b8c65478f4597c4fc3eecc6f8ef34d9c1136"
+    },
+    "ima-sdk-client-side": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/ima-sdk-client-side/SKILL.md",
+      "computedHash": "846e77560a73768f0c84af6262b2c1456c67d5565cdd2bcf4d2bbbb6622f9bd2"
+    },
+    "managed-airflow-dag-authoring": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/managed-airflow-dag-authoring/SKILL.md",
+      "computedHash": "55fc5b8e87ffe7b5be73c04bad91a2a252bfcd800c1a3c862b1036a45ad0b259"
+    },
+    "managed-airflow-dag-troubleshooting": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/managed-airflow-dag-troubleshooting/SKILL.md",
+      "computedHash": "23cc2a6e993827cc8ca36d39ff865d66f851278cc8a5b685350423a1b4c575d2"
+    },
+    "managed-airflow-migrations": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/managed-airflow-migrations/SKILL.md",
+      "computedHash": "a8c98a8f993a9c8d7f5b817bfaf60f147216be0c41bf479a493d077e94ba266b"
+    },
+    "retrieving-developer-knowledge": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/developers/retrieving-developer-knowledge/SKILL.md",
+      "computedHash": "39a93ca8021bbb6a4160a82c9dccecd6135ffcc691941fa35e51af05cb7e7b41"
+    },
+    "secops-cases": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/secops-cases/SKILL.md",
+      "computedHash": "7719a2b20e840d0fdc6442216e552c2e8579513371cc6d9e7a2421ad3403862c"
+    },
+    "secops-detection-engineering": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/secops-detection-engineering/SKILL.md",
+      "computedHash": "efcc1d5913b030d96521e4a66479f3c9263611b6bd9a8bbd1c862e52cb09bd2c"
+    },
+    "secops-hunt": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/secops-hunt/SKILL.md",
+      "computedHash": "ffb775b85c35c0e16dc0bf052c925b079b3caec02da3143a164c4874c318ef1c"
+    },
+    "secops-investigate": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/secops-investigate/SKILL.md",
+      "computedHash": "84897ddeb140ef7c13e7cb564e871b543157b5c33cf1a532de0f7a2dae430dd8"
+    },
+    "secops-triage": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/secops-triage/SKILL.md",
+      "computedHash": "847266537bd02c23dc691429c87c3eda478be519c8ab63a8493996e675760d37"
+    },
+    "spanner-basics": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/spanner-basics/SKILL.md",
+      "computedHash": "2c1594923e62758a355dc4eeef936d77619fc61347c9e0f1fcd413c8db156ec1"
+    },
+    "supabase": {
+      "source": "supabase/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/supabase/SKILL.md",
+      "computedHash": "af1844ade632808fc0c15cf2db87daf3b2431c5262dc8a0c3ea7d70880fadf91"
+    },
+    "supabase-postgres-best-practices": {
+      "source": "supabase/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/supabase-postgres-best-practices/SKILL.md",
+      "computedHash": "128fac78002d916c8ca908245d398e634f540d8bcf20915b2b2359aeb18eba59"
+    },
+    "supabase-server": {
+      "source": "supabase/server",
+      "sourceType": "github",
+      "skillPath": "skills/supabase-server/SKILL.md",
+      "computedHash": "e648f4569881342d1f102391eb56c5ce69f8ae96454d47547489382ff061cfb2"
+    },
+    "workload-manager-basics": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/workload-manager-basics/SKILL.md",
+      "computedHash": "010397b6e9353869aee33b7a4cecae7908392e284c5c7aa6eb25d8787fdef747"
+    }
+  }
+}
