@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
+    <div id="menu-background" aria-hidden="true"><img src="/background/poster.webp" alt="" fetchpriority="high" width="960" height="540" /></div>
     <section id="account-screen" aria-label="Account access">
       <div class="entry-panel pixel-panel">
         <div class="entry-emblem" aria-hidden="true"><svg viewBox="0 0 32 32"><path fill="#69d8c6" d="M8 4h16v4h4v16h-4v4H8v-4H4V8h4z"/><path fill="#b4f3e4" d="M8 8h8v4H8z"/><path fill="#ccdce0" d="M16 12h16v8H16z"/><path fill="#526979" d="M28 14h4v4h-4z"/></svg></div>
@@ -37,11 +38,20 @@
           <p id="account-identity">ACCOUNT / Loading profile…</p>
           <form id="profile-form"><label>Public display name<input id="display-name" minlength="3" maxlength="20" pattern="[A-Za-z0-9][A-Za-z0-9 _\-]{2,19}" required /></label><p class="note">3–20 letters, numbers, spaces, hyphens or underscores. Do not use private information.</p><button type="submit">Save name</button></form>
           <button id="retry-profile" type="button" hidden>Retry profile</button>
-          <button id="account-play" type="button">Play</button>
+          <button id="account-play" type="button">Continue to lobby</button>
           <button id="account-signout" type="button">Sign out</button>
         </div>
         <p id="auth-message" role="status" aria-live="polite"></p>
         <button id="auth-cancel" type="button" hidden>Cancel</button>
+      </div>
+    </section>
+    <section id="lobby-screen" aria-label="Main menu" hidden>
+      <div class="lobby-shell">
+        <header class="lobby-heading"><div class="entry-emblem" aria-hidden="true"><svg viewBox="0 0 32 32"><path fill="#69d8c6" d="M8 4h16v4h4v16h-4v4H8v-4H4V8h4z"/><path fill="#b4f3e4" d="M8 8h8v4H8z"/><path fill="#ccdce0" d="M16 12h16v8H16z"/></svg></div><h1>SHOOTBALL ARENA</h1><p>Choose your next match.</p></header>
+        <div class="lobby-panels">
+          <section class="pixel-panel lobby-account" aria-label="Player identity"><h2 class="pixel-title">YOUR PLAYER</h2><p id="lobby-identity">GUEST / Temporary</p><p id="lobby-identity-note" class="note">Play freely as a guest, or create an account for a saved display name.</p><button id="lobby-account" type="button">Log in</button><button id="lobby-signup" type="button">Create account</button></section>
+          <section class="pixel-panel lobby-match" aria-label="Quick play"><h2 class="pixel-title">FREE-FOR-ALL</h2><p class="lobby-target">FIRST TO <strong>1,000</strong> POINTS</p><p class="note">Up to 8 players per arena. Collect orbs, defeat rivals, and climb the leaderboard. No time limit.</p><button id="lobby-play" type="button">Play</button><p class="note">Find an open arena automatically. Full arenas create another match.</p><p id="lobby-message" role="status"></p></section>
+        </div>
       </div>
     </section>
     <main id="arena-app" aria-label="ShootBall Arena" hidden>
@@ -98,14 +108,14 @@
 
           <div id="stamina" hidden><span>STAMINA</span><div id="stamina-meter" role="progressbar" aria-label="Sprint stamina" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div id="stamina-fill"></div></div></div>
           <div id="player-status" role="status"></div>
-          <section id="results" class="pixel-panel" hidden aria-label="Round results"><h2 class="pixel-title">ROUND COMPLETE</h2><p id="winner" role="status"></p><p id="rematch"></p><ol id="final-standings" aria-label="Final rankings"></ol></section>
+          <section id="results" class="pixel-panel" hidden aria-label="Match results"><h2 class="pixel-title">MATCH COMPLETE</h2><p id="winner" role="status"></p><p id="rematch"></p><button id="results-menu" type="button">Return to main menu</button><ol id="final-standings" aria-label="Final rankings"></ol></section>
         </div>
         </div>
         <aside>
           <section class="scores" aria-label="Live scoreboard"><h2>Leaderboard</h2><p id="active-count">0/8 players</p><table><thead><tr><th>Player</th><th scope="col">Pts</th><th scope="col" title="Player kills">PvP</th><th scope="col" title="Bot kills">Bots</th></tr></thead><tbody id="scoreboard"></tbody></table></section>
           <section class="feed-panel"><h2>Kill feed</h2><ul id="kill-feed"></ul></section>
-          <section class="round-panel"><h2>Round <span id="round-number">1</span></h2><dl><div><dt>Time</dt><dd id="round-time">0:00 / 5:00</dd></div><div><dt>Target</dt><dd id="round-target">1000 pts</dd></div></dl></section>
-          <div class="match-actions"><button id="join" hidden>Join / Retry</button><button id="leave" hidden>Leave Match</button></div>
+          <section class="round-panel"><h2>Match</h2><dl><div><dt>Time</dt><dd id="round-time">0:00</dd></div><div><dt>Target</dt><dd id="round-target">1000 pts</dd></div></dl></section>
+          <div class="match-actions"><button id="game-main-menu" type="button">Main menu</button><button id="join" hidden>Join / Retry</button><button id="leave" hidden>Leave Match</button></div>
           <div class="connection"><span id="connection-status" role="status" aria-live="polite">Connecting...</span></div>
         </aside>
       </div>

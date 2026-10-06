@@ -19,6 +19,7 @@ export class PracticeRoom extends Room {
   protected verifyAccount: VerifyAccount = verifyAccount;
   private identities = new Map<string, Identity>();
   private publicIdentities = new Map<string, { kind: 'guest' | 'account'; displayName?: string }>();
+  private finished = false;
   private refreshing = new Set<string>();
 
   onCreate(): void {
@@ -57,6 +58,7 @@ export class PracticeRoom extends Room {
         }
         this.world.step(inputs, NETWORK.tickMs / 1000);
         this.accumulator -= NETWORK.tickMs;
+        if (this.world.match.phase === 'results' && !this.finished) { this.finished = true; void this.lock(); }
       }
     }, NETWORK.tickMs);
     this.patchRate = null;
@@ -66,9 +68,11 @@ export class PracticeRoom extends Room {
     if (!options || typeof options !== 'object' || !('version' in options) || options.version !== VERSION) {
       throw new ServerError(400, 'Protocol mismatch. Refresh the client.');
     }
+    if (this.world.match.phase !== 'playing') throw new ServerError(409, 'Match finished. Start a new match from the menu.');
     return authenticate(options, this.verifyAccount);
   }
   onJoin(client: Client, _options: unknown, identity: Identity): void {
+    if (this.world.match.phase !== 'playing') throw new ServerError(409, 'Match finished.');
     this.identities.set(client.sessionId, identity);
     this.publicIdentities.set(client.sessionId, identity.kind === 'account' ? { kind: 'account', displayName: identity.displayName } : { kind: 'guest' });
     this.world.add(client.sessionId);

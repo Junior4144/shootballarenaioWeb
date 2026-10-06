@@ -97,9 +97,9 @@ remaining real-Google-login, inbox-delivery and production-URL checks.
 ## Game loop and controls
 
 Fight humans and bots, collect upgrades and points, scan for the next opportunity,
-and compete to win the round. First to **1,000 points** or highest score after
-**five minutes** wins. Equal top scores draw. Results stay visible for ten seconds,
-then the same room automatically starts a fresh round.
+and compete to be first to **1,000 points**. There is no match time limit and no automatic rematch. Results show your final placement and stay visible until you choose **Return to main menu**. Simultaneous top scores share victory.
+
+Guest/account entry leads to a pixel-art lobby with account controls and **Play**. No arena connection is made until lobby Play. The matchmaker fills open rooms with up to eight humans (bots do not use human seats), then creates another room. Finished matches are locked and empty rooms are disposed. Rooms currently run in one Node process; this is not automatic VM/container scaling. See [matchmaking and scaling](docs/specs/matchmaking.md).
 
 | Action | Control / reward |
 | --- | --- |
@@ -129,11 +129,11 @@ Humans have 100 HP; the basic gun deals 25 damage with a 150 ms cooldown. Shots
 never damage their owner and use swept collision against cover and opponents,
 including the muzzle path. Death keeps points but removes temporary upgrades.
 Respawn takes three seconds; a gold ring/SHIELD label marks 1.5 seconds of spawn
-protection. Firing ends it. Rematches reset round stats and upgrades. No R reset.
+protection. Firing ends it. A new match starts with fresh stats and upgrades. No R reset.
 
 All gameplay is server-authoritative: 30 Hz validated intent, 60 Hz simulation,
 20 Hz snapshots and a 100 ms presentation buffer. Ordinary movement/aim interpolate;
-death, respawn and round changes do not slide across the arena. No prediction.
+death, respawn and life changes do not slide across the arena. No prediction.
 
 Unexpected disconnect clears input but leaves the avatar vulnerable for a ten-second
 reservation. Shots continue. Reconnect/refresh preserves health, points, kills,
@@ -174,13 +174,13 @@ tabs. The frontend endpoint is selected at build time.
 Verification on 2026-10-05:
 - Typechecking, 33 automated tests and both production builds pass. Existing Phaser
   bundle warning remains (about 1.38 MB minified / 376 KB gzip).
-- Simulation covers scoring, ties, results freeze, rematch, cover collision and
+- Simulation covers scoring, ties, results freeze, no automatic rematch, cover collision and
   navigation, bots, collection contention/respawn, weapons/ammo, boosts, radar,
   death/reconnect preservation, and bounded immutable event snapshots.
 - Real WebSocket clients verify PvP and lifecycle regressions, pickup points,
-  radar and cooldown-preserving reconnect, results/rematch synchronization and
+  radar and cooldown-preserving reconnect, persistent results and new-room synchronization and
   bot combat. Default-content bot combat also passes against the built server.
-- Presentation tests cover interpolation, respawn/round snapping and event deduplication.
+- Presentation tests cover interpolation, respawn/life snapping and event deduplication.
 - Browser discovery reports no available surface. Two-browser visual play, responsive
   layout, aim/focus recovery, sound quality and overall balance remain manual checks.
   See [verification log](docs/integrationspec/verification.md) for exact coverage.
@@ -204,7 +204,7 @@ $env:GAME_SERVER_PORT='2568'; npm.cmd run start:server
 $env:ARENA_TEST_ENDPOINT='ws://127.0.0.1:2568'; npm.cmd test
 ~~~
 
-Other tests still start isolated ephemeral servers, including a short test round.
+Other tests still start isolated ephemeral servers, including a test match.
 The endpoint is test-runner configuration; browser join options cannot alter rules.
 
 ## Structure and scope
@@ -228,3 +228,5 @@ cosmetics, ads, custom matchmaking, prediction, Redis and distributed infrastruc
 Supabase Auth and minimal profiles are implemented; the profile migration is
 applied to the scoped hosted project. No game/frontend deployment was performed. Vercel remains the
 planned frontend host; the game server will deploy separately to Compute Engine.
+
+Menu background: see [generation, performance comparison and lifecycle checks](docs/menu-background.md). Regenerate the committed static media with `npm run background:generate`.

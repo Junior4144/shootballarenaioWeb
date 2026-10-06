@@ -36,7 +36,7 @@ for (const width of [1366, 390]) test(`pixel account entry waits for choice at $
   await expect(page.locator('#confirm-password')).toBeVisible();
   await expect(page.locator('#google-login svg')).toBeVisible();
   await page.screenshot({ path: info.outputPath('signup.png'), fullPage: true });
-  await page.getByRole('button', { name: 'Play as Guest', exact: true }).click();
+  await page.getByRole('button', { name: 'Play as Guest', exact: true }).click(); await page.locator('#lobby-play').click();
   await expect(page.locator('#connection-status')).toContainText('Connected');
   await expect(page.locator('#playing-identity')).toContainText('GUEST');
 });
@@ -127,16 +127,16 @@ test('guest reload waits for choice then resumes the same temporary identity', a
   let snapshot: Snapshot | undefined;
   observer.onMessage<Snapshot>('snapshot', value => { snapshot = value; });
   try {
-    await page.goto('/'); await page.locator('#guest-play').click();
+    await page.goto('/'); await page.locator('#guest-play').click(); await page.locator('#lobby-play').click();
     await expect(page.locator('#connection-status')).toContainText('Connected');
     await expect.poll(() => snapshot?.players.filter(p => !p.bot && p.id !== observer.sessionId).length).toBe(1);
     const id = snapshot!.players.find(p => !p.bot && p.id !== observer.sessionId)!.id;
     await page.reload(); await expect(page.locator('#guest-play')).toBeEnabled();
     await expect(page.locator('canvas')).toHaveCount(0);
-    await page.locator('#guest-play').click(); await expect(page.locator('#connection-status')).toContainText('Connected');
+    await page.locator('#guest-play').click(); await page.locator('#lobby-play').click(); await expect(page.locator('#connection-status')).toContainText('Connected');
     await expect.poll(() => snapshot?.players.find(p => p.id === id)?.connected).toBe(true);
     await expect(page.locator('#playing-identity')).toContainText('GUEST');
-    await page.locator('#account-toggle').click(); await page.locator('#return-accounts').click(); await page.locator('#guest-play').click();
+    await page.locator('#account-toggle').click(); await page.locator('#return-accounts').click(); await page.locator('#guest-play').click(); await page.locator('#lobby-play').click();
     await expect(page.locator('#connection-status')).toContainText('Connected');
     await page.locator('#leave').click(); await page.locator('#join').click();
     await expect(page.locator('#connection-status')).toContainText('Connected');
@@ -145,7 +145,7 @@ test('guest reload waits for choice then resumes the same temporary identity', a
 });
 
 test('login in another tab exits guest gameplay and discards guest resume tokens', async ({ page, context }) => {
-  await page.goto('/'); await page.locator('#guest-play').click();
+  await page.goto('/'); await page.locator('#guest-play').click(); await page.locator('#lobby-play').click();
   await expect(page.locator('#connection-status')).toContainText('Connected');
   const other = await context.newPage(); await mockAuth(other);
   try {
@@ -161,7 +161,7 @@ test('login in another tab exits guest gameplay and discards guest resume tokens
 for (const width of [1366, 390]) test(`gameplay account controls at ${width}px open the requested form`, async ({ page }, info) => {
   await page.setViewportSize({ width, height: 844 });
   await page.goto('/');
-  await page.locator('#guest-play').click();
+  await page.locator('#guest-play').click(); await page.locator('#lobby-play').click();
   await expect(page.locator('#connection-status')).toContainText('Connected');
   await expect(page.locator('#account-toggle')).toBeInViewport();
   await page.locator('#account-toggle').click();
@@ -173,7 +173,7 @@ for (const width of [1366, 390]) test(`gameplay account controls at ${width}px o
   await expect(page.locator('#confirm-password')).toBeVisible();
   await expect(page.locator('canvas')).toHaveCount(0);
   expect(await page.evaluate(() => Object.keys(sessionStorage).filter(key => key.startsWith('shootball:v')))).toEqual([]);
-  await page.locator('#guest-play').click();
+  await page.locator('#guest-play').click(); await page.locator('#lobby-play').click();
   await expect(page.locator('#connection-status')).toContainText('Connected');
   await page.locator('#account-toggle').click(); await page.locator('#return-accounts').click();
   await expect(page.locator('#login-tab')).toHaveAttribute('aria-selected', 'true');
@@ -182,7 +182,7 @@ for (const width of [1366, 390]) test(`gameplay account controls at ${width}px o
   await page.locator('#password').fill('Test-password-123');
   await page.locator('#auth-submit').click();
   await expect(page.locator('#account-play')).toBeEnabled();
-  await page.locator('#account-play').click();
+  await page.locator('#account-play').click(); await page.locator('#lobby-play').click();
   // Auth is mocked here; the real server rejects the fixture token. The account UI still works.
   await expect(page.locator('#playing-identity')).toHaveText('ACCOUNT / Pixel Ace');
   await expect(page.locator('#gameplay-signup')).toBeHidden();
@@ -217,7 +217,7 @@ test('hover audio produces real Web Audio tones, supports keyboard focus and res
   await page.keyboard.press('Tab');
   await expect(page.locator('#auth-submit')).toBeFocused();
   await expect.poll(count).toBeGreaterThan(beforeKeyboard);
-  await page.locator('#guest-play').click();
+  await page.locator('#guest-play').click(); await page.locator('#lobby-play').click();
   await expect(page.locator('#connection-status')).toContainText('Connected');
   await page.locator('#mute').click();
   await expect(page.locator('#mute')).toHaveAttribute('aria-pressed', 'true');
@@ -240,7 +240,7 @@ for (const viewport of [{ width: 2560, height: 1440 }, { width: 1920, height: 10
     await page.locator('#password').fill('Test-password-123');
     await page.locator('#auth-submit').click();
     await expect(page.locator('#account-play')).toBeEnabled();
-    await page.locator('#account-play').click();
+    await page.locator('#account-play').click(); await page.locator('#lobby-play').click();
     await expect(page.locator('#account-toggle-name')).toHaveText('ABCDEFGHIJKLMNOPQRST');
     const geometry = await page.evaluate(() => {
       const box = (selector: string) => {
@@ -270,7 +270,7 @@ for (const viewport of [{ width: 2560, height: 1440 }, { width: 1920, height: 10
 }
 
 test('header dropdowns support keyboard, outside dismissal and working settings', async ({ page }) => {
-  await page.goto('/'); await page.locator('#guest-play').click();
+  await page.goto('/'); await page.locator('#guest-play').click(); await page.locator('#lobby-play').click();
   await expect(page.locator('#connection-status')).toContainText('Connected');
   await page.locator('#account-toggle').focus(); await page.keyboard.press('ArrowDown');
   await expect(page.locator('#return-accounts')).toBeFocused();
@@ -325,13 +325,13 @@ test('restored session never flashes the signed-out form while the profile loads
 });
 
 test('arena loading covers setup until a rendered snapshot and supports returning to accounts', async ({ page }) => {
-  await page.goto('/'); await page.locator('#guest-play').click();
+  await page.goto('/'); await page.locator('#guest-play').click(); await page.locator('#lobby-play').click();
   await expect(page.locator('#game-loading')).toBeHidden();
   await expect(page.locator('#scoreboard tr.local')).toContainText('YOU');
   await page.locator('#account-toggle').click(); await page.locator('#return-accounts').click();
   await expect(page.locator('#account-screen')).toBeVisible();
   await expect(page.locator('canvas')).toHaveCount(0);
-  await page.locator('#guest-play').click();
+  await page.locator('#guest-play').click(); await page.locator('#lobby-play').click();
   await expect(page.locator('#game-loading')).toBeHidden();
   await expect(page.locator('#scoreboard tr.local')).toContainText('YOU');
 });
@@ -340,7 +340,7 @@ test('slow arena entry shows a cancellable loading screen without flashing the m
   let release!: () => void;
   const blocked = new Promise<void>(resolve => { release = resolve; });
   await page.route('**/matchmake/**', async route => { await blocked; await route.continue(); });
-  await page.goto('/'); await page.locator('#guest-play').click();
+  await page.goto('/'); await page.locator('#guest-play').click(); await page.locator('#lobby-play').click();
   try {
     await expect(page.locator('#game-loading')).toBeVisible();
     await expect(page.locator('#game-loading')).toHaveCSS('background-color', 'rgb(11, 23, 32)');
@@ -358,7 +358,7 @@ for (const stale of ['disposed-room:old-token', 'malformed-token']) test(`guest 
   await page.evaluate(({ key, stale }) => sessionStorage.setItem(key, stale), { key, stale });
   let freshJoins = 0;
   page.on('request', request => { if (request.url().includes('/joinOrCreate/')) freshJoins++; });
-  await page.locator('#guest-play').click();
+  await page.locator('#guest-play').click(); await page.locator('#lobby-play').click();
   await expect(page.locator('#game-loading')).toBeHidden();
   await expect(page.locator('#connection-status')).toContainText('Connected');
   await expect(page.locator('#scoreboard tr.local')).toContainText('YOU');
@@ -374,7 +374,7 @@ test('expired guest reservation in a live room falls back to one fresh guest', a
   try {
     await page.goto('/'); await expect(page.locator('#guest-play')).toBeEnabled();
     await page.evaluate(({ version, token }) => sessionStorage.setItem(`shootball:v${version}:ws://127.0.0.1:2569:guest`, token), { version: VERSION, token: `${observer.roomId}:expired-token` });
-    await page.locator('#guest-play').click();
+    await page.locator('#guest-play').click(); await page.locator('#lobby-play').click();
     await expect(page.locator('#connection-status')).toContainText('Connected');
     await expect(page.locator('#scoreboard tr.local')).toContainText('YOU');
   } finally { await observer.leave(); }
@@ -388,7 +388,7 @@ test('cancelled stale guest reconnect cannot start a fallback join', async ({ pa
   await page.evaluate(version => sessionStorage.setItem(`shootball:v${version}:ws://127.0.0.1:2569:guest`, 'disposed-room:old-token'), VERSION);
   let freshJoins = 0;
   page.on('request', request => { if (request.url().includes('/joinOrCreate/')) freshJoins++; });
-  await page.locator('#guest-play').click();
+  await page.locator('#guest-play').click(); await page.locator('#lobby-play').click();
   await page.locator('#cancel-game-loading').click();
   release();
   await expect(page.locator('#guest-play')).toBeEnabled();
@@ -403,7 +403,7 @@ test('failed account resume never falls back to a fresh guest', async ({ page })
   await page.evaluate(({ version, uid }) => sessionStorage.setItem(`shootball:v${version}:ws://127.0.0.1:2569:account:${uid}`, 'disposed-room:old-token'), { version: VERSION, uid });
   let freshJoins = 0;
   page.on('request', request => { if (request.url().includes('/joinOrCreate/')) freshJoins++; });
-  await page.locator('#account-play').click();
+  await page.locator('#account-play').click(); await page.locator('#lobby-play').click();
   await expect(page.locator('#connection-status')).toContainText('Account join failed');
   expect(freshJoins).toBe(0);
 });
@@ -414,9 +414,32 @@ test('unavailable server stops after one guest fallback and keeps retry accessib
   await page.evaluate(version => sessionStorage.setItem(`shootball:v${version}:ws://127.0.0.1:2569:guest`, 'disposed-room:old-token'), VERSION);
   let freshJoins = 0;
   page.on('request', request => { if (request.url().includes('/joinOrCreate/')) freshJoins++; });
-  await page.locator('#guest-play').click();
+  await page.locator('#guest-play').click(); await page.locator('#lobby-play').click();
   await expect(page.locator('#connection-status')).toContainText('Could not connect');
   await expect(page.locator('#join')).toBeVisible();
   await expect(page.locator('#game-loading')).toBeHidden();
   expect(freshJoins).toBe(1);
+});
+
+for (const width of [1920, 2560, 390]) test(`main menu waits for Play and exposes account actions at ${width}px`, async ({ page }, info) => {
+  await page.setViewportSize({ width, height: width === 2560 ? 1440 : width === 390 ? 844 : 1080 });
+  let sockets = 0;
+  page.on('websocket', socket => { if (new URL(socket.url()).port === '2569') sockets++; });
+  await page.goto('/'); await page.locator('#guest-play').click();
+  await expect(page.locator('#lobby-screen')).toBeVisible();
+  await expect(page.locator('#lobby-identity')).toHaveText('GUEST / Temporary');
+  await expect(page.locator('canvas')).toHaveCount(0); expect(sockets).toBe(0);
+  expect(await page.locator('.lobby-shell').evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
+  await page.screenshot({ path: info.outputPath('main-menu.png'), fullPage: true });
+  await page.locator('#lobby-signup').click();
+  await expect(page.locator('#signup-tab')).toHaveAttribute('aria-selected', 'true');
+  await page.locator('#guest-play').click();
+  await page.locator('#lobby-play').click();
+  await expect(page.locator('#connection-status')).toContainText('Connected');
+  await page.locator('#game-main-menu').click();
+  await expect(page.locator('#lobby-screen')).toBeVisible();
+  await expect(page.locator('canvas')).toHaveCount(0);
+  expect(await page.evaluate(() => Object.keys(sessionStorage).filter(key => key.startsWith('shootball:v')))).toEqual([]);
+  await page.locator('#lobby-play').click();
+  await expect(page.locator('#connection-status')).toContainText('Connected');
 });

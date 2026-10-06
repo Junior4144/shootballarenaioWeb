@@ -1,7 +1,7 @@
 import { CONFIG, ARENA, type InputIntent, type Target } from '@shootball/shared';
 import { LOOP, type ActorState, type Shot, type Pickup, type MatchState, type ArenaEvent } from '@shootball/shared/content';
 
-export const VERSION = 7;
+export const VERSION = 8;
 export const ROOM_NAME = 'arena';
 export const NETWORK = CONFIG.network;
 export interface InputMessage extends InputIntent { seq: number; radar: boolean; sprint: boolean }
@@ -37,4 +37,4 @@ export function isInput(value: unknown): value is InputMessage {
 }
 
 export const emptySnapshot = (): Snapshot => ({ tick: 0, generation: 0, time: 0, players: [], projectiles: [], targets: [], pickups: [], events: [],
-  match: { round: 1, phase: 'playing', remaining: LOOP.matchSeconds, durationSeconds: LOOP.matchSeconds, scoreLimit: LOOP.scoreLimit, winCondition: CONFIG.match.winCondition, killsToWin: CONFIG.match.killsToWin, winnerIds: [], standings: [] } });
+  match: { phase: 'playing', elapsedSeconds: 0, scoreLimit: LOOP.scoreLimit, winCondition: CONFIG.match.winCondition, killsToWin: CONFIG.match.killsToWin, winnerIds: [], standings: [] } });

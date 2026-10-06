@@ -1,3 +1,5 @@
+import { matchMaker } from '@colyseus/core';
+import type { Practice } from '@shootball/shared/practice';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import type { AddressInfo } from 'node:net';
@@ -17,8 +19,8 @@ function observe(room: Room) {
   return { get latest() { return latest!; }, history };
 }
 
-test('GL-F: real clients collect, scan, reconnect, see results and start a fresh round', { timeout: 15000 }, async () => {
-  const server = createServer({ matchSeconds: 4, resultsSeconds: 1 });
+test('GL-F: real clients collect, scan, reconnect, see persistent results and match into a new room', { timeout: 15000 }, async () => {
+  const server = createServer();
   await server.listen(0, '127.0.0.1');
   const client = new Client(`ws://127.0.0.1:${(server.transport.server!.address() as AddressInfo).port}`);
   const rooms: Room[] = [];
@@ -46,14 +48,17 @@ test('GL-F: real clients collect, scan, reconnect, see results and start a fresh
     const sr = observe(resumed); await until(() => !!sr.latest, 'resumed snapshot');
     const restored = sr.latest.players.find(p => p.id === a.sessionId)!;
     assert.equal(restored.points, 5); assert.ok(restored.radarCooldown > 10 && restored.radarCooldown < scanned.radarCooldown);
+    (matchMaker.getLocalRoomById(a.roomId) as unknown as { world: Practice }).world.players.get(a.sessionId)!.points = 1000;
     await until(() => sr.latest.match.phase === 'results' && sb.latest.match.phase === 'results', 'round results', 5000);
     assert.ok(sr.latest.match.standings.some(p => p.id === a.sessionId && p.points >= 5));
     const final = structuredClone(sr.latest.match.standings);
     resumed.send('input', { ...neutralInput(), seq: 0, fire: true, radar: true, moveX: 1 });
     await pause(100); assert.deepEqual(sr.latest.match.standings, final); assert.equal(sr.latest.projectiles.length, 0);
-    await until(() => sr.latest.match.round === 2 && sb.latest.match.round === 2, 'automatic rematch', 2000);
-    const fresh = sr.latest.players.find(p => p.id === a.sessionId)!;
-    assert.equal(sr.latest.generation, 1); assert.equal(fresh.points, 0); assert.equal(fresh.kills, 0); assert.equal(fresh.radarCooldown, 0);
+    await pause(1200); assert.equal(sr.latest.match.phase, 'results');
+    const next = await client.joinOrCreate(ROOM_NAME, { version: VERSION }); rooms.push(next); next.reconnection.enabled = false;
+    const sn = observe(next); await until(() => !!sn.latest, 'new match snapshot');
+    assert.notEqual(next.roomId, resumed.roomId, 'finished room excluded from matchmaking');
+    assert.equal(sn.latest.match.phase, 'playing'); assert.equal(sn.latest.players.find(p => p.id === next.sessionId)!.points, 0);
     const common = [...sr.history.keys()].reverse().find(t => sb.history.has(t))!;
     assert.deepEqual(sr.history.get(common), sb.history.get(common));
   } finally {

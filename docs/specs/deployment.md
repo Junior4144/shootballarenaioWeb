@@ -26,10 +26,12 @@ Colyseus as installed runtime dependencies. `npm run start:server` runs the buil
 server; `npm run preview` serves the built frontend. Both bind to loopback for
 local verification. Production host binding/TLS/packaging remain deployment work.
 Game-loop typechecking, 33 automated tests and both production builds pass on
-2026-10-05. Real SDK clients verify combat, pickups, radar, reconnect, results and rematches. See ../integrationspec/verification.md for evidence. Vite's large-bundle warning remains; no deployment was performed.
+2026-10-05. Real SDK clients verify combat, pickups, radar, reconnect, results and new-match routing. See ../integrationspec/verification.md for evidence. Vite's large-bundle warning remains; no deployment was performed.
 
 ## Out of scope now
 Cloud provisioning, deployment workflows, Docker/Terraform, Redis, load balancers, Kubernetes, scaling infrastructure, and secret management integrations.
 
 ## Future upgrades
 Add independent frontend/server pipelines with shared-package path triggers when deployment is requested. Package the implemented game server in a production Docker image, publish it to Artifact Registry, and run it on one Compute Engine VM. Use GCP project `project-7915787f-37b2-4286-aa7` through `scripts/gcloud.cmd`. Scale on measurements.
+
+Room overflow is implemented and tested on one Node process. It creates another in-memory room, not another server process. Multi-process or multi-machine deployment requires shared matchmaking storage/presence and routing; see [matchmaking and scaling](matchmaking.md). No scaling infrastructure is configured or deployed by this change.

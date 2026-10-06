@@ -10,7 +10,7 @@ export interface PracticePlayer extends ActorState {
 }
 export type OwnedProjectile = Shot;
 // Server construction only: never read these settings from join options/messages.
-export interface ArenaRules { bots?: boolean; walls?: readonly Wall[]; matchSeconds?: number; scoreLimit?: number; resultsSeconds?: number; winCondition?: WinCondition; killsToWin?: number }
+export interface ArenaRules { bots?: boolean; walls?: readonly Wall[]; scoreLimit?: number; winCondition?: WinCondition; killsToWin?: number }
 const PADS = CONFIG.map.pickupPads;
 export class Practice {
   players = new Map<string, PracticePlayer>();
@@ -29,9 +29,9 @@ export class Practice {
   private readonly rules: Required<ArenaRules>;
 
   constructor(rules: ArenaRules = {}) {
-    this.rules = { bots: CONFIG.npc.enabled, winCondition: CONFIG.match.winCondition, killsToWin: CONFIG.match.killsToWin, walls: WALLS, matchSeconds: LOOP.matchSeconds, scoreLimit: LOOP.scoreLimit, resultsSeconds: LOOP.resultsSeconds, ...rules };
+    this.rules = { bots: CONFIG.npc.enabled, winCondition: CONFIG.match.winCondition, killsToWin: CONFIG.match.killsToWin, walls: WALLS, scoreLimit: LOOP.scoreLimit, ...rules };
     this.walls = this.rules.walls;
-    this.match = { round: 1, phase: 'playing', remaining: this.rules.matchSeconds, durationSeconds: this.rules.matchSeconds, scoreLimit: this.rules.scoreLimit, winCondition: this.rules.winCondition, killsToWin: this.rules.killsToWin, winnerIds: [], standings: [] };
+    this.match = { phase: 'playing', elapsedSeconds: 0, scoreLimit: this.rules.scoreLimit, winCondition: this.rules.winCondition, killsToWin: this.rules.killsToWin, winnerIds: [], standings: [] };
     this.resetPickups();
   }
   add(id: string, bot = false): void {
@@ -153,37 +153,21 @@ export class Practice {
       ...markers, ...this.pickups.filter(item => item.available).map(item => ({ id: `pickup:${item.id}`, x: item.x, y: item.y, kind: item.kind })),
     ].filter(other => Math.hypot(other.x - p.x, other.y - p.y) <= LOOP.radarRange) };
   }
-  private finishRound(): void {
+  private finishMatch(): void {
     for (const player of this.players.values()) player.sprinting = false;
     const standings = rankPlayers([...this.players.values()].filter(p => !p.bot), this.rules.winCondition).map(({ id, points, kills, botKills, deaths }) => ({ id, points, kills, botKills, deaths }));
     const metric = (p: { points: number; kills: number }) => this.rules.winCondition === 'kills' ? p.kills : p.points;
     const top = standings[0] ? metric(standings[0]) : 0;
-    this.match = { ...this.match, phase: 'results', remaining: this.rules.resultsSeconds, standings,
+    this.match = { ...this.match, phase: 'results', standings,
       winnerIds: top > 0 ? standings.filter(p => metric(p) === top).map(p => p.id) : [] };
     this.projectiles = [];
-  }
-  private rematch(): void {
-    this.generation++;
-    this.match = { round: this.match.round + 1, phase: 'playing', remaining: this.rules.matchSeconds, durationSeconds: this.rules.matchSeconds, scoreLimit: this.rules.scoreLimit, winCondition: this.rules.winCondition, killsToWin: this.rules.killsToWin, standings: [], winnerIds: [] };
-    this.projectiles = []; this.events = []; this.resetPickups();
-    for (const p of this.players.values()) {
-      p.health = 0; p.points = 0; p.kills = 0; p.botKills = 0; p.deaths = 0;
-      p.radarCooldown = 0; p.radar = { remaining: 0, origin: { x: p.x, y: p.y }, markers: [] };
-      p.respawnRemaining = 0; p.protectionRemaining = 0; p.weapon = 'basic'; p.ammo = 0; p.speedRemaining = 0;
-      p.stamina = CONFIG.player.sprint.maxStamina; p.sprinting = false; p.staminaDelay = 0; p.sprintExhausted = false;
-    }
-    for (const p of this.players.values()) if (p.connected) this.spawn(p);
   }
   step(inputs: ReadonlyMap<string, InputIntent>, deltaSeconds: number): void {
     const dt = Math.max(0, Math.min(deltaSeconds, CONFIG.simulation.maxStepSeconds));
     this.time += dt; this.tick++;
     this.events = this.events.filter(event => this.time - event.time <= CONFIG.simulation.eventRetentionSeconds);
-    if (this.match.phase === 'results') {
-      this.match.remaining = Math.max(0, this.match.remaining - dt);
-      if (this.match.remaining <= 1e-9) this.rematch();
-      return;
-    }
-    this.match.remaining = Math.max(0, this.match.remaining - dt);
+    if (this.match.phase === 'results') return;
+    this.match.elapsedSeconds += dt;
     const actors = [...this.players.values()];
     const humans = actors.filter(p => !p.bot);
     const firing: PracticePlayer[] = [];
@@ -238,7 +222,7 @@ export class Practice {
       return shot.life > 0 && inside(shot, GAME.shotRadius);
     });
     this.collect(dt);
-    if (this.match.remaining <= 1e-9 || humans.some(p => this.rules.winCondition === 'kills' ? p.kills >= this.rules.killsToWin : p.points >= this.rules.scoreLimit)) this.finishRound();
+    if (humans.some(p => this.rules.winCondition === 'kills' ? p.kills >= this.rules.killsToWin : p.points >= this.rules.scoreLimit)) this.finishMatch();
   }
   snapshot() {
     return {

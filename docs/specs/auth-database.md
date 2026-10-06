@@ -1,7 +1,7 @@
 # Accounts, guests and profiles
 
 The account implementation supersedes the former deferred-auth scope. Gameplay,
-round scores and match history remain in memory. Development uses Node/npm and
+match scores and match history remain in memory. Development uses Node/npm and
 hosted Supabase project `lkgxpgcmspxekggndzih`; no local containers are needed.
 
 ## Entry and browser sessions
@@ -29,7 +29,7 @@ affects this browser's session, not every device.
 
 ## Game-server trust boundary
 
-Protocol v7 distinguishes guest and account joins. Registered joins carry an
+Protocol v8 distinguishes guest and account joins. Registered joins carry an
 access token, never an authoritative user ID. The server uses a fresh Supabase
 client with a publishable key and `auth.getUser(token)` to validate against the
 scoped project. It rejects anonymous Supabase accounts, expired/invalid
@@ -93,3 +93,5 @@ trigger, public directory, stats or match-history table was added.
 
 See [account setup and verification](../auth-setup.md) for environment examples,
 hosted configuration, tests and remaining release checks.
+
+Account/guest entry now leads to the main-menu lobby. Only lobby Play opens gameplay. Returning from results or the in-game Main menu closes the room and clears its reconnection token; the browser Auth session remains signed in. Account management and guest login/signup retain the existing forms.

@@ -17,8 +17,8 @@ test('default config is valid; editor drafts reject invalid timing and map layou
   }
 });
 
-test('kills mode ignores points and NPC kills, ends on PvP kills, and preserves rules after rematch', () => {
-  const world = new Practice({ bots: false, walls: [], winCondition: 'kills', killsToWin: 2, resultsSeconds: 0.01 });
+test('kills mode ignores points and NPC kills, ends on PvP kills, and keeps final results', () => {
+  const world = new Practice({ bots: false, walls: [], winCondition: 'kills', killsToWin: 2 });
   world.add('a'); world.add('b');
   const a = world.players.get('a')!, b = world.players.get('b')!;
   a.points = 10000; a.botKills = 100;
@@ -30,14 +30,14 @@ test('kills mode ignores points and NPC kills, ends on PvP kills, and preserves 
   assert.deepEqual(world.match.winnerIds, ['b']);
   assert.equal(world.match.standings[0].id, 'b');
   world.step(new Map(), 0.02);
-  assert.equal(world.match.phase, 'playing');
+  assert.equal(world.match.phase, 'results');
   assert.equal(world.match.winCondition, 'kills');
   assert.equal(world.match.killsToWin, 2);
-  assert.equal(b.kills, 0);
+  assert.equal(b.kills, 2);
 });
 
-test('kills-mode timeout draws on equal kills regardless of points', () => {
-  const world = new Practice({ bots: false, winCondition: 'kills', matchSeconds: 0.01 });
+test('simultaneous kill thresholds draw regardless of points', () => {
+  const world = new Practice({ bots: false, winCondition: 'kills', killsToWin: 1 });
   world.add('a'); world.add('b');
   world.players.get('a')!.kills = 1;
   world.players.get('b')!.kills = 1;

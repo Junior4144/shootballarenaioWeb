@@ -44,9 +44,8 @@ export const CONFIG = {
     },
   },
   match: {
-    durationSeconds: 300, resultsSeconds: 10,
     // 'points': first to scoreLimit. 'kills': first to killsToWin (human kills only).
-    // Timer always ends the round; rankings/winners use the selected metric.
+    // Matches end only at the selected threshold; results persist until players leave.
     winCondition: 'points' as WinCondition, scoreLimit: 1000, killsToWin: 10,
     humanKillPoints: 100, npcKillPoints: 20, orbPoints: 5,
   },

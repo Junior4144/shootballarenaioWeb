@@ -3,7 +3,7 @@ import type { Player, Point, Projectile } from './index';
 export type { PickupKind } from './config';
 import type { PickupKind } from './config';
 export const LOOP = {
-  matchSeconds: CONFIG.match.durationSeconds, scoreLimit: CONFIG.match.scoreLimit, resultsSeconds: CONFIG.match.resultsSeconds,
+  scoreLimit: CONFIG.match.scoreLimit,
   humanKillPoints: CONFIG.match.humanKillPoints, botKillPoints: CONFIG.match.npcKillPoints, orbPoints: CONFIG.match.orbPoints,
   radarCooldown: CONFIG.radar.cooldownSeconds, radarDuration: CONFIG.radar.durationSeconds, radarRange: CONFIG.radar.range,
   pickupRadius: CONFIG.pickups.collectRadius, speedDuration: CONFIG.pickups.speedDurationSeconds, speedMultiplier: CONFIG.pickups.speedMultiplier,
@@ -35,8 +35,8 @@ export interface Pickup extends Point {
 }
 export interface Standing { id: string; points: number; kills: number; botKills: number; deaths: number }
 export interface MatchState {
-  round: number; phase: 'playing' | 'results'; remaining: number;
-  durationSeconds: number; scoreLimit: number; winCondition: WinCondition; killsToWin: number; winnerIds: string[]; standings: Standing[];
+  phase: 'playing' | 'results'; elapsedSeconds: number;
+  scoreLimit: number; winCondition: WinCondition; killsToWin: number; winnerIds: string[]; standings: Standing[];
 }
 export interface ArenaEvent extends Point {
   id: number; time: number; kind: 'shot' | 'hit' | 'elimination' | 'pickup';

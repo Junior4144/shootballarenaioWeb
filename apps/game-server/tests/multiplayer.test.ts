@@ -189,12 +189,10 @@ test('real clients synchronize authority, PvP, disabled reset, reconnect, capaci
     assert.equal(ui.sessionId, refreshId);
     await ui.room!.leave();
     await until(() => ui!.state === 'disconnected', 'consented SDK cleanup');
-    // A stale token yields a visible error; retry is a fresh, successful join.
+    // A stale guest token automatically falls back to a fresh join.
     saved.forEach(([key, value]) => storage.setItem(key, value));
     await ui.join();
-    assert.equal(ui.state, 'error');
-    assert.equal(values.size, 0);
-    await ui.join();
+    assert.equal(values.size, 1);
     assert.equal(ui.state, 'connected');
     await ui.room!.leave();
     await until(() => bState.latest!.players.length === 1, 'controllers clean up');
@@ -229,3 +227,22 @@ test('real clients synchronize authority, PvP, disabled reset, reconnect, capaci
   }
 });
 
+
+test('17 guests fill three independent rooms with at most eight human seats', { timeout: 15000 }, async () => {
+  const server = createServer({ bots: false });
+  await server.listen(0, '127.0.0.1');
+  const client = new Client(`ws://127.0.0.1:${(server.transport.server!.address() as AddressInfo).port}`);
+  const rooms: Room[] = [];
+  try {
+    for (let i = 0; i < 17; i++) {
+      const room = await client.joinOrCreate(ROOM_NAME, { version: VERSION, mode: 'guest' });
+      room.reconnection.enabled = false; observe(room); rooms.push(room);
+    }
+    const counts = new Map<string, number>();
+    for (const room of rooms) counts.set(room.roomId, (counts.get(room.roomId) ?? 0) + 1);
+    assert.deepEqual([...counts.values()].sort((a, b) => b - a), [8, 8, 1]);
+  } finally {
+    for (const room of rooms) if (room.connection.isOpen) await room.leave();
+    await server.gracefullyShutdown(false);
+  }
+});

@@ -10,15 +10,13 @@ for (const width of [1366, 390]) {
       const errors: string[] = [];
       page.on('pageerror', e => errors.push(e.message));
       await page.setViewportSize({ width, height: width === 390 ? 844 : 768 });
-      await page.route('**/src/main.ts', route => route.fulfill({
-        contentType: 'application/javascript', body: "import '/src/style.css';",
-      }));
       await page.goto('/');
-      await page.evaluate(() => { document.getElementById('account-screen')!.hidden = true; document.getElementById('arena-app')!.hidden = false; });
+      await page.locator('#guest-play').click();
+      await page.evaluate(() => { document.getElementById('account-screen')!.hidden = true; document.getElementById('lobby-screen')!.hidden = true; document.getElementById('arena-app')!.hidden = false; document.getElementById('game-loading')!.hidden = true; });
       const state = emptySnapshot();
       state.players = [Object.assign(createActor('local'), { health: 100 })];
       state.match.phase = 'results';
-      state.match.remaining = 7;
+      state.match.elapsedSeconds = 420;
       state.match.winnerIds = outcome === 'win' ? ['local'] : outcome === 'loss' ? ['rival'] : outcome === 'draw' ? ['local', 'rival'] : [];
       state.match.standings = outcome === 'empty' ? [] : Array.from({ length: 8 }, (_, i) => ({
         id: i === 0 ? (outcome === 'loss' ? 'rival' : 'local') : i === 1 ? (outcome === 'loss' ? 'local' : 'rival') : `guest-${i}`,
@@ -31,8 +29,9 @@ for (const width of [1366, 390]) {
       }, state);
       await expect(page.locator('#results')).toBeVisible();
       await expect(page.locator('#results')).toHaveAttribute('data-outcome', outcome);
-      await expect(page.locator('#winner')).toHaveText(outcome === 'win' ? 'VICTORY!' : outcome === 'loss' ? 'GUEST riva wins!' : outcome === 'draw' ? 'Draw!' : 'No winner this round');
-      await expect(page.locator('#rematch')).toHaveText('Next round in 7s');
+      await expect(page.locator('#winner')).toHaveText(outcome === 'win' ? 'VICTORY!' : outcome === 'loss' ? 'GUEST riva wins!' : outcome === 'draw' ? 'Draw!' : 'No winner this match');
+      await expect(page.locator('#rematch')).toHaveText(outcome === 'empty' ? 'Match complete' : `YOUR POSITION: #${outcome === 'loss' ? 2 : 1} OF 8`);
+      await expect(page.locator('#results-menu')).toBeVisible();
       await expect(page.locator('#final-standings li')).toHaveCount(outcome === 'empty' ? 0 : 8);
       if (outcome !== 'empty') await expect(page.locator('#final-standings .local')).toContainText('YOU');
       const style = await page.locator('#results').evaluate(node => ({
@@ -47,6 +46,10 @@ for (const width of [1366, 390]) {
         await page.locator('#final-standings li').last().scrollIntoViewIfNeeded();
         await expect(page.locator('#final-standings li').last()).toBeInViewport();
       }
+      await page.locator('#results-menu').click();
+      await expect(page.locator('#lobby-screen')).toBeVisible();
+      await expect(page.locator('#arena-app')).toBeHidden();
+      await expect(page.locator('#lobby-identity')).toHaveText('GUEST / Temporary');
       expect(errors).toEqual([]);
     });
   }

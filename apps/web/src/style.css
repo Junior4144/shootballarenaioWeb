@@ -185,3 +185,31 @@ aside .connection { border-top: 2px solid #294754; color: #a9c8d9; }
   #account-toggle svg, #settings-toggle svg { width: 32px; height: 32px; }
   #settings-toggle { width: 64px; height: 64px; }
 }
+
+/* The main menu extends the account entry's pixel panels and typography. */
+#lobby-screen { height: 100dvh; overflow: auto; display: grid; place-items: center; padding: 32px 20px; background: #0b1720; }
+.lobby-shell { width: min(100%, 840px); }
+.lobby-heading { text-align: center; margin-bottom: 28px; }
+.lobby-heading h1 { color: #72e1ca; font-size: clamp(24px, 4vw, 36px); letter-spacing: .06em; margin: 16px 0 8px; }
+.lobby-heading p { color: #9abcca; font-size: 13px; }
+.lobby-panels { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 18px; }
+.lobby-panels > section { padding: 20px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.lobby-panels .note { margin: 0; font-size: 12px; }
+#lobby-identity { color: #69e2ce; overflow-wrap: anywhere; line-height: 1.5; }
+.lobby-panels button { text-transform: uppercase; }
+#lobby-account { margin-top: auto; }
+.lobby-target { color: #d5fff0; font-size: 18px; text-align: center; line-height: 1.6; margin: 12px 0; }
+.lobby-target strong { display: block; color: #72e1ca; font-size: 48px; }
+#lobby-play { min-height: 64px; font-size: 22px; font-weight: bold; }
+#lobby-message:empty { display: none; }
+#results-menu { display: block; margin: 0 auto 16px; }
+@media (max-width: 580px) { #lobby-screen { padding: 20px 12px; } .lobby-panels { grid-template-columns: 1fr; gap: 12px; } .lobby-panels > section { padding: 14px; gap: 12px; } .lobby-heading { margin-bottom: 16px; } .lobby-target strong { font-size: 36px; } }
+
+/* One persistent decorative layer beneath every menu. No layout or input ownership. */
+#menu-background { position: fixed; inset: 0; overflow: hidden; pointer-events: none; background: #0b1720; }
+#menu-background img, #menu-background video { position: absolute; width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
+#menu-background video { opacity: 0; }
+#menu-background video.ready { opacity: 1; }
+#menu-background::after { content: ''; position: absolute; inset: 0; background: rgba(5, 14, 22, .64); }
+#account-screen, #lobby-screen { position: relative; background: transparent; }
+@media (prefers-reduced-motion: reduce) { #menu-background video { display: none; } }

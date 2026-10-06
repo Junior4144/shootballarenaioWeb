@@ -1,3 +1,4 @@
+import { MenuBackground } from './MenuBackground';
 import Phaser from 'phaser';
 import { GAME } from '@shootball/shared';
 import { ArenaScene } from './game/ArenaScene';
@@ -12,15 +13,23 @@ document.getElementById('help-close')!.addEventListener('click', () => {
   helpWidget.querySelector('summary')!.focus();
 });
 
+const menuBackground = new MenuBackground(document.getElementById('menu-background')!);
+if (import.meta.hot) import.meta.hot.dispose(menuBackground.destroy);
+
 let game: Phaser.Game | undefined;
 let scene: ArenaScene | undefined;
 const screen = document.getElementById('account-screen')!;
 const detachHoverAudio = attachHoverAudio(document.body);
 if (import.meta.hot) import.meta.hot.dispose(detachHoverAudio);
 const arena = document.getElementById('arena-app')!;
+const lobby = document.getElementById('lobby-screen')!;
+let lobbyIdentity: PlayIdentity | undefined;
 const header = attachGameplayHeader();
 if (import.meta.hot) import.meta.hot.dispose(header.destroy);
 function stop(): void {
+  menuBackground.setActive(true);
+  lobby.hidden = true;
+  lobbyIdentity = undefined;
   header.close();
   scene?.connection?.endIdentity();
   // Phaser destroys on its next frame; remove the scene now so a new game cannot overlap.
@@ -30,9 +39,10 @@ function stop(): void {
 }
 function play(identity: PlayIdentity): void {
   if (game) return;
+  menuBackground.setActive(false);
   document.getElementById('game-loading')!.hidden = false;
   document.getElementById('game-loading-message')!.textContent = 'Entering the arena...';
-  screen.hidden = true; arena.hidden = false;
+  lobby.hidden = true; screen.hidden = true; arena.hidden = false;
   document.getElementById('playing-identity')!.textContent = identity.kind === 'guest' ? 'GUEST / Temporary' : document.getElementById('account-identity')!.textContent;
   const label = identity.kind === 'guest' ? 'GUEST' : (document.getElementById('display-name') as HTMLInputElement).value;
   document.getElementById('account-toggle-name')!.textContent = label;
@@ -55,7 +65,27 @@ function play(identity: PlayIdentity): void {
     scene,
   });
 }
-const accounts = new AccountScreen(play, stop, () => { void scene?.connection?.refreshAccount(); });
+function showLobby(identity: PlayIdentity): void {
+  stop();
+  lobbyIdentity = identity;
+  screen.hidden = true; lobby.hidden = false;
+  const guest = identity.kind === 'guest';
+  document.getElementById('lobby-identity')!.textContent = guest ? 'GUEST / Temporary' : document.getElementById('account-identity')!.textContent;
+  document.getElementById('lobby-identity-note')!.textContent = guest ? 'Play freely as a guest, or create an account for a saved display name.' : 'Your account is ready. Choose Play to enter a match.';
+  document.getElementById('lobby-account')!.textContent = guest ? 'Log in' : 'Manage account';
+  document.getElementById('lobby-signup')!.hidden = !guest;
+  document.getElementById('lobby-play')!.focus();
+}
+function returnToMenu(): void {
+  if (lobbyIdentity) showLobby(lobbyIdentity);
+  else accounts.open('login');
+}
+const accounts = new AccountScreen(showLobby, stop, () => { void scene?.connection?.refreshAccount(); });
+document.getElementById('lobby-play')!.onclick = () => { if (lobbyIdentity) play(lobbyIdentity); };
+document.getElementById('lobby-account')!.onclick = () => accounts.open('login');
+document.getElementById('lobby-signup')!.onclick = () => accounts.open('signup');
+document.getElementById('results-menu')!.onclick = returnToMenu;
+document.getElementById('game-main-menu')!.onclick = returnToMenu;
 document.getElementById('return-accounts')!.onclick = () => accounts.open('login');
 document.getElementById('gameplay-signup')!.onclick = () => accounts.open('signup');
 document.getElementById('cancel-game-loading')!.onclick = () => accounts.open('login');

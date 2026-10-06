@@ -101,23 +101,22 @@ test('GL-A: points distinguish human/bot/orb, death preserves score, bot drops b
   assert.equal(orb.available, false); w.step(idle, 1 / 60); assert.equal(a.points, 125);
 });
 
-test('GL-A: threshold freezes immutable results, joins cannot restart, rematch resets retained identities', () => {
-  const { w, a, b } = world({ scoreLimit: 100, resultsSeconds: 0.2 });
-  lethal(w, 'b'); assert.equal(w.match.phase, 'results'); assert.deepEqual(w.match.winnerIds, ['a']);
-  const results = structuredClone(w.match.standings); const x = a.x;
-  w.step(new Map([['a', { ...neutralInput(), moveX: 1, fire: true, radar: true }]]), 0.05);
-  assert.equal(a.x, x); assert.equal(w.projectiles.length, 0); assert.equal(a.radarCooldown, 0);
-  w.add('late'); assert.equal(w.players.get('late')!.health, 0); assert.deepEqual(w.match.standings, results);
-  w.disconnect('b'); advance(w, 0.15);
-  assert.equal(w.match.phase, 'playing'); assert.equal(w.match.round, 2); assert.equal(w.generation, 1);
-  assert.equal(a.points, 0); assert.equal(a.kills, 0); assert.equal(a.health, 100); assert.equal(a.lifeId, 2);
-  assert.equal(b.connected, false); assert.equal(b.health, 0); assert.equal(w.players.get('late')!.health, 100);
+test('GL-A: first to 1000 freezes results without a timer or automatic rematch', () => {
+  const { w, a, b } = world(); a.points = 999; b.points = 20;
+  advance(w, 301); assert.equal(w.match.phase, 'playing');
+  a.points = 1000; w.step(idle, 0.01);
+  assert.equal(w.match.phase, 'results'); assert.deepEqual(w.match.winnerIds, ['a']);
+  const final = structuredClone(w.match); const position = { x: a.x, y: a.y };
+  w.step(new Map([['a', { ...neutralInput(), moveX: 1, fire: true }]]), 0.05);
+  advance(w, 30); assert.deepEqual(w.match, final);
+  assert.deepEqual({ x: a.x, y: a.y }, position);
+  assert.equal(w.projectiles.length, 0); assert.equal(a.points, 1000);
+  w.remove('b'); assert.deepEqual(w.match.standings, final.standings);
 });
 
-test('GL-A: time limit handles ties and empty scores without arbitrary winner', () => {
-  const { w, a, b } = world({ matchSeconds: 0.1 }); a.points = 20; b.points = 20;
-  advance(w, 0.1); assert.deepEqual(w.match.winnerIds, ['a', 'b']);
-  const empty = world({ matchSeconds: 0.1 }).w; advance(empty, 0.1); assert.deepEqual(empty.match.winnerIds, []);
+test('GL-A: simultaneous score thresholds share victory with deterministic standings', () => {
+  const { w, a, b } = world(); a.points = 1000; b.points = 1000;
+  w.step(idle, 0.01); assert.deepEqual(w.match.winnerIds, ['a', 'b']);
 });
 
 test('GL-B: high-speed movement cannot cross cover, slides on free axis, and map routes connect spawns', () => {

@@ -1,5 +1,7 @@
 # GL-01: Points-based arena loop
 
+> Match lifecycle update (2026-10-06): the timed rounds and automatic rematches below are historical and superseded by [matchmaking and main menu](../specs/matchmaking.md). Production now uses first to 1,000 points with no time limit, permanent results, explicit Return to main menu and protocol v8. Combat/pickup/radar rules below remain applicable.
+
 Status: implemented and automated acceptance verified; browser/audio playtesting remains open. Date: 2026-10-05.
 
 ## Scope and initial values

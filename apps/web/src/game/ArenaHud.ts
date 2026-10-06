@@ -14,12 +14,12 @@ export class ArenaHud {
     element('stamina-fill').style.width = `${stamina / CONFIG.player.sprint.maxStamina * 100}%`;
     element('stamina-meter').setAttribute('aria-valuemax', String(CONFIG.player.sprint.maxStamina));
     element('stamina-meter').setAttribute('aria-valuenow', String(Math.round(stamina)));
-    const elapsed = time(Math.floor(Math.max(0, state.match.durationSeconds - state.match.remaining)));
+    const elapsed = time(Math.floor(Math.max(0, state.match.elapsedSeconds)));
     element('match-clock').textContent = state.match.phase === 'playing' ? elapsed : 'RESULTS';
     const target = state.match.winCondition === 'kills' ? `${state.match.killsToWin} kills` : `${state.match.scoreLimit} pts`;
     element('match-target').textContent = `Target: ${target}`;
-    element('round-number').textContent = String(state.match.round);
-    element('round-time').textContent = state.match.phase === 'playing' ? `${elapsed} / ${time(state.match.durationSeconds)}` : 'Finished';
+
+    element('round-time').textContent = state.match.phase === 'playing' ? elapsed : 'Finished';
     element('round-target').textContent = target;
     element('active-count').textContent = `${humans.filter(p => p.connected).length}/${NETWORK.maxPlayers} players`;
     const rows = rankPlayers(humans, state.match.winCondition);
@@ -52,18 +52,19 @@ export class ArenaHud {
     scan.disabled = !me || me.health <= 0 || me.radarCooldown > 0 || state.match.phase !== 'playing';
     scan.textContent = me && me.radarCooldown > 0 ? `Q / Radar ${Math.ceil(me.radarCooldown)}s` : 'Q / Radar ready';
     const nearest = me?.radar.remaining ? [...me.radar.markers].sort((a, b) => Math.hypot(a.x - me.x, a.y - me.y) - Math.hypot(b.x - me.x, b.y - me.y))[0] : undefined;
-    element('objective').textContent = state.match.phase === 'results' ? 'Next round starts automatically.' : nearest
+    element('objective').textContent = state.match.phase === 'results' ? 'Match complete. Return to the main menu to play again.' : nearest
       ? `Last scan: ${nearest.kind.toUpperCase()} / ${Math.round(Math.hypot(nearest.x - me!.x, nearest.y - me!.y))} units. Markers expire in ${Math.ceil(me!.radar.remaining)}s.`
       : me?.radar.remaining ? 'Scan clear. Explore another route.' : 'Collect orbs and upgrades. Scan for nearby opportunities.';
     const results = element('results'); results.hidden = state.match.phase !== 'results';
     if (!results.hidden) {
-      element('rematch').textContent = `Next round in ${Math.ceil(state.match.remaining)}s`;
-      const signature = JSON.stringify([state.match.round, state.match.standings, localId, state.identities]);
+      const position = state.match.standings.findIndex(player => player.id === localId);
+      element('rematch').textContent = position >= 0 ? `YOUR POSITION: #${position + 1} OF ${state.match.standings.length}` : 'Match complete';
+      const signature = JSON.stringify([state.match.standings, localId, state.identities]);
       if (this.resultSignature !== signature) {
         this.resultSignature = signature;
         const localWinner = !!localId && state.match.winnerIds.includes(localId);
         results.dataset.outcome = !state.match.winnerIds.length ? 'empty' : state.match.winnerIds.length > 1 ? 'draw' : localWinner ? 'win' : 'loss';
-        element('winner').textContent = !state.match.winnerIds.length ? 'No winner this round' : state.match.winnerIds.length > 1 ? 'Draw!' : localWinner ? 'VICTORY!' : actorName(state.match.winnerIds[0], localId, state.identities) + ' wins!';
+        element('winner').textContent = !state.match.winnerIds.length ? 'No winner this match' : state.match.winnerIds.length > 1 ? 'Draw!' : localWinner ? 'VICTORY!' : actorName(state.match.winnerIds[0], localId, state.identities) + ' wins!';
         element('final-standings').replaceChildren(...state.match.standings.map((p, i) => {
           const item = document.createElement('li');
           if (p.id === localId) item.className = 'local';

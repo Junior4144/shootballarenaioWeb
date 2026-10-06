@@ -1,7 +1,7 @@
 # Networking
 
-Colyseus WebSockets; protocol v7; room arena. Default ws://127.0.0.1:2567,
-configurable through public VITE_GAME_SERVER_URL. Join with version 7 and mode
+Colyseus WebSockets; protocol v8; room arena. Default ws://127.0.0.1:2567,
+configurable through public VITE_GAME_SERVER_URL. Join with version 8 and mode
 guest/account. Account joins include an accessToken validated by the server;
 client-supplied user IDs are never trusted. No connection precedes a Play choice.
 
@@ -22,7 +22,7 @@ full arena positions are already replicated.
 30 Hz intent, 60 Hz simulation, 20 Hz snapshots. Preserve bounded 100 ms interpolation,
 shortest-angle rotation, no extrapolation, focus/connection clearing and 250 ms
 input expiry. Discrete gameplay/events share the delayed shot timeline. Life
-changes hold then snap; round generation changes clear interpolation history.
+changes hold then snap; snapshot generation changes clear interpolation history.
 Events are deduplicated and historical feedback is skipped on connection recovery.
 
 Auto-reconnect/refresh/Leave-Join preserve the tab's reserved identity and combat
@@ -42,3 +42,5 @@ join within the same Play action. Both requests have bounded timeouts; a failed
 fresh join returns an actionable error with Join / Retry. Cancellation or an
 identity change prevents the fallback. Account reconnection failures never use
 this guest fallback.
+
+Protocol v8 replaces round/remaining/durationSeconds with match.elapsedSeconds. Matches never end on time or restart automatically. Match standings remain frozen through player departures. See [matchmaking](matchmaking.md).

@@ -215,7 +215,7 @@ test('unreachable patrol destinations do not trigger pathfinding every tick', ()
 });
 
 test('server tick keeps converging combat bots apart over time', () => {
-  const world = new Practice({ walls: [], matchSeconds: 1000 }); world.add('human');
+  const world = new Practice({ walls: [] }); world.add('human');
   const human = world.players.get('human')!;
   Object.assign(human, { x: 600, y: 400, health: 100000 });
   const bots = [...world.players.values()].filter(p => p.bot);

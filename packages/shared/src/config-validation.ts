@@ -30,7 +30,6 @@ export function validateConfig(config: GameConfig): string[] {
     'npc.health': config.npc.health, 'npc.shotCooldownSeconds': config.npc.shotCooldownSeconds,
     'npc.ai.spacing': config.npc.ai.spacing, 'npc.ai.thinkSeconds': config.npc.ai.thinkSeconds,
     'npc.ai.routeSeconds': config.npc.ai.routeSeconds,
-    'match.durationSeconds': config.match.durationSeconds, 'match.resultsSeconds': config.match.resultsSeconds,
     'match.scoreLimit': config.match.scoreLimit, 'match.killsToWin': config.match.killsToWin,
     'map.width': config.map.width, 'map.height': config.map.height, 'map.gridSize': config.map.gridSize,
     'projectile.radius': config.projectile.radius,

@@ -17,7 +17,8 @@
     "build": "npm run build --workspace @shootball/game-server && npm run build --workspace @shootball/web",
     "preview": "npm run preview --workspace @shootball/web",
     "typecheck": "npm run typecheck --workspace @shootball/web && npm run typecheck --workspace @shootball/game-server",
-    "test": "npm run test --workspace @shootball/web && npm run test --workspace @shootball/game-server"
+    "test": "npm run test --workspace @shootball/web && npm run test --workspace @shootball/game-server",
+    "background:generate": "node scripts/generate-background.mjs"
   },
   "dependencies": {
     "@supabase/server": "^1.9.1",
@@ -26,6 +27,7 @@
   },
   "devDependencies": {
     "concurrently": "^10.0.5",
-    "esbuild": "^0.28.2"
+    "esbuild": "^0.28.2",
+    "ffmpeg-static": "^5.3.0"
   }
 }
