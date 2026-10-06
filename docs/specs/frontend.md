@@ -17,3 +17,9 @@ Preserve the 100 ms snapshot buffer; life and round changes snap. Deduplicate
 server events and skip historical audio/effects on join/reconnect. Verification:
 [GL-01 evidence](../integrationspec/verification.md). Browser visual/audio checks
 remain a separate acceptance gate from automated simulation/transport tests.
+
+Current presentation follows [HUD-03](../integrationspec/reference-ui.md): compact
+navy frame, centered mode/elapsed timer, target at right, bottom health meter,
+speed/weapon/ammo and sound control, and a leaderboard/feed/round/leave sidebar.
+The existing scrolling camera and play window stay unchanged. Circular radar UI
+is deferred; existing scan controls remain in the secondary controls below.

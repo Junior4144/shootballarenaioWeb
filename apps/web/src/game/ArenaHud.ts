@@ -1,5 +1,6 @@
 import type { Snapshot } from '@shootball/protocol';
-import { rankPlayers } from '@shootball/shared/content';
+import { GAME } from '@shootball/shared';
+import { LOOP, WEAPONS, rankPlayers } from '@shootball/shared/content';
 export const actorName = (id: string, localId?: string) => id === localId ? 'YOU' : id.startsWith('bot:') ? 'BOT ' + id.slice(4) : 'GUEST ' + id.slice(0, 4);
 const element = (id: string) => document.getElementById(id)!;
 const time = (seconds: number) => `${Math.floor(Math.ceil(seconds) / 60)}:${String(Math.ceil(seconds) % 60).padStart(2, '0')}`;
@@ -8,8 +9,13 @@ export class ArenaHud {
   private resultSignature = '';
   render(state: Snapshot, localId?: string): void {
     const humans = state.players.filter(p => !p.bot), me = humans.find(p => p.id === localId);
-    element('match-clock').textContent = `ROUND ${state.match.round} / ${time(state.match.remaining)} / ${state.match.scoreLimit} PTS`;
-    element('active-count').textContent = `${humans.filter(p => p.connected).length} active players / ${state.players.filter(p => p.bot).length} bots`;
+    const elapsed = time(Math.floor(Math.max(0, LOOP.matchSeconds - state.match.remaining)));
+    element('match-clock').textContent = state.match.phase === 'playing' ? elapsed : 'RESULTS';
+    element('match-target').textContent = `Target: ${state.match.scoreLimit} pts`;
+    element('round-number').textContent = String(state.match.round);
+    element('round-time').textContent = state.match.phase === 'playing' ? `${elapsed} / ${time(LOOP.matchSeconds)}` : 'Finished';
+    element('round-target').textContent = `${state.match.scoreLimit} pts`;
+    element('active-count').textContent = `${humans.filter(p => p.connected).length}/8 players`;
     const rows = rankPlayers(humans);
     const signature = JSON.stringify([localId, rows.map(p => [p.id, p.points, p.kills, p.botKills, p.connected, p.health > 0])]);
     if (signature !== this.signature) {
@@ -22,7 +28,20 @@ export class ArenaHud {
         return row;
       }));
     }
-    element('loadout').textContent = !me ? 'Join to play' : `${me.weapon === 'basic' ? 'BASIC / unlimited' : me.weapon.toUpperCase() + ' / ' + me.ammo + ' shots'}${me.speedRemaining > 0 ? ' / SPEED ' + me.speedRemaining.toFixed(1) + 's' : ''}`;
+    const hp = Math.max(0, Math.min(GAME.playerHealth, me?.health ?? 0));
+    element('health-value').textContent = me ? String(Math.ceil(hp)) : '—';
+    element('health-fill').style.width = `${hp / GAME.playerHealth * 100}%`;
+    element('health-meter').setAttribute('aria-valuemax', String(GAME.playerHealth));
+    element('health-meter').setAttribute('aria-valuenow', String(hp));
+    element('health-meter').classList.toggle('low', hp <= 25);
+    element('loadout').textContent = me ? me.weapon.toUpperCase() : '—';
+    element('ammo').textContent = !me ? '—' : me.weapon === 'basic' ? '∞' : `${me.ammo} / ${WEAPONS[me.weapon].ammo}`;
+    element('ammo').setAttribute('aria-label', !me ? 'No weapon' : me.weapon === 'basic' ? 'Unlimited ammo' : `${me.ammo} of ${WEAPONS[me.weapon].ammo} shots`);
+    element('speed').textContent = me && me.speedRemaining > 0 ? `ϟ SPD ${me.speedRemaining.toFixed(1)}s` : 'ϟ SPD';
+    element('speed').classList.toggle('active', !!me && me.speedRemaining > 0);
+    element('player-status').textContent = !me ? 'JOIN TO PLAY' : me.health <= 0
+      ? `RESPAWN ${me.respawnRemaining.toFixed(1)}s`
+      : me.protectionRemaining > 0 ? `SHIELD ${me.protectionRemaining.toFixed(1)}s` : '';
     const scan = element('scan') as HTMLButtonElement;
     scan.disabled = !me || me.health <= 0 || me.radarCooldown > 0 || state.match.phase !== 'playing';
     scan.textContent = me && me.radarCooldown > 0 ? `Q / Radar ${Math.ceil(me.radarCooldown)}s` : 'Q / Radar ready';
@@ -43,7 +62,13 @@ export class ArenaHud {
       }
     }
     element('kill-feed').replaceChildren(...state.events.filter(e => e.kind === 'elimination').slice(-4).reverse().map(e => {
-      const item = document.createElement('li'); item.textContent = `${actorName(e.actorId, localId)} eliminated ${actorName(e.targetId!, localId)}`; return item;
+      const item = document.createElement('li');
+      const actor = document.createElement('span'), target = document.createElement('span');
+      actor.className = e.actorId === localId ? 'feed-local' : 'feed-actor';
+      target.className = e.targetId === localId ? 'feed-local' : 'feed-target';
+      actor.textContent = actorName(e.actorId, localId);
+      target.textContent = actorName(e.targetId!, localId);
+      item.append(actor, ' eliminated ', target); return item;
     }));
   }
 }

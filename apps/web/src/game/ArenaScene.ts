@@ -19,7 +19,6 @@ export class ArenaScene extends Phaser.Scene {
   private keys!: Record<'W' | 'A' | 'S' | 'D' | 'Q', Phaser.Input.Keyboard.Key>;
   private players = new Map<string, { ball: Phaser.GameObjects.Image; cannon: Phaser.GameObjects.Image; label: Phaser.GameObjects.Text }>();
   private health!: Phaser.GameObjects.Graphics;
-  private status!: Phaser.GameObjects.Text;
   private shots = new Map<number, Phaser.GameObjects.Image>();
   private fireQueued = false;
   private radarQueued = false;
@@ -51,9 +50,6 @@ export class ArenaScene extends Phaser.Scene {
     this.add.graphics().setScrollFactor(0).setDepth(20).fillStyle(0x0c1823)
       .fillRect(0, 0, GAME.width, 80).fillRect(0, 592, GAME.width, 48)
       .fillRect(0, 80, 48, 512).fillRect(912, 80, 48, 512);
-    this.add.text(48, 30, '01 / FREE-FOR-ALL', { fontFamily: 'monospace', fontSize: '16px', color: '#9db2bf' }).setScrollFactor(0).setDepth(21);
-    this.status = this.add.text(912, 30, '', { fontFamily: 'monospace', fontSize: '16px', color: '#69e2ce' }).setOrigin(1, 0).setScrollFactor(0).setDepth(21);
-    this.add.text(48, 610, 'WASD  MOVE     /     MOUSE  AIM     /     CLICK  FIRE     /     Q  SCAN', { fontFamily: 'monospace', fontSize: '12px', color: '#819dab' }).setScrollFactor(0).setDepth(21);
     this.health = this.add.graphics().setDepth(4);
     this.details = this.add.graphics().setDepth(6);
     this.keys = this.input.keyboard!.addKeys('W,A,S,D,Q') as typeof this.keys;
@@ -97,7 +93,7 @@ export class ArenaScene extends Phaser.Scene {
     const mute = document.getElementById('mute')!;
     const onScan = () => { this.radarQueued = true; this.audio.unlock(); };
     const unlock = () => this.audio.unlock();
-    const onMute = () => { this.audio.muted = !this.audio.muted; mute.textContent = this.audio.muted ? 'Sound off' : 'Sound on'; mute.setAttribute('aria-pressed', String(this.audio.muted)); };
+    const onMute = () => { this.audio.muted = !this.audio.muted; mute.setAttribute('aria-label', this.audio.muted ? 'Unmute sound' : 'Mute sound'); mute.setAttribute('title', this.audio.muted ? 'Sound off' : 'Sound on'); mute.setAttribute('aria-pressed', String(this.audio.muted)); };
     scan.addEventListener('click', onScan); mute.addEventListener('click', onMute);
     document.addEventListener('pointerdown', unlock); document.addEventListener('keydown', unlock);
     const onJoin = () => { void this.connection.join(); };
@@ -200,9 +196,6 @@ export class ArenaScene extends Phaser.Scene {
       camera.setScroll(camera.scrollX + (x - camera.scrollX) * blend, camera.scrollY + (y - camera.scrollY) * blend);
       this.cameraLife = life;
     }
-    this.status.setText(!me ? 'JOIN TO PLAY' : me.health <= 0
-      ? 'ELIMINATED / RESPAWN ' + me.respawnRemaining.toFixed(1) + 's'
-      : 'HP ' + me.health + ' / 100' + (me.protectionRemaining > 0 ? ' / SHIELD ' + me.protectionRemaining.toFixed(1) + 's' : ''));
     this.hud.render(this.world, this.connection?.sessionId);
     for (const [id, label] of this.pickupLabels) {
       if (!this.world.pickups.some(p => p.id === id && p.available)) { label.destroy(); this.pickupLabels.delete(id); }

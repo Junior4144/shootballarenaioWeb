@@ -43,3 +43,9 @@ the verification log before starting follow-up tasks.
 
 [Viewport-first arena and transparent HUD](viewport-hud.md): reverted at user request.
 The previous centered FIT canvas and separate leaderboard sidebar are restored.
+
+## HUD-03 reference UI
+
+[Reference game UI](reference-ui.md): compact framed arena, bottom health/loadout
+strip and right-hand leaderboard/feed/round panel. Presentation only; circular
+radar redesign is explicitly deferred. See the spec for acceptance evidence.

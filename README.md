@@ -20,6 +20,21 @@ On Windows PowerShell, use `npm.cmd` if execution policy blocks `npm.ps1`.
 Stop both processes with Ctrl+C. After updating the game/protocol, restart both
 apps and refresh open tabs so client and server versions match.
 
+### Browser acceptance tests
+
+```sh
+npx playwright install chromium
+npm run test:e2e --workspace @shootball/web
+```
+
+Playwright starts an isolated Vite frontend on port 5189 and the real Node/Colyseus
+server on port 2569, then stops them after testing. Keep those ports free; the
+suite deliberately does not reuse an existing development server. No Docker or
+hosted backend is needed. Tests cover four viewport sizes, the live HUD, canvas
+alignment, mute, authoritative movement/fire, and leave/rejoin identity. A second
+Colyseus client observes snapshots to verify browser inputs reach the server.
+Screenshots, failure traces, and the HTML report are in `.test-artifacts/`.
+
 Alternatively, use separate terminals:
 
 ```sh
