@@ -26,7 +26,7 @@ class Capture extends Phaser.Scene {
     const pickups = this.add.graphics().setDepth(1);
     for (const p of match.pickups) { pickups.lineStyle(2, 0xffd87c).strokeTriangle(p.x, p.y - 7, p.x - 7, p.y + 6, p.x + 7, p.y + 6); }
     (window as any).captureFrame = async () => {
-      tick(); tick(); // 30 Hz simulation, 15 fps film.
+      tick(); // One distinct simulation step per frame: 30 Hz simulation, 30 fps film.
       [...match.players.values()].forEach((p, i) => {
         this.actors[i].ball.setPosition(p.x, p.y).setVisible(p.health > 0).setTint(i % 2 ? 0xffc080 : 0x86b8ff);
         this.actors[i].cannon.setPosition(p.x, p.y).setRotation(p.angle).setVisible(p.health > 0);
@@ -38,4 +38,4 @@ class Capture extends Phaser.Scene {
     };
   }
 }
-new Phaser.Game({ type: Phaser.WEBGL, width: 960, height: 540, backgroundColor: '#131e2a', pixelArt: true, roundPixels: true, render: { preserveDrawingBuffer: true }, audio: { noAudio: true }, input: { keyboard: false, mouse: false, touch: false, gamepad: false }, fps: { target: 15, forceSetTimeOut: true }, scene: Capture });
+new Phaser.Game({ type: Phaser.WEBGL, width: 960, height: 540, backgroundColor: '#131e2a', pixelArt: true, roundPixels: true, render: { preserveDrawingBuffer: true }, audio: { noAudio: true }, input: { keyboard: false, mouse: false, touch: false, gamepad: false }, fps: { target: 30, forceSetTimeOut: true }, scene: Capture });
