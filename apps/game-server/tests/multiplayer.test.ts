@@ -31,7 +31,7 @@ test('wire validation rejects nonfinite, injected and malformed intent', () => {
     { ...valid, seq: Number.MAX_SAFE_INTEGER + 1 },
     { ...valid, moveX: 2 }, { ...valid, moveY: NaN },
     { ...valid, aim: { x: Infinity, y: 0 } }, { ...valid, aim: { x: -1, y: 0 } },
-    { ...valid, aim: { x: 0, y: ARENA.bottom + 1 } }, { ...valid, aim: { x: ARENA.right + 1, y: 0 } }, { ...valid, fire: 1 }, { ...valid, radar: 1 }, { ...valid, points: 999 },
+    { ...valid, aim: { x: 0, y: ARENA.bottom + 1 } }, { ...valid, aim: { x: ARENA.right + 1, y: 0 } }, { ...valid, fire: 1 }, { ...valid, radar: 1 }, { ...valid, sprint: 1 }, { ...valid, stamina: 999 }, { ...valid, points: 999 },
     { ...valid, x: 900 }, { ...valid, health: 99 },
   ]) assert.equal(isInput(bad), false);
 });

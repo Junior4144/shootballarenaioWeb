@@ -17,19 +17,21 @@
               <h2 class="help-title">CONTROLS &amp; ABILITIES</h2>
               <dl class="control-list">
                 <div><dt><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></dt><dd>Move</dd></div>
+                <div><dt><kbd>Shift</kbd></dt><dd>Hold while moving to sprint</dd></div>
                 <div><dt>Mouse</dt><dd>Aim</dd></div>
                 <div><dt>Left click</dt><dd>Fire</dd></div>
                 <div><dt><kbd>Q</kbd></dt><dd>Radar pulse</dd></div>
               </dl>
               <button id="scan">Q / Radar ready</button>
               <p id="objective" class="note"></p>
+              <p class="note">Sprinting drains stamina. Release Shift to recover; an empty bar needs a short recovery before you can sprint again.</p>
               <p class="note">Walk over upgrades to collect them. Gold ring = spawn shield; firing ends it.</p>
               <p class="note">Leave pauses for 10 seconds. Your avatar stays vulnerable.</p>
             </div>
           </details>
         </div>
         <div class="arena-stage"><div class="arena-wrap">
-          <div id="game" aria-label="ShootBall Arena. WASD to move, mouse to aim, left click to fire, Q to scan."></div>
+          <div id="game" aria-label="ShootBall Arena. WASD to move, hold Shift to sprint, mouse to aim, left click to fire, Q to scan."></div>
           <div class="arena-heading"><div class="mode">FREE-FOR-ALL <span id="match-clock" role="timer">0:00</span></div><span id="match-target">Target: 1000 pts</span></div>
           <div class="status-strip" aria-label="Player status">
             <div class="vitals"><svg class="heart" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 2h5v2h4V2h5v7h-2v2h-2v2H9v2H7v-2H5v-2H3V9H1z" fill="currentColor"/></svg><span id="health-value">&mdash;</span><div id="health-meter" role="progressbar" aria-label="Health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="health-fill"></div></div></div>
@@ -39,6 +41,7 @@
             <button id="mute" aria-pressed="false" aria-label="Mute sound" title="Sound on"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h4V7h2V5h3v14H9v-2H7v-2H3z M16 8h2v8h-2 M20 5h2v14h-2"/></svg></button>
           </div>
 
+          <div id="stamina" hidden><span>STAMINA</span><div id="stamina-meter" role="progressbar" aria-label="Sprint stamina" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div id="stamina-fill"></div></div></div>
           <div id="player-status" role="status"></div>
           <section id="results" class="pixel-panel" hidden aria-label="Round results"><h2 class="pixel-title">ROUND COMPLETE</h2><p id="winner" role="status"></p><p id="rematch"></p><ol id="final-standings" aria-label="Final rankings"></ol></section>
         </div>

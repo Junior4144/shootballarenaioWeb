@@ -73,7 +73,7 @@ for (const viewport of [{ width: 1920, height: 1080 }, { width: 1366, height: 76
   });
 }
 
-test('browser inputs reach authority; HUD and leave/rejoin reflect server state', async ({ page }) => {
+test('browser inputs reach authority; HUD and leave/rejoin reflect server state', async ({ page }, testInfo) => {
   const observer = await new Client('ws://127.0.0.1:2569').joinOrCreate(ROOM_NAME, { version: VERSION });
   let snapshot: Snapshot | undefined;
   observer.onMessage<Snapshot>('snapshot', value => { snapshot = value; });
@@ -89,6 +89,22 @@ test('browser inputs reach authority; HUD and leave/rejoin reflect server state'
     try {
       await expect.poll(() => Math.hypot(player().x - before.x, player().y - before.y), { timeout: 3000 }).toBeGreaterThan(10);
     } finally { await page.keyboard.up('d'); }
+    await expect(page.locator('#stamina')).toBeHidden();
+    await page.keyboard.down('Shift');
+    await page.keyboard.down('d');
+    try {
+      await expect.poll(() => player().sprinting).toBe(true);
+      await expect(page.locator('#stamina')).toBeVisible();
+      await expect.poll(() => player().stamina).toBeLessThan(100);
+      await expect.poll(async () => Number(await page.locator('#stamina-meter').getAttribute('aria-valuenow'))).toBeLessThan(100);
+      const bar = await page.locator('#stamina').boundingBox();
+      const stage = await page.locator('.arena-wrap').boundingBox();
+      expect(Math.abs(bar!.x + bar!.width / 2 - (stage!.x + stage!.width / 2))).toBeLessThan(2);
+      expect(bar!.y).toBeGreaterThan(stage!.y + stage!.height * 0.7);
+      await page.screenshot({ path: testInfo.outputPath('sprint-stamina.png'), fullPage: true });
+    } finally { await page.keyboard.up('Shift'); await page.keyboard.up('d'); }
+    await expect.poll(() => player().sprinting).toBe(false);
+    await expect(page.locator('#stamina')).toBeHidden();
     const arena = await page.locator('.arena-wrap').boundingBox();
     await page.mouse.click(arena!.x + arena!.width * .6, arena!.y + arena!.height * .5);
     await expect.poll(() => snapshot?.events.some(e => e.kind === 'shot' && e.actorId === id)).toBe(true);

@@ -16,7 +16,7 @@ export class ArenaScene extends Phaser.Scene {
   private sendElapsed = 0;
   private focused = true;
   private connectionState = '';
-  private keys!: Record<'W' | 'A' | 'S' | 'D' | 'Q', Phaser.Input.Keyboard.Key>;
+  private keys!: Record<'W' | 'A' | 'S' | 'D' | 'Q' | 'SHIFT', Phaser.Input.Keyboard.Key>;
   private players = new Map<string, { ball: Phaser.GameObjects.Image; cannon: Phaser.GameObjects.Image; label: Phaser.GameObjects.Text }>();
   private health!: Phaser.GameObjects.Graphics;
   private shots = new Map<number, Phaser.GameObjects.Image>();
@@ -53,7 +53,7 @@ export class ArenaScene extends Phaser.Scene {
       .fillRect(0, topInset, sideInset, GAME.height - topInset - bottomInset).fillRect(GAME.width - sideInset, topInset, sideInset, GAME.height - topInset - bottomInset);
     this.health = this.add.graphics().setDepth(4);
     this.details = this.add.graphics().setDepth(6);
-    this.keys = this.input.keyboard!.addKeys('W,A,S,D,Q') as typeof this.keys;
+    this.keys = this.input.keyboard!.addKeys('W,A,S,D,Q,SHIFT') as typeof this.keys;
     const fire = (pointer: Phaser.Input.Pointer) => {
       if (pointer.leftButtonDown() && pointer.x >= sideInset && pointer.x <= GAME.width - sideInset && pointer.y >= topInset && pointer.y <= GAME.height - bottomInset) this.fireQueued = true;
     };
@@ -131,7 +131,7 @@ export class ArenaScene extends Phaser.Scene {
       moveX: Number(this.keys.D.isDown) - Number(this.keys.A.isDown),
       moveY: Number(this.keys.S.isDown) - Number(this.keys.W.isDown),
       aim: { x: Phaser.Math.Clamp(aim.x, ARENA.left, ARENA.right), y: Phaser.Math.Clamp(aim.y, ARENA.top, ARENA.bottom) },
-      fire: this.fireQueued, radar: this.radarQueued,
+      fire: this.fireQueued, radar: this.radarQueued, sprint: this.keys.SHIFT.isDown,
       });
       this.fireQueued = false; this.radarQueued = false;
     }

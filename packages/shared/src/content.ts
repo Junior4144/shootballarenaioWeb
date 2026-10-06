@@ -15,6 +15,7 @@ export interface RadarScan { remaining: number; origin: Point; markers: RadarMar
 export interface ActorState extends Player {
   id: string; connected: boolean; bot: boolean;
   health: number; kills: number; botKills: number; deaths: number; points: number;
+  stamina: number; sprinting: boolean;
   respawnRemaining: number; protectionRemaining: number; lifeId: number;
   weapon: Weapon; ammo: number; speedRemaining: number; radarCooldown: number;
   radar: RadarScan;
@@ -22,6 +23,7 @@ export interface ActorState extends Player {
 export const createActor = (id: string, bot = false): ActorState => ({
   id, bot, connected: true, x: 0, y: 0, angle: 0,
   health: 0, kills: 0, botKills: 0, deaths: 0, points: 0,
+  stamina: CONFIG.player.sprint.maxStamina, sprinting: false,
   respawnRemaining: 0, protectionRemaining: 0, lifeId: 0,
   weapon: 'basic', ammo: 0, speedRemaining: 0, radarCooldown: 0,
   radar: { remaining: 0, origin: { x: 0, y: 0 }, markers: [] },

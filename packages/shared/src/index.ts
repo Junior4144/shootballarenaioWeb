@@ -22,6 +22,6 @@ export const GAME = {
 
 export interface Point { x: number; y: number }
 export interface Player extends Point { angle: number }
-export interface InputIntent { moveX: number; moveY: number; aim: Point; fire: boolean; radar?: boolean }
+export interface InputIntent { moveX: number; moveY: number; aim: Point; fire: boolean; radar?: boolean; sprint?: boolean }
 export interface Projectile extends Point { id: number; vx: number; vy: number; life: number }
 export interface Target extends Point { id: number; health: number }

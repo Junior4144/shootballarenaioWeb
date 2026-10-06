@@ -16,6 +16,12 @@ export function validateConfig(config: GameConfig): string[] {
     }
   };
   visit(config, '');
+  const sprint = config.player.sprint;
+  check(sprint.speedMultiplier > 1, 'player.sprint.speedMultiplier must exceed 1');
+  check(sprint.maxStamina > 0 && sprint.drainPerSecond > 0 && sprint.regenPerSecond > 0,
+    'player.sprint stamina capacity, drain and regeneration must be positive');
+  check(sprint.resumeStamina > 0 && sprint.resumeStamina <= sprint.maxStamina,
+    'player.sprint.resumeStamina must be positive and no greater than maxStamina');
   const positive = (values: Record<string, number>) => {
     for (const [path, value] of Object.entries(values)) check(value > 0, `${path} must be greater than zero`);
   };

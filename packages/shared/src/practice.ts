@@ -5,7 +5,9 @@ import { LOOP, WEAPONS, createActor, rankPlayers, type ActorState, type Shot, ty
 import { WALLS, SPAWNS, clearPoint, firstWall, moveActor, type Wall } from './arena';
 import { botInput, separateBots, type BotBrain } from './bots';
 
-export interface PracticePlayer extends ActorState { cooldown: number; brain: BotBrain }
+export interface PracticePlayer extends ActorState {
+  cooldown: number; brain: BotBrain; staminaDelay: number; sprintExhausted: boolean;
+}
 export type OwnedProjectile = Shot;
 // Server construction only: never read these settings from join options/messages.
 export interface ArenaRules { bots?: boolean; walls?: readonly Wall[]; matchSeconds?: number; scoreLimit?: number; resultsSeconds?: number; winCondition?: WinCondition; killsToWin?: number }
@@ -34,12 +36,12 @@ export class Practice {
   }
   add(id: string, bot = false): void {
     if (this.players.has(id)) return;
-    const player = { ...createActor(id, bot), cooldown: 0, brain: { remaining: 0, path: [] } };
+    const player = { ...createActor(id, bot), cooldown: 0, staminaDelay: 0, sprintExhausted: false, brain: { remaining: 0, path: [] } };
     this.players.set(id, player);
     if (this.match.phase === 'playing') this.spawn(player);
     if (!bot) this.balanceBots();
   }
-  disconnect(id: string): void { const p = this.players.get(id); if (p) p.connected = false; }
+  disconnect(id: string): void { const p = this.players.get(id); if (p) { p.connected = false; p.sprinting = false; } }
   remove(id: string): void { this.players.delete(id); this.balanceBots(); }
   private balanceBots(): void {
     const humans = [...this.players.values()].filter(p => !p.bot);
@@ -58,6 +60,7 @@ export class Practice {
     if (!candidates.length) throw new Error('No valid spawn: check map.spawns, map dimensions, walls and player.radius in config.ts');
     const point = candidates.reduce((best, candidate) => distance(candidate) > distance(best) ? candidate : best);
     Object.assign(p, point, { health: p.bot ? CONFIG.npc.health : GAME.playerHealth, cooldown: 0, angle: 0,
+      stamina: CONFIG.player.sprint.maxStamina, sprinting: false, staminaDelay: 0, sprintExhausted: false,
       respawnRemaining: 0, protectionRemaining: GAME.spawnProtection, lifeId: p.lifeId + 1,
       weapon: 'basic', ammo: 0, speedRemaining: 0, brain: { remaining: 0, path: [] } });
   }
@@ -78,6 +81,7 @@ export class Practice {
     victim.health = Math.max(0, victim.health - shot.damage);
     this.emit('hit', shot.ownerId, victim, { targetId: victim.id, targetBot: victim.bot, value: shot.damage });
     if (victim.health === 0) {
+      victim.sprinting = false;
       victim.deaths++;
       victim.respawnRemaining = victim.bot ? CONFIG.npc.respawnSeconds : GAME.respawnDelay;
       victim.protectionRemaining = 0; victim.speedRemaining = 0; victim.weapon = 'basic'; victim.ammo = 0;
@@ -150,6 +154,7 @@ export class Practice {
     ].filter(other => Math.hypot(other.x - p.x, other.y - p.y) <= LOOP.radarRange) };
   }
   private finishRound(): void {
+    for (const player of this.players.values()) player.sprinting = false;
     const standings = rankPlayers([...this.players.values()].filter(p => !p.bot), this.rules.winCondition).map(({ id, points, kills, botKills, deaths }) => ({ id, points, kills, botKills, deaths }));
     const metric = (p: { points: number; kills: number }) => this.rules.winCondition === 'kills' ? p.kills : p.points;
     const top = standings[0] ? metric(standings[0]) : 0;
@@ -165,6 +170,7 @@ export class Practice {
       p.health = 0; p.points = 0; p.kills = 0; p.botKills = 0; p.deaths = 0;
       p.radarCooldown = 0; p.radar = { remaining: 0, origin: { x: p.x, y: p.y }, markers: [] };
       p.respawnRemaining = 0; p.protectionRemaining = 0; p.weapon = 'basic'; p.ammo = 0; p.speedRemaining = 0;
+      p.stamina = CONFIG.player.sprint.maxStamina; p.sprinting = false; p.staminaDelay = 0; p.sprintExhausted = false;
     }
     for (const p of this.players.values()) if (p.connected) this.spawn(p);
   }
@@ -182,6 +188,7 @@ export class Practice {
     const humans = actors.filter(p => !p.bot);
     const firing: PracticePlayer[] = [];
     for (const p of this.players.values()) {
+      p.sprinting = false;
       p.protectionRemaining = Math.max(0, p.protectionRemaining - dt);
       p.speedRemaining = Math.max(0, p.speedRemaining - dt);
       p.radarCooldown = Math.max(0, p.radarCooldown - dt);
@@ -195,7 +202,25 @@ export class Practice {
       if (!p.connected) continue;
       const input = p.bot ? botInput(p, humans, p.brain, dt, this.walls, actors) : inputs.get(p.id) ?? { moveX: 0, moveY: 0, aim: p, fire: false };
       const length = Math.max(1, Math.hypot(input.moveX, input.moveY));
-      const speed = p.bot ? CONFIG.npc.speed : GAME.playerSpeed * (p.speedRemaining > 0 ? LOOP.speedMultiplier : 1);
+      let speed = p.bot ? CONFIG.npc.speed : GAME.playerSpeed * (p.speedRemaining > 0 ? LOOP.speedMultiplier : 1);
+      if (!p.bot) {
+        const sprint = CONFIG.player.sprint;
+        if (p.stamina >= sprint.resumeStamina) p.sprintExhausted = false;
+        const requested = input.sprint && (input.moveX !== 0 || input.moveY !== 0);
+        if (requested && !p.sprintExhausted && p.stamina > 0 && dt > 0) {
+          const sprintSeconds = Math.min(dt, p.stamina / sprint.drainPerSecond);
+          speed *= 1 + (sprint.speedMultiplier - 1) * sprintSeconds / dt;
+          p.stamina = Math.max(0, p.stamina - sprint.drainPerSecond * dt);
+          if (p.stamina < 1e-9) p.stamina = 0;
+          p.sprinting = p.stamina > 0;
+          p.sprintExhausted = p.stamina === 0;
+          p.staminaDelay = sprint.regenDelaySeconds;
+        } else {
+          const recoverySeconds = Math.max(0, dt - p.staminaDelay);
+          p.staminaDelay = Math.max(0, p.staminaDelay - dt);
+          p.stamina = Math.min(sprint.maxStamina, p.stamina + sprint.regenPerSecond * recoverySeconds);
+        }
+      }
       moveActor(p, input.moveX / length * speed * dt, input.moveY / length * speed * dt, this.walls);
       if (input.aim.x !== p.x || input.aim.y !== p.y) p.angle = Math.atan2(input.aim.y - p.y, input.aim.x - p.x);
       p.cooldown = Math.max(0, p.cooldown - dt);
@@ -218,7 +243,7 @@ export class Practice {
   snapshot() {
     return {
       tick: this.tick, generation: this.generation, time: this.time,
-      players: [...this.players.values()].map(({ cooldown: _cooldown, brain: _brain, ...p }) => ({ ...p, radar: { ...p.radar, origin: { ...p.radar.origin }, markers: p.radar.markers.map(m => ({ ...m })) } })),
+      players: [...this.players.values()].map(({ cooldown: _cooldown, brain: _brain, staminaDelay: _delay, sprintExhausted: _exhausted, ...p }) => ({ ...p, radar: { ...p.radar, origin: { ...p.radar.origin }, markers: p.radar.markers.map(m => ({ ...m })) } })),
       targets: [], projectiles: this.projectiles.map(p => ({ ...p })),
       pickups: this.pickups.map(p => ({ ...p })), events: this.events.map(e => ({ ...e })),
       match: { ...this.match, winnerIds: [...this.match.winnerIds], standings: this.match.standings.map(p => ({ ...p })) },

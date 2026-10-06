@@ -77,6 +77,7 @@ then the same room automatically starts a fresh round.
 | Action | Control / reward |
 | --- | --- |
 | Move / aim / fire | WASD / mouse / one left click per shot |
+| Sprint | Hold Shift while moving; uses stamina, which recovers after you stop sprinting |
 | Radar Pulse | Q or HUD button; 12 s cooldown, frozen nearby markers for 3 s |
 | Player elimination | 100 points |
 | Bot elimination | 20 points; drops two +5 orbs |

@@ -73,7 +73,7 @@ export class PracticeConnection {
     }
   }
   send(input: InputIntent): void {
-    if (this.state === 'connected') this.room?.send('input', { ...input, radar: input.radar ?? false, seq: this.sequence++ });
+    if (this.state === 'connected') this.room?.send('input', { ...input, radar: input.radar ?? false, sprint: input.sprint ?? false, seq: this.sequence++ });
   }
   leave(): void {
     const room = this.room;

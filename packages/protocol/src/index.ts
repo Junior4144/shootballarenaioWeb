@@ -1,10 +1,10 @@
 import { CONFIG, ARENA, type InputIntent, type Target } from '@shootball/shared';
 import { LOOP, type ActorState, type Shot, type Pickup, type MatchState, type ArenaEvent } from '@shootball/shared/content';
 
-export const VERSION = 5;
+export const VERSION = 6;
 export const ROOM_NAME = 'arena';
 export const NETWORK = CONFIG.network;
-export interface InputMessage extends InputIntent { seq: number; radar: boolean }
+export interface InputMessage extends InputIntent { seq: number; radar: boolean; sprint: boolean }
 export type NetworkPlayer = ActorState;
 export type NetworkProjectile = Shot;
 export interface Snapshot {
@@ -18,7 +18,7 @@ export interface Snapshot {
   projectiles: NetworkProjectile[];
   targets: Target[];
 }
-export const neutralInput = (): InputIntent => ({ moveX: 0, moveY: 0, aim: { x: CONFIG.map.left + CONFIG.map.width / 2, y: CONFIG.map.top + CONFIG.map.height / 2 }, fire: false, radar: false });
+export const neutralInput = (): InputIntent => ({ moveX: 0, moveY: 0, aim: { x: CONFIG.map.left + CONFIG.map.width / 2, y: CONFIG.map.top + CONFIG.map.height / 2 }, fire: false, radar: false, sprint: false });
 
 function exact(value: unknown, keys: string[]): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value)
@@ -29,9 +29,9 @@ const seq = (value: unknown): value is number => typeof value === 'number' && Nu
 const axis = (value: unknown) => value === -1 || value === 0 || value === 1;
 const bounded = (value: unknown, max: number) => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= max;
 export function isInput(value: unknown): value is InputMessage {
-  return exact(value, ['seq', 'moveX', 'moveY', 'aim', 'fire', 'radar'])
+  return exact(value, ['seq', 'moveX', 'moveY', 'aim', 'fire', 'radar', 'sprint'])
     && seq(value.seq) && axis(value.moveX) && axis(value.moveY)
-    && typeof value.radar === 'boolean' && typeof value.fire === 'boolean' && exact(value.aim, ['x', 'y'])
+    && typeof value.sprint === 'boolean' && typeof value.radar === 'boolean' && typeof value.fire === 'boolean' && exact(value.aim, ['x', 'y'])
     && bounded(value.aim.x, ARENA.right) && bounded(value.aim.y, ARENA.bottom);
 }
 

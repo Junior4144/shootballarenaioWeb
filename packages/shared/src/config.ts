@@ -11,6 +11,12 @@ export const CONFIG = {
   player: {
     health: 100, radius: 16, speed: 220,
     respawnSeconds: 3, spawnProtectionSeconds: 1.5,
+    sprint: {
+      speedMultiplier: 1.25, maxStamina: 100,
+      drainPerSecond: 25, regenPerSecond: 20, regenDelaySeconds: 0.8,
+      // Exhaustion needs this much recovery before sprint can resume.
+      resumeStamina: 25,
+    },
   },
   npc: {
     enabled: true, health: 75, speed: 165, respawnSeconds: 4,
@@ -46,9 +52,9 @@ export const CONFIG = {
   },
   weapons: {
     // cooldown/life are seconds, spread is radians; basic ammo 0 means unlimited.
-    basic: { damage: 25, cooldown: 0.15, speed: 520, life: 1.2, pellets: 1, spread: 0, ammo: 0 },
-    shotgun: { damage: 12, cooldown: 0.6, speed: 450, life: 0.65, pellets: 5, spread: 0.24, ammo: 8 },
-    heavy: { damage: 50, cooldown: 0.55, speed: 650, life: 1, pellets: 1, spread: 0, ammo: 6 },
+    basic: { damage: 25, cooldown: 0.15, speed: 624, life: 1.2, pellets: 1, spread: 0, ammo: 0 },
+    shotgun: { damage: 12, cooldown: 0.6, speed: 540, life: 0.65, pellets: 5, spread: 0.24, ammo: 8 },
+    heavy: { damage: 50, cooldown: 0.55, speed: 780, life: 1, pellets: 1, spread: 0, ammo: 6 },
   },
   projectile: { radius: 4, muzzleOffset: 28 },
   pickups: {

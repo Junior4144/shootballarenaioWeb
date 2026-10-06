@@ -25,6 +25,13 @@ weapon trajectory, with their own damage and fire cooldown.
 ## Common edits
 
 - Player health: `player.health`.
+- Sprint: `player.sprint` controls speed multiplier, stamina capacity, drain,
+  regeneration, recovery delay and exhaustion recovery threshold. Defaults give
+  1.25× speed for four seconds, with recovery starting after 0.8 seconds and
+  restoring 20 stamina per second. Exhaustion requires 25 stamina to resume.
+  Hold Shift while moving; the bottom-center stamina bar appears during sprint
+  and hides when sprinting stops. Sprint stacks with speed pickups. Only human
+  players sprint; stamina and movement are controlled by the server.
 - NPC health: `npc.health`.
 - Map size: `map.width` and `map.height` (currently 1600 by 1200).
 - Point-based victory: `match.winCondition: 'points'` and `match.scoreLimit`.

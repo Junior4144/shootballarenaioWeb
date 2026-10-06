@@ -9,6 +9,11 @@ export class ArenaHud {
   private resultSignature = '';
   render(state: Snapshot, localId?: string): void {
     const humans = state.players.filter(p => !p.bot), me = humans.find(p => p.id === localId);
+    const stamina = Math.max(0, Math.min(CONFIG.player.sprint.maxStamina, me?.stamina ?? 0));
+    element('stamina').hidden = !me?.sprinting || !me.connected || me.health <= 0 || state.match.phase !== 'playing';
+    element('stamina-fill').style.width = `${stamina / CONFIG.player.sprint.maxStamina * 100}%`;
+    element('stamina-meter').setAttribute('aria-valuemax', String(CONFIG.player.sprint.maxStamina));
+    element('stamina-meter').setAttribute('aria-valuenow', String(Math.round(stamina)));
     const elapsed = time(Math.floor(Math.max(0, state.match.durationSeconds - state.match.remaining)));
     element('match-clock').textContent = state.match.phase === 'playing' ? elapsed : 'RESULTS';
     const target = state.match.winCondition === 'kills' ? `${state.match.killsToWin} kills` : `${state.match.scoreLimit} pts`;
