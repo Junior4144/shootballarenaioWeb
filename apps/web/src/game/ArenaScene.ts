@@ -29,11 +29,13 @@ export class ArenaScene extends Phaser.Scene {
   private effects: { event: ArenaEvent; until: number }[] = [];
   private details!: Phaser.GameObjects.Graphics;
   private pickupLabels = new Map<number, Phaser.GameObjects.Text>();
+  private cameraLife = '';
 
   constructor() { super('arena'); }
 
   create(): void {
     this.createTextures();
+    this.cameras.main.setBounds(0, 0, ARENA.right + 48, ARENA.bottom + 48);
     const floor = this.add.graphics();
     floor.fillStyle(0x1b2c39).fillRect(ARENA.left, ARENA.top, ARENA.right - ARENA.left, ARENA.bottom - ARENA.top);
     floor.lineStyle(1, 0x243745);
@@ -45,14 +47,18 @@ export class ArenaScene extends Phaser.Scene {
       floor.lineStyle(2, 0x78909d).strokeRect(wall.x, wall.y, wall.width, wall.height);
       floor.fillStyle(0x526979).fillRect(wall.x + 4, wall.y + 4, wall.width - 8, 5);
     }
-    this.add.text(48, 30, '01 / FREE-FOR-ALL', { fontFamily: 'monospace', fontSize: '16px', color: '#9db2bf' });
-    this.status = this.add.text(912, 30, '', { fontFamily: 'monospace', fontSize: '16px', color: '#69e2ce' }).setOrigin(1, 0);
-    this.add.text(48, 610, 'WASD  MOVE     /     MOUSE  AIM     /     CLICK  FIRE     /     Q  SCAN', { fontFamily: 'monospace', fontSize: '12px', color: '#819dab' });
+    // Keep the original 864 x 512 play window and HUD while the world scrolls.
+    this.add.graphics().setScrollFactor(0).setDepth(20).fillStyle(0x0c1823)
+      .fillRect(0, 0, GAME.width, 80).fillRect(0, 592, GAME.width, 48)
+      .fillRect(0, 80, 48, 512).fillRect(912, 80, 48, 512);
+    this.add.text(48, 30, '01 / FREE-FOR-ALL', { fontFamily: 'monospace', fontSize: '16px', color: '#9db2bf' }).setScrollFactor(0).setDepth(21);
+    this.status = this.add.text(912, 30, '', { fontFamily: 'monospace', fontSize: '16px', color: '#69e2ce' }).setOrigin(1, 0).setScrollFactor(0).setDepth(21);
+    this.add.text(48, 610, 'WASD  MOVE     /     MOUSE  AIM     /     CLICK  FIRE     /     Q  SCAN', { fontFamily: 'monospace', fontSize: '12px', color: '#819dab' }).setScrollFactor(0).setDepth(21);
     this.health = this.add.graphics().setDepth(4);
     this.details = this.add.graphics().setDepth(6);
     this.keys = this.input.keyboard!.addKeys('W,A,S,D,Q') as typeof this.keys;
     const fire = (pointer: Phaser.Input.Pointer) => {
-      if (pointer.leftButtonDown() && pointer.x >= ARENA.left && pointer.x <= ARENA.right && pointer.y >= ARENA.top && pointer.y <= ARENA.bottom) this.fireQueued = true;
+      if (pointer.leftButtonDown() && pointer.x >= 48 && pointer.x <= 912 && pointer.y >= 80 && pointer.y <= 592) this.fireQueued = true;
     };
     const clearInput = () => { this.fireQueued = false; this.radarQueued = false; this.input.keyboard!.resetKeys(); };
     const neutral = () => {
@@ -60,7 +66,7 @@ export class ArenaScene extends Phaser.Scene {
       this.focused = false;
       this.connection.send({ moveX: 0, moveY: 0, aim: { x: 480, y: 336 }, fire: false });
     };
-    const focus = () => { clearInput(); this.snapshots.clear(); this.focused = !document.hidden; };
+    const focus = () => { clearInput(); this.snapshots.clear(); this.cameraLife = ''; this.focused = !document.hidden; };
     const visibility = () => { if (document.hidden) neutral(); else focus(); };
     const status = document.querySelector<HTMLElement>('#connection-status')!;
     const join = document.querySelector<HTMLButtonElement>('#join')!;
@@ -74,6 +80,7 @@ export class ArenaScene extends Phaser.Scene {
         this.snapshots.clear();
         this.eventCursor.clear(); this.effects = [];
         this.connectionState = connection.state;
+        this.cameraLife = '';
       }
       this.world = connection.snapshot ?? emptySnapshot();
       if (connection.snapshot && connection.state === 'connected') {
@@ -119,24 +126,25 @@ export class ArenaScene extends Phaser.Scene {
   update(_time: number, delta: number): void {
     if (Phaser.Input.Keyboard.JustDown(this.keys.Q)) this.radarQueued = true;
     const pointer = this.input.activePointer;
-    // FIT scaling already converts pointer positions into logical canvas coordinates.
+    // Convert logical canvas coordinates through the scrolling world camera.
+    const aim = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
     this.sendElapsed += delta;
     if (this.sendElapsed >= NETWORK.inputMs && this.connection.state === 'connected' && this.focused) {
       this.sendElapsed %= NETWORK.inputMs;
       this.connection.send({
       moveX: Number(this.keys.D.isDown) - Number(this.keys.A.isDown),
       moveY: Number(this.keys.S.isDown) - Number(this.keys.W.isDown),
-      aim: { x: Phaser.Math.Clamp(pointer.x, 0, GAME.width), y: Phaser.Math.Clamp(pointer.y, 0, GAME.height) },
+      aim: { x: Phaser.Math.Clamp(aim.x, ARENA.left, ARENA.right), y: Phaser.Math.Clamp(aim.y, ARENA.top, ARENA.bottom) },
       fire: this.fireQueued, radar: this.radarQueued,
       });
       this.fireQueued = false; this.radarQueued = false;
     }
     if (this.connection.state !== 'connected' || !this.focused) { this.fireQueued = false; this.radarQueued = false; }
     this.world = this.snapshots.sample(performance.now()) ?? this.world;
-    this.syncVisuals();
+    this.syncVisuals(delta);
   }
 
-  private syncVisuals(): void {
+  private syncVisuals(delta = 0): void {
     this.health.clear(); this.details.clear();
     const now = performance.now();
     for (const event of this.eventCursor.take(this.world)) {
@@ -181,6 +189,17 @@ export class ArenaScene extends Phaser.Scene {
       this.shots.get(shot.id)!.setPosition(shot.x, shot.y);
     }
     const me = this.world.players.find(p => p.id === this.connection?.sessionId);
+    if (me) {
+      const camera = this.cameras.main;
+      const life = `${this.world.generation}:${me.id}:${me.lifeId}`;
+      // Ease over about a tenth of a second, independently of frame rate.
+      // Clamp the destination first so edges do not build up camera lag.
+      const x = Phaser.Math.Clamp(me.x - GAME.width / 2, 0, ARENA.right + 48 - GAME.width);
+      const y = Phaser.Math.Clamp(me.y - 16 - GAME.height / 2, 0, ARENA.bottom + 48 - GAME.height);
+      const blend = life === this.cameraLife ? 1 - Math.exp(-Math.max(0, delta) / 110) : 1;
+      camera.setScroll(camera.scrollX + (x - camera.scrollX) * blend, camera.scrollY + (y - camera.scrollY) * blend);
+      this.cameraLife = life;
+    }
     this.status.setText(!me ? 'JOIN TO PLAY' : me.health <= 0
       ? 'ELIMINATED / RESPAWN ' + me.respawnRemaining.toFixed(1) + 's'
       : 'HP ' + me.health + ' / 100' + (me.protectionRemaining > 0 ? ' / SHIELD ' + me.protectionRemaining.toFixed(1) + 's' : ''));

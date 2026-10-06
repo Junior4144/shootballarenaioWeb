@@ -5,6 +5,7 @@ import { Client, type Room } from '@colyseus/sdk';
 import { createServer } from '../src/server';
 import { NETWORK, ROOM_NAME, VERSION, neutralInput, isInput, type Snapshot } from '@shootball/protocol';
 import { PracticeConnection } from '../../web/src/network/PracticeConnection';
+import { ARENA } from '@shootball/shared';
 
 const pause = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 async function until(check: () => boolean, message: string, timeout = 2500): Promise<void> {
@@ -24,12 +25,13 @@ function observe(room: Room) {
 test('wire validation rejects nonfinite, injected and malformed intent', () => {
   const valid = { ...neutralInput(), seq: 0 };
   assert.ok(isInput(valid));
+  assert.ok(isInput({ ...valid, aim: { x: ARENA.right, y: ARENA.bottom } }));
   for (const bad of [
     null, [], {}, { ...valid, seq: -1 }, { ...valid, seq: 0.5 },
     { ...valid, seq: Number.MAX_SAFE_INTEGER + 1 },
     { ...valid, moveX: 2 }, { ...valid, moveY: NaN },
     { ...valid, aim: { x: Infinity, y: 0 } }, { ...valid, aim: { x: -1, y: 0 } },
-    { ...valid, aim: { x: 0, y: 641 } }, { ...valid, fire: 1 }, { ...valid, radar: 1 }, { ...valid, points: 999 },
+    { ...valid, aim: { x: 0, y: ARENA.bottom + 1 } }, { ...valid, aim: { x: ARENA.right + 1, y: 0 } }, { ...valid, fire: 1 }, { ...valid, radar: 1 }, { ...valid, points: 999 },
     { ...valid, x: 900 }, { ...valid, health: 99 },
   ]) assert.equal(isInput(bad), false);
 });
@@ -73,7 +75,15 @@ test('real clients synchronize authority, PvP, disabled reset, reconnect, capaci
     await pause(100);
     assert.equal(aState.latest!.generation, 0, 'reset cannot change an active fight');
     // Move into range using real validated client input.
-    for (let i = 0; i < 5; i++) { input({ moveX: 1 }); await pause(180); }
+    const approachDeadline = performance.now() + 10000;
+    while (true) {
+      const self = aState.latest!.players.find(p => p.id === a.sessionId)!;
+      const opponent = aState.latest!.players.find(p => p.id === b.sessionId)!;
+      if (Math.hypot(opponent.x - self.x, opponent.y - self.y) < 400) break;
+      assert.ok(performance.now() < approachDeadline, 'players close distance across the larger arena');
+      input({ moveX: Math.sign(opponent.x - self.x), moveY: Math.sign(opponent.y - self.y) });
+      await pause(180);
+    }
     input();
     await pause(500); // Both initial spawn shields have expired.
     let activeB = b;

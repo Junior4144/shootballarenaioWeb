@@ -1,4 +1,4 @@
-export const ARENA = { left: 48, top: 80, right: 912, bottom: 592 } as const;
+export const ARENA = { left: 48, top: 80, right: 1344, bottom: 848 } as const;
 export const GAME = {
   width: 960, height: 640, playerRadius: 16, playerSpeed: 220,
   muzzleOffset: 28, shotRadius: 4, shotSpeed: 520, shotLifetime: 1.2,

@@ -11,7 +11,7 @@ test('diagonal movement has the same speed and whole player stays inside every w
   stepWorld(diagonal, { ...idle, moveX: 1, moveY: 1 }, 0.05);
   assert.ok(Math.abs(straight.player.x - 240 - Math.hypot(diagonal.player.x - 240, diagonal.player.y - 336)) < 0.00001);
   for (const direction of [-1, 1]) {
-    for (let i = 0; i < 200; i++) stepWorld(diagonal, { ...idle, moveX: direction, moveY: direction }, 0.05);
+    for (let i = 0; i < 300; i++) stepWorld(diagonal, { ...idle, moveX: direction, moveY: direction }, 0.05);
     assert.equal(diagonal.player.x, direction < 0 ? ARENA.left + GAME.playerRadius : ARENA.right - GAME.playerRadius);
     assert.equal(diagonal.player.y, direction < 0 ? ARENA.top + GAME.playerRadius : ARENA.bottom - GAME.playerRadius);
   }
@@ -54,7 +54,7 @@ test('swept collisions catch a target even when a shot crosses it in one frame',
 });
 
 test('projectiles disappear at every wall and on lifetime expiration', () => {
-  for (const [x, y, vx, vy] of [[55, 300, -520, 0], [905, 300, 520, 0], [300, 87, 0, -520], [300, 585, 0, 520]]) {
+  for (const [x, y, vx, vy] of [[ARENA.left + 7, 300, -520, 0], [ARENA.right - 7, 300, 520, 0], [300, ARENA.top + 7, 0, -520], [300, ARENA.bottom - 7, 0, 520]]) {
     const world = createWorld();
     world.projectiles = [{ id: 0, x, y, vx, vy, life: 1 }];
     stepWorld(world, idle, 0.05);

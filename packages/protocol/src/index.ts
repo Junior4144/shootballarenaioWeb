@@ -1,7 +1,7 @@
-import { GAME, type InputIntent, type Target } from '@shootball/shared';
+import { ARENA, type InputIntent, type Target } from '@shootball/shared';
 import { LOOP, type ActorState, type Shot, type Pickup, type MatchState, type ArenaEvent } from '@shootball/shared/content';
 
-export const VERSION = 3;
+export const VERSION = 4;
 export const ROOM_NAME = 'arena';
 export const NETWORK = {
   maxPlayers: 8, tickMs: 1000 / 60, snapshotMs: 50, inputMs: 1000 / 30,
@@ -36,7 +36,7 @@ export function isInput(value: unknown): value is InputMessage {
   return exact(value, ['seq', 'moveX', 'moveY', 'aim', 'fire', 'radar'])
     && seq(value.seq) && axis(value.moveX) && axis(value.moveY)
     && typeof value.radar === 'boolean' && typeof value.fire === 'boolean' && exact(value.aim, ['x', 'y'])
-    && bounded(value.aim.x, GAME.width) && bounded(value.aim.y, GAME.height);
+    && bounded(value.aim.x, ARENA.right) && bounded(value.aim.y, ARENA.bottom);
 }
 
 export const emptySnapshot = (): Snapshot => ({ tick: 0, generation: 0, time: 0, players: [], projectiles: [], targets: [], pickups: [], events: [],

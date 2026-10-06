@@ -1,11 +1,81 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Practice, type ArenaRules } from '@shootball/shared/practice';
-import { GAME } from '@shootball/shared';
+import { ARENA, GAME } from '@shootball/shared';
 import { LOOP, WEAPONS } from '@shootball/shared/content';
 import { WALLS, SPAWNS, clearPoint, firstWall, moveActor, route } from '@shootball/shared/arena';
 import { neutralInput } from '@shootball/protocol';
+import { botInput, type BotBrain } from '@shootball/shared/bots';
+import { createActor } from '@shootball/shared/content';
 const idle = new Map();
+test('wall contact redirects diagonal movement at full speed and allows escape on all four faces', () => {
+  const walls = [{ x: 300, y: 300, width: 100, height: 100 }];
+  const slide = 340 + Math.hypot(10, 20);
+  for (const [x, y, dx, dy, expectedX, expectedY] of [
+    [284, 340, 10, 20, 284, slide], [416, 340, -10, 20, 416, slide],
+    [340, 284, 20, 10, slide, 284], [340, 416, 20, -10, slide, 416],
+    [284, 340, -20, 0, 264, 340], [416, 340, 20, 0, 436, 340],
+    [340, 284, 0, -20, 340, 264], [340, 416, 0, 20, 340, 436],
+  ]) {
+    const p = { x, y }; moveActor(p, dx, dy, walls);
+    assert.deepEqual(p, { x: expectedX, y: expectedY });
+  }
+});
+
+test('straight-on hits glide toward a wall end, including arena edges', () => {
+  const walls = [{ x: 300, y: 300, width: 100, height: 100 }];
+  for (const [x, y, dx, dy, expectedX, expectedY] of [
+    [284, 340, 10, 0, 284, 330], [416, 380, -10, 0, 416, 390],
+    [340, 284, 0, 10, 330, 284], [380, 416, 0, -10, 390, 416],
+    [ARENA.left + 16, 300, -10, 0, ARENA.left + 16, 290],
+  ]) {
+    const p = { x, y }; moveActor(p, dx, dy, walls);
+    assert.deepEqual(p, { x: expectedX, y: expectedY });
+  }
+  const p = { x: 284, y: 310 };
+  for (let i = 0; i < 30; i++) moveActor(p, 4, 0, walls);
+  assert.ok(p.x > 300 && p.y < 284, 'continued input glides around the end');
+  const stopped = { ...p }; moveActor(p, 0, 0, walls);
+  assert.deepEqual(p, stopped, 'releasing input stops movement');
+});
+
+test('sliding respects adjoining cover and never adds more than the input distance', () => {
+  const walls = [{ x: 300, y: 300, width: 100, height: 100 }, { x: 200, y: 400, width: 100, height: 50 }];
+  const p = { x: 283.999, y: 380 };
+  moveActor(p, 20, 20, walls);
+  assert.ok(clearPoint(p, GAME.playerRadius, walls));
+  assert.ok(p.y < 384);
+  for (const [dx, dy] of [[40, 10], [10, 40], [40, 0]]) {
+    const start = { x: 275, y: 340 }, next = { ...start };
+    moveActor(next, dx, dy, walls);
+    assert.ok(Math.hypot(next.x - start.x, next.y - start.y) <= Math.hypot(dx, dy) + 1e-8);
+    assert.ok(clearPoint(next, GAME.playerRadius, walls));
+  }
+});
+
+test('bots patrol without a nearby opponent, engage nearby humans, and resume patrol', () => {
+  const bot = createActor('bot:1', true); Object.assign(bot, { x: 144, y: 160, health: 75 });
+  const human = createActor('human', false); Object.assign(human, { x: 1232, y: 752, health: 100 });
+  const brain: BotBrain = { remaining: 0, path: [] };
+  const start = { x: bot.x, y: bot.y };
+  for (let i = 0; i < 600; i++) {
+    const input = botInput(bot, [], brain, 1 / 60, WALLS);
+    assert.equal(input.fire, false);
+    moveActor(bot, input.moveX * 165 / 60, input.moveY * 165 / 60);
+    assert.ok(clearPoint(bot, GAME.playerRadius));
+  }
+  assert.ok(Math.hypot(bot.x - start.x, bot.y - start.y) > 80);
+  Object.assign(bot, start);
+  assert.equal(botInput(bot, [human], brain, 1 / 60, WALLS).fire, false);
+  Object.assign(human, { x: 200, y: 160 });
+  brain.thinkRemaining = 0;
+  assert.equal(botInput(bot, [human], brain, 1 / 60, WALLS).fire, true);
+  human.connected = false;
+  brain.remaining = 0;
+  const input = botInput(bot, [human], brain, 1 / 60, WALLS);
+  assert.equal(input.fire, false); assert.equal(brain.targetId, undefined);
+  assert.ok(Math.hypot(input.moveX, input.moveY) > 0);
+});
 function advance(w: Practice, seconds: number) { for (let i = 0; i < Math.round(seconds * 60); i++) w.step(idle, 1 / 60); }
 function world(rules: ArenaRules = {}) {
   const w = new Practice({ bots: false, walls: [], ...rules }); w.add('a'); w.add('b');
@@ -52,7 +122,8 @@ test('GL-A: time limit handles ties and empty scores without arbitrary winner', 
 
 test('GL-B: high-speed movement cannot cross cover, slides on free axis, and map routes connect spawns', () => {
   const p = { x: 240, y: 280 }; moveActor(p, 400, 10);
-  assert.ok(p.x < 264 && p.x > 260); assert.equal(p.y, 290);
+  assert.ok(p.x < 264 && p.x > 260); assert.ok(p.y > 290);
+  assert.ok(clearPoint(p, GAME.playerRadius));
   for (const spawn of SPAWNS) assert.ok(clearPoint(spawn, GAME.playerRadius));
   for (const a of SPAWNS) for (const b of SPAWNS) {
     const path = route(a, b); assert.ok(path.length > 0);
@@ -76,7 +147,9 @@ test('GL-B: wall blocks swept shots and muzzle shots; opponent in front of wall 
 test('GL-C: bot population scales without consuming human slots; bot navigation and combat work solo', () => {
   const w = new Practice(); w.add('human');
   assert.equal([...w.players.values()].filter(p => p.bot).length, 4);
-  const before = w.snapshot(); advance(w, 8);
+  // Start one bot in sight; distant bots now patrol instead of pursuing globally.
+  Object.assign(w.players.get('bot:1')!, { x: 208, y: 160 });
+  const before = w.snapshot(); advance(w, 3);
   assert.ok(w.events.some(e => e.kind === 'shot' && e.actorId.startsWith('bot:')));
   assert.ok(w.players.get('human')!.health < 100 || w.players.get('human')!.deaths > 0);
   assert.ok(before.players.filter(p => p.bot).some(p => Math.hypot(p.x - w.players.get(p.id)!.x, p.y - w.players.get(p.id)!.y) > 20));

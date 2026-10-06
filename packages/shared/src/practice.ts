@@ -2,13 +2,18 @@ import { hitFraction, inside } from './simulation';
 import { GAME, type InputIntent, type Point } from './index';
 import { LOOP, WEAPONS, createActor, rankPlayers, type ActorState, type Shot, type Pickup, type PickupKind, type MatchState, type ArenaEvent } from './content';
 import { WALLS, SPAWNS, clearPoint, firstWall, moveActor, type Wall } from './arena';
-import { botInput, type BotBrain } from './bots';
+import { botInput, separateBots, type BotBrain } from './bots';
 
 export interface PracticePlayer extends ActorState { cooldown: number; brain: BotBrain }
 export type OwnedProjectile = Shot;
 // Server construction only: never read these settings from join options/messages.
 export interface ArenaRules { bots?: boolean; walls?: readonly Wall[]; matchSeconds?: number; scoreLimit?: number; resultsSeconds?: number }
 const PADS: { x: number; y: number; kind: PickupKind }[] = [
+  { x: 1168, y: 336, kind: 'shotgun' }, { x: 1056, y: 752, kind: 'heavy' },
+  { x: 480, y: 768, kind: 'speed' }, { x: 1232, y: 592, kind: 'health' },
+  { x: 752, y: 656, kind: 'health' },
+  ...[{ x: 944, y: 128 }, { x: 1232, y: 240 }, { x: 1040, y: 432 },
+    { x: 1232, y: 752 }, { x: 800, y: 784 }, { x: 384, y: 656 }, { x: 144, y: 752 }].map(p => ({ ...p, kind: 'score' as const })),
   { x: 480, y: 336, kind: 'shotgun' }, { x: 816, y: 336, kind: 'heavy' },
   { x: 144, y: 336, kind: 'speed' }, { x: 376, y: 336, kind: 'health' },
   { x: 584, y: 336, kind: 'health' },
@@ -181,7 +186,8 @@ export class Practice {
       return;
     }
     this.match.remaining = Math.max(0, this.match.remaining - dt);
-    const humans = [...this.players.values()].filter(p => !p.bot);
+    const actors = [...this.players.values()];
+    const humans = actors.filter(p => !p.bot);
     const firing: PracticePlayer[] = [];
     for (const p of this.players.values()) {
       p.protectionRemaining = Math.max(0, p.protectionRemaining - dt);
@@ -195,7 +201,7 @@ export class Practice {
         continue;
       }
       if (!p.connected) continue;
-      const input = p.bot ? botInput(p, humans, p.brain, dt, this.walls) : inputs.get(p.id) ?? { moveX: 0, moveY: 0, aim: p, fire: false };
+      const input = p.bot ? botInput(p, humans, p.brain, dt, this.walls, actors) : inputs.get(p.id) ?? { moveX: 0, moveY: 0, aim: p, fire: false };
       const length = Math.max(1, Math.hypot(input.moveX, input.moveY));
       const speed = p.bot ? 165 : GAME.playerSpeed * (p.speedRemaining > 0 ? LOOP.speedMultiplier : 1);
       moveActor(p, input.moveX / length * speed * dt, input.moveY / length * speed * dt, this.walls);
@@ -204,6 +210,7 @@ export class Practice {
       if (input.radar && !p.bot && p.radarCooldown <= 0) this.scan(p);
       if (input.fire && p.cooldown <= 0) { p.protectionRemaining = 0; firing.push(p); }
     }
+    separateBots(actors, this.walls);
     // Fire from actors alive at the start of the tick; simultaneous trades are valid.
     for (const p of firing) this.fire(p);
     this.projectiles = this.projectiles.filter(shot => {
