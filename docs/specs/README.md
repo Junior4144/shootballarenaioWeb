@@ -1,6 +1,6 @@
 # Specification index
 
-[Hosting Architecture & Upgrade Path](../../shootball-arena-architecture.md) is the source of truth for technical direction. The current slice is **authoritative points-based PvP with bots and pickups**, extending the local prototype. Colyseus runs locally; cloud deployment, identity/persistence and distributed infrastructure remain deferred. No Unity code is ported.
+[Hosting Architecture & Upgrade Path](../../shootball-arena-architecture.md) is the source of truth for technical direction. The current slice is **authoritative points-based PvP with bots, pickups and optional Supabase accounts**. Colyseus runs locally; account profiles use the scoped hosted project. Deployment, persistent stats/history and distributed infrastructure remain deferred. No Unity code is ported.
 
 - [Gameplay](gameplay.md)
 - [Frontend](frontend.md)

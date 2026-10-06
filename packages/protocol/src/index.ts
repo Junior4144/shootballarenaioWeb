@@ -1,13 +1,14 @@
 import { CONFIG, ARENA, type InputIntent, type Target } from '@shootball/shared';
 import { LOOP, type ActorState, type Shot, type Pickup, type MatchState, type ArenaEvent } from '@shootball/shared/content';
 
-export const VERSION = 6;
+export const VERSION = 7;
 export const ROOM_NAME = 'arena';
 export const NETWORK = CONFIG.network;
 export interface InputMessage extends InputIntent { seq: number; radar: boolean; sprint: boolean }
 export type NetworkPlayer = ActorState;
 export type NetworkProjectile = Shot;
 export interface Snapshot {
+  identities?: Record<string, { kind: 'guest' | 'account'; displayName?: string }>;
   time: number;
   match: MatchState;
   pickups: Pickup[];

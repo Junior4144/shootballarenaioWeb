@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { CONFIG, ARENA, GAME } from '@shootball/shared';
 import { NETWORK, neutralInput, emptySnapshot, type Snapshot } from '@shootball/protocol';
-import { PracticeConnection } from '../network/PracticeConnection';
+import { PracticeConnection, type PlayIdentity } from '../network/PracticeConnection';
 import { SnapshotBuffer } from '../network/SnapshotBuffer';
 import { EventCursor } from '../network/EventCursor';
 import { WALLS } from '@shootball/shared/arena';
@@ -11,7 +11,7 @@ import { CombatAudio } from './CombatAudio';
 
 export class ArenaScene extends Phaser.Scene {
   private world: Snapshot = emptySnapshot();
-  private connection!: PracticeConnection;
+  connection!: PracticeConnection;
   private snapshots = new SnapshotBuffer();
   private sendElapsed = 0;
   private focused = true;
@@ -30,7 +30,7 @@ export class ArenaScene extends Phaser.Scene {
   private pickupLabels = new Map<number, Phaser.GameObjects.Text>();
   private cameraLife = '';
 
-  constructor() { super('arena'); }
+  constructor(private identity: PlayIdentity = { kind: 'guest' }) { super('arena'); }
 
   create(): void {
     this.createTextures();
@@ -88,7 +88,7 @@ export class ArenaScene extends Phaser.Scene {
         : connection.message;
       join.hidden = !['error', 'disconnected'].includes(connection.state);
       leave.hidden = ['error', 'disconnected'].includes(connection.state);
-    }, storage);
+    }, storage, this.identity);
     const scan = document.getElementById('scan')!;
     const mute = document.getElementById('mute')!;
     const onScan = () => { this.radarQueued = true; this.audio.unlock(); };
@@ -175,7 +175,7 @@ export class ArenaScene extends Phaser.Scene {
       }
       v.ball.setPosition(p.x, p.y).setTint(this.effects.some(e => e.event.kind === 'hit' && e.event.targetId === p.id) ? 0xff5555 : local ? 0xffffff : p.bot ? 0xffc080 : 0x86b8ff).setAlpha(alpha);
       v.cannon.setPosition(p.x, p.y).setRotation(p.angle).setAlpha(alpha);
-      v.label.setPosition(p.x, p.y + 28).setText(actorName(p.id, this.connection?.sessionId) + (!alive ? ' RESPAWN ' + Math.ceil(p.respawnRemaining) : p.protectionRemaining > 0 ? ' SHIELD' : '') + (p.connected ? '' : ' (away)')).setAlpha(alpha);
+      v.label.setPosition(p.x, p.y + 28).setText(actorName(p.id, this.connection?.sessionId, this.world.identities) + (!alive ? ' RESPAWN ' + Math.ceil(p.respawnRemaining) : p.protectionRemaining > 0 ? ' SHIELD' : '') + (p.connected ? '' : ' (away)')).setAlpha(alpha);
     }
     for (const [id, image] of this.shots) {
       if (!this.world.projectiles.some(shot => shot.id === id)) { image.destroy(); this.shots.delete(id); }

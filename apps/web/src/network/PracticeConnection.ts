@@ -3,6 +3,12 @@ import { NETWORK, ROOM_NAME, VERSION, type Snapshot } from '@shootball/protocol'
 import type { InputIntent } from '@shootball/shared';
 
 export type ConnectionState = 'connecting' | 'connected' | 'reconnecting' | 'disconnected' | 'error';
+export type PlayIdentity = { kind: 'guest' } | { kind: 'account'; userId: string; getToken: () => Promise<string> };
+export function clearResumeTokens(storage?: Storage): void {
+  try { for (let i = (storage?.length ?? 0) - 1; i >= 0; i--) {
+    const key = storage!.key(i); if (key?.startsWith('shootball:v')) storage!.removeItem(key);
+  } } catch { /* Storage is optional. */ }
+}
 export class PracticeConnection {
   state: ConnectionState = 'disconnected';
   message = 'Disconnected';
@@ -15,9 +21,9 @@ export class PracticeConnection {
   private storageKey: string;
   private token?: string;
 
-  constructor(endpoint: string, private changed: () => void, private storage?: Storage) {
+  constructor(endpoint: string, private changed: () => void, private storage?: Storage, private identity: PlayIdentity = { kind: 'guest' }) {
     this.client = new Client(endpoint);
-    this.storageKey = `shootball:v${VERSION}:${endpoint}`;
+    this.storageKey = `shootball:v${VERSION}:${endpoint}:${identity.kind === 'guest' ? 'guest' : `account:${identity.userId}`}`;
   }
   get sessionId(): string | undefined { return this.room?.sessionId; }
 
@@ -26,15 +32,31 @@ export class PracticeConnection {
     const attempt = ++this.attempt;
     this.setState('connecting', 'Connecting to PvP arena…');
     try {
+      const accessToken = this.identity.kind === 'account' ? await this.identity.getToken() : undefined;
+      if (attempt !== this.attempt) return;
       const token = this.readToken();
-      const room = token
-        ? await this.client.reconnect(token)
-        : await this.client.joinOrCreate(ROOM_NAME, { version: VERSION });
+      const pending = token
+        ? this.client.reconnect(token)
+        : this.client.joinOrCreate(ROOM_NAME, { version: VERSION, mode: this.identity.kind, ...(accessToken ? { accessToken } : {}) });
+      const room = await new Promise<Room>((resolve, reject) => {
+        let expired = false;
+        const timer = setTimeout(() => { expired = true; reject(new Error('Join timed out')); }, 15000);
+        pending.then(room => {
+          clearTimeout(timer);
+          if (expired) { room.reconnection.enabled = false; void room.leave(); }
+          else resolve(room);
+        }, error => { clearTimeout(timer); reject(error); });
+      });
       if (attempt !== this.attempt) { void room.leave(); return; }
       this.room = room;
       this.sequence = 0;
       Object.assign(room.reconnection, { minUptime: 0, minDelay: NETWORK.reconnectMinDelayMs, maxDelay: NETWORK.reconnectMaxDelayMs, delay: NETWORK.reconnectMinDelayMs, maxRetries: NETWORK.reconnectMaxRetries, maxEnqueuedMessages: 0 });
       this.saveToken(room.reconnectionToken);
+      room.onMessage('authError', () => {
+        if (this.room !== room) return;
+        this.endIdentity();
+        this.setState('error', 'Account session ended. Return to accounts and log in again.');
+      });
       room.onMessage<Snapshot>('snapshot', snapshot => {
         if (this.room !== room) return;
         this.snapshot = snapshot;
@@ -57,6 +79,7 @@ export class PracticeConnection {
         this.sequence = 0;
         this.saveToken(room.reconnectionToken);
         this.setState('connected', 'Connected');
+        void this.refreshAccount();
       }));
       room.onLeave(() => { if (this.room === room) this.finish('Disconnected. Join again.'); });
       room.onError(() => {
@@ -65,11 +88,12 @@ export class PracticeConnection {
         this.changed();
       });
       this.setState('connected', 'Connected');
+      if (accessToken) room.send('refreshAuth', accessToken);
     } catch {
       if (attempt !== this.attempt) return;
       this.saveToken();
       this.snapshot = undefined;
-      this.setState('error', 'Could not connect or resume. Check the game server, then retry.');
+      this.setState('error', this.identity.kind === 'account' ? 'Account join failed. Check your session and display name, then retry or return to accounts.' : 'Could not connect or resume. Check the game server, then retry.');
     }
   }
   send(input: InputIntent): void {
@@ -81,6 +105,27 @@ export class PracticeConnection {
     ++this.attempt;
     this.finish(`Paused. Join within ${NETWORK.reconnectSeconds} seconds to resume; your avatar remains vulnerable.`, true);
     if (room) room.connection.close();
+  }
+  async refreshAccount(): Promise<void> {
+    if (this.identity.kind !== 'account') return;
+    const room = this.room;
+    try {
+      const token = await this.identity.getToken();
+      if (room && this.room === room && this.state === 'connected') room.send('refreshAuth', token);
+    } catch {
+      if (room && this.room === room) {
+        this.endIdentity();
+        this.setState('error', 'Account session expired. Return to accounts and log in again.');
+      }
+    }
+  }
+  endIdentity(): void {
+    const room = this.room;
+    ++this.attempt;
+    if (room) room.reconnection.enabled = false;
+    this.finish('Choose how to play.');
+    if (room) void room.leave();
+    clearResumeTokens(this.storage);
   }
   private finish(message: string, retainToken = false): void {
     clearTimeout(this.deadline);

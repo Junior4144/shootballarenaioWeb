@@ -4,17 +4,18 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "node --env-file-if-exists=../../.env --import tsx --watch src/index.ts",
     "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit && esbuild src/index.ts --bundle --platform=node --format=esm --external:@colyseus/core --external:@colyseus/ws-transport --outfile=dist/index.js",
-    "start": "node dist/index.js",
+    "start": "node --env-file-if-exists=../../.env dist/index.js",
     "test": "tsx --test tests/*.test.ts"
   },
   "dependencies": {
     "@colyseus/core": "^0.18.18",
     "@colyseus/ws-transport": "^0.18.4",
     "@shootball/protocol": "0.0.0",
-    "@shootball/shared": "0.0.0"
+    "@shootball/shared": "0.0.0",
+    "@supabase/supabase-js": "2.117.2"
   },
   "devDependencies": {
     "@colyseus/sdk": "^0.18.5",

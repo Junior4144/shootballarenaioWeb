@@ -3,8 +3,9 @@ import { WebSocketTransport } from '@colyseus/ws-transport';
 import { NETWORK, ROOM_NAME } from '@shootball/protocol';
 import { Practice, type ArenaRules } from '@shootball/shared/practice';
 import { PracticeRoom } from './PracticeRoom';
+import { verifyAccount, type VerifyAccount } from './accountAuth';
 
-export function createServer(rules?: ArenaRules): Server {
+export function createServer(rules?: ArenaRules, accountVerifier: VerifyAccount = verifyAccount): Server {
   const server = new Server({
     transport: new WebSocketTransport({
       maxPayload: NETWORK.maxPayload, pingInterval: NETWORK.pingInterval, pingMaxRetries: NETWORK.pingMaxRetries,
@@ -12,6 +13,9 @@ export function createServer(rules?: ArenaRules): Server {
     greet: false,
     gracefullyShutdown: false,
   });
-  server.define(ROOM_NAME, rules ? class extends PracticeRoom { protected world = new Practice(rules); } : PracticeRoom);
+  server.define(ROOM_NAME, class extends PracticeRoom {
+    protected world = new Practice(rules);
+    protected verifyAccount = accountVerifier;
+  });
   return server;
 }

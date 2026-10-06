@@ -18,7 +18,7 @@ export default defineConfig({
     {
       command: 'node ../../node_modules/vite/bin/vite.js --host 127.0.0.1 --port 5189 --strictPort',
       url: 'http://127.0.0.1:5189',
-      env: { VITE_GAME_SERVER_URL: 'ws://127.0.0.1:2569' },
+      env: { VITE_GAME_SERVER_URL: 'ws://127.0.0.1:2569', VITE_SUPABASE_URL: 'https://lkgxpgcmspxekggndzih.supabase.co', VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_test_fixture' },
       reuseExistingServer: false,
     },
   ],

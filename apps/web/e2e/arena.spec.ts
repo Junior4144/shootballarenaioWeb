@@ -8,6 +8,7 @@ for (const viewport of [{ width: 1920, height: 1080 }, { width: 1366, height: 76
     page.on('pageerror', error => errors.push(error.message));
     await page.setViewportSize(viewport);
     await page.goto('/');
+    await page.getByRole('button', { name: 'Play as Guest', exact: true }).click();
     await expect(page.locator('#connection-status')).toContainText('Arena \u00b7 Connected');
     await expect(page.locator('#scoreboard tr.local')).toContainText('YOU');
     await expect(page.locator('#health-value')).toHaveText(/\d+/);
@@ -79,6 +80,7 @@ test('browser inputs reach authority; HUD and leave/rejoin reflect server state'
   observer.onMessage<Snapshot>('snapshot', value => { snapshot = value; });
   try {
     await page.goto('/');
+    await page.getByRole('button', { name: 'Play as Guest', exact: true }).click();
     await expect(page.locator('#connection-status')).toContainText('Arena \u00b7 Connected');
     await expect(page.locator('#active-count')).toHaveText('2/8 players');
     await expect.poll(() => snapshot?.players.filter(p => !p.bot && p.connected).length).toBe(2);

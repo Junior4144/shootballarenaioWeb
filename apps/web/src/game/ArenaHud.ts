@@ -1,7 +1,7 @@
 import { NETWORK, type Snapshot } from '@shootball/protocol';
 import { CONFIG, GAME } from '@shootball/shared';
 import { WEAPONS, rankPlayers } from '@shootball/shared/content';
-export const actorName = (id: string, localId?: string) => id === localId ? 'YOU' : id.startsWith('bot:') ? 'BOT ' + id.slice(4) : 'GUEST ' + id.slice(0, 4);
+export const actorName = (id: string, localId?: string, identities?: Snapshot['identities']) => id === localId ? (identities?.[id]?.kind === 'account' ? 'YOU / ACCOUNT' : 'YOU') : id.startsWith('bot:') ? 'BOT ' + id.slice(4) : identities?.[id]?.kind === 'account' ? 'ACCOUNT / ' + identities[id].displayName : 'GUEST ' + id.slice(0, 4);
 const element = (id: string) => document.getElementById(id)!;
 const time = (seconds: number) => `${Math.floor(Math.ceil(seconds) / 60)}:${String(Math.ceil(seconds) % 60).padStart(2, '0')}`;
 export class ArenaHud {
@@ -23,12 +23,12 @@ export class ArenaHud {
     element('round-target').textContent = target;
     element('active-count').textContent = `${humans.filter(p => p.connected).length}/${NETWORK.maxPlayers} players`;
     const rows = rankPlayers(humans, state.match.winCondition);
-    const signature = JSON.stringify([localId, rows.map(p => [p.id, p.points, p.kills, p.botKills, p.connected, p.health > 0])]);
+    const signature = JSON.stringify([localId, state.identities, rows.map(p => [p.id, p.points, p.kills, p.botKills, p.connected, p.health > 0])]);
     if (signature !== this.signature) {
       this.signature = signature;
       element('scoreboard').replaceChildren(...rows.map(p => {
         const row = document.createElement('tr'); if (p.id === localId) row.className = 'local';
-        for (const text of [actorName(p.id, localId) + (!p.connected ? ' (away)' : p.health <= 0 ? ' (down)' : ''), String(p.points), String(p.kills), String(p.botKills)]) {
+        for (const text of [actorName(p.id, localId, state.identities) + (!p.connected ? ' (away)' : p.health <= 0 ? ' (down)' : ''), String(p.points), String(p.kills), String(p.botKills)]) {
           const cell = document.createElement('td'); cell.textContent = text; row.append(cell);
         }
         return row;
@@ -58,19 +58,19 @@ export class ArenaHud {
     const results = element('results'); results.hidden = state.match.phase !== 'results';
     if (!results.hidden) {
       element('rematch').textContent = `Next round in ${Math.ceil(state.match.remaining)}s`;
-      const signature = JSON.stringify([state.match.round, state.match.standings, localId]);
+      const signature = JSON.stringify([state.match.round, state.match.standings, localId, state.identities]);
       if (this.resultSignature !== signature) {
         this.resultSignature = signature;
         const localWinner = !!localId && state.match.winnerIds.includes(localId);
         results.dataset.outcome = !state.match.winnerIds.length ? 'empty' : state.match.winnerIds.length > 1 ? 'draw' : localWinner ? 'win' : 'loss';
-        element('winner').textContent = !state.match.winnerIds.length ? 'No winner this round' : state.match.winnerIds.length > 1 ? 'Draw!' : localWinner ? 'VICTORY!' : actorName(state.match.winnerIds[0], localId) + ' wins!';
+        element('winner').textContent = !state.match.winnerIds.length ? 'No winner this round' : state.match.winnerIds.length > 1 ? 'Draw!' : localWinner ? 'VICTORY!' : actorName(state.match.winnerIds[0], localId, state.identities) + ' wins!';
         element('final-standings').replaceChildren(...state.match.standings.map((p, i) => {
           const item = document.createElement('li');
           if (p.id === localId) item.className = 'local';
           const rank = document.createElement('span'), name = document.createElement('strong');
           const points = document.createElement('span'), kills = document.createElement('span');
           rank.className = 'result-rank'; rank.textContent = String(i + 1).padStart(2, '0');
-          name.className = 'result-name'; name.textContent = actorName(p.id, localId);
+          name.className = 'result-name'; name.textContent = actorName(p.id, localId, state.identities);
           points.className = 'result-points'; points.textContent = `${p.points} PTS`;
           kills.className = 'result-kills'; kills.textContent = `${p.kills} PvP / ${p.botKills} bots`;
           item.append(rank, name, points, kills); return item;
@@ -82,8 +82,8 @@ export class ArenaHud {
       const actor = document.createElement('span'), target = document.createElement('span');
       actor.className = e.actorId === localId ? 'feed-local' : 'feed-actor';
       target.className = e.targetId === localId ? 'feed-local' : 'feed-target';
-      actor.textContent = actorName(e.actorId, localId);
-      target.textContent = actorName(e.targetId!, localId);
+      actor.textContent = actorName(e.actorId, localId, state.identities);
+      target.textContent = actorName(e.targetId!, localId, state.identities);
       item.append(actor, ' eliminated ', target); return item;
     }));
   }

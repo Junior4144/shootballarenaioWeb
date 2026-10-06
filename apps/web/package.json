@@ -15,7 +15,8 @@
     "@colyseus/sdk": "^0.18.5",
     "@shootball/protocol": "^0.0.0",
     "@shootball/shared": "0.0.0",
-    "phaser": "^3.90.0"
+    "phaser": "^3.90.0",
+    "@supabase/supabase-js": "2.117.2"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

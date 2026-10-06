@@ -14,6 +14,7 @@ for (const width of [1366, 390]) {
         contentType: 'application/javascript', body: "import '/src/style.css';",
       }));
       await page.goto('/');
+      await page.evaluate(() => { document.getElementById('account-screen')!.hidden = true; document.getElementById('arena-app')!.hidden = false; });
       const state = emptySnapshot();
       state.players = [Object.assign(createActor('local'), { health: 100 })];
       state.match.phase = 'results';

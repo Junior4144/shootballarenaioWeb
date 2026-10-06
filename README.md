@@ -1,8 +1,14 @@
 ﻿# ShootBall Arena
 
 A playable points-based PvP arena game built with TypeScript, Vite, Phaser
-and an authoritative Node.js/Colyseus server. Up to eight anonymous guests fight in
-an arena with server-controlled bots, cover and collectible upgrades. No accounts, credentials, database or cloud services are needed.
+and an authoritative Node.js/Colyseus server. Up to eight guests or registered
+players fight in an arena with server-controlled bots, cover and upgrades.
+Choose email/password, Google sign-in, or **Play as Guest** on the pixel entry
+screen. Guest play needs no account or cloud credentials. Restored accounts wait
+for **Play**; the app never automatically joins a match on entry.
+
+Account configuration, Google redirects, migrations and verification are covered
+in the [account setup guide](docs/auth-setup.md) and [auth specification](docs/specs/auth-database.md).
 
 ## Run locally
 
@@ -20,7 +26,8 @@ npm run dev
 
 This starts both the game server at `ws://127.0.0.1:2567` and Vite, normally at
 `http://127.0.0.1:5173`. Open **the URL Vite prints** in two separate tabs/windows
-to play together. If 5173 is occupied, Vite chooses the next available port.
+and choose how to play. If 5173 is occupied, Vite chooses the next available port;
+account callbacks require that exact origin in the hosted redirect allowlist.
 On Windows PowerShell, use `npm.cmd` if execution policy blocks `npm.ps1`.
 Stop both processes with Ctrl+C. After updating the game/protocol, restart both
 apps and refresh open tabs so client and server versions match.
@@ -56,7 +63,7 @@ npm run dev:web
 
 Development runs directly on Node.js/npm. No Docker, Compose, dev container or
 local Supabase stack is required. Docker remains reserved for future production
-packaging. Future persistence must use hosted project `lkgxpgcmspxekggndzih`.
+packaging. Accounts and profiles use hosted project `lkgxpgcmspxekggndzih`.
 
 Optional configuration:
 - Server: `GAME_SERVER_PORT` (default 2567). The local server binds to 127.0.0.1.
@@ -66,6 +73,26 @@ Optional configuration:
   with `VITE_GAME_SERVER_URL=ws://127.0.0.1:2568` in the frontend env file.
 - All `VITE_*` values are public. Never place private credentials there.
   No env file is required with default ports.
+- For accounts, configure the public Supabase URL/key in root `.env` and
+  `apps/web/.env.local` using the committed examples. Root env is loaded by
+  `dev:server` and `start:server`; browser variables use `VITE_`, not `NEXT_PUBLIC_`.
+  No secret/service-role key is needed by the game server or frontend.
+
+## Accounts
+
+Email/password signup signs users in immediately without email verification;
+login includes password reset. Google uses Supabase OAuth with PKCE. Signed-in players can edit their
+public display name, Play, or Sign out. **Accounts / Exit** leaves gameplay and
+returns to the entry screen; **Leave Match** retains the short reconnect window.
+Account changes/signout clear resume tokens, and the server verifies registered
+access tokens on join, refresh and reconnect. Account UUIDs, email addresses and
+tokens never appear in gameplay snapshots or leaderboards.
+
+Only an owner ID and display name are persisted, with ownership-based RLS.
+Match stats, history and competitive progression are not saved. Guest sessions
+remain temporary and never create a Supabase Auth user. See the
+[setup guide](docs/auth-setup.md) for the verified hosted configuration and
+remaining real-Google-login, inbox-delivery and production-URL checks.
 
 ## Game loop and controls
 
@@ -113,8 +140,9 @@ reservation. Shots continue. Reconnect/refresh preserves health, points, kills,
 loadout and cooldowns. Dead disconnected players wait to reconnect before spawning.
 **Leave** pauses transport and retains the tab-local resume token; **Join / Retry**
 resumes within the reservation. Expired tokens/server restarts show a retryable
-error. New tabs are new anonymous identities; preventing identity evasion requires
-future authentication. All state is in memory. Focus loss clears controls; input
+error. New guest tabs are new temporary identities; account joins use verified
+Supabase identity. Account reservations also end at access-token expiry; retry
+joins with a refreshed token. Gameplay state is in memory. Focus loss clears controls; input
 expires after 250 ms. Keyboard and mouse required.
 
 ## Verify and build
@@ -157,6 +185,14 @@ Verification on 2026-10-05:
   layout, aim/focus recovery, sound quality and overall balance remain manual checks.
   See [verification log](docs/integrationspec/verification.md) for exact coverage.
 
+Account verification on 2026-10-06: typechecks and production builds pass;
+automated Auth UI and real-WebSocket security tests supplement the gameplay
+suite. Live hosted tests passed signup without email verification, password login,
+profile isolation, token verification/refresh, snapshot privacy and logout
+against both source and built servers. Disposable users were removed. Google
+launch/callback and local redirect acceptance are verified; real consent and
+SMTP delivery remain manual checks. Details: [account setup](docs/auth-setup.md).
+
 For a built-server smoke, start it on a spare port and point the default-content
 network test at it. PowerShell, in separate terminals:
 
@@ -187,8 +223,8 @@ the [spec index](docs/specs/README.md) describes core ideas. The
 [integration tracker](docs/integrationspec/README.md) records workstream dependencies,
 status, concrete rules and acceptance evidence. GL-01 was specified before implementation. The prior Unity project is reference only.
 
-Deferred: additional maps/weapons, Supabase
-auth/persistence, persistent leaderboards, cosmetics, ads, custom matchmaking, prediction,
-Redis and distributed infrastructure. Existing Supabase packages are not used
-by gameplay. No cloud changes or deployment were performed. Vercel remains the
+Deferred: additional maps/weapons, persistent stats/history/leaderboards,
+cosmetics, ads, custom matchmaking, prediction, Redis and distributed infrastructure.
+Supabase Auth and minimal profiles are implemented; the profile migration is
+applied to the scoped hosted project. No game/frontend deployment was performed. Vercel remains the
 planned frontend host; the game server will deploy separately to Compute Engine.

@@ -136,7 +136,7 @@ export const CONFIG = {
   network: {
     maxPlayers: 8, tickMs: 1000 / 60, snapshotMs: 50, inputMs: 1000 / 30,
     inputTimeoutMs: 250, reconnectSeconds: 10,
-    maxMessagesPerSecond: 60, roomMaxMessagesPerSecond: 120, maxPayload: 1024,
+    maxMessagesPerSecond: 60, roomMaxMessagesPerSecond: 120, maxPayload: 18432,
     pingInterval: 1000, pingMaxRetries: 2,
     interpolationDelayMs: 100, interpolationMaxGapMs: 250, interpolationMaxSnapshots: 12,
     reconnectMinDelayMs: 250, reconnectMaxDelayMs: 1000, reconnectMaxRetries: 40,

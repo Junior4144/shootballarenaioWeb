@@ -10,10 +10,10 @@ Root npm workspaces install shared dependencies. Scripts start Vite and the Coly
 - Use Node.js 22.12+ or a supported newer LTS and npm; this slice is verified with Node 24.
 - Run `npm install` initially (`npm ci` from the committed lockfile), `npm run dev`, `npm run typecheck`, `npm test`, and `npm run build` at repository root.
 - Development runs directly on Node.js/npm. Docker, Compose, dev containers, and a local Supabase stack are not development prerequisites.
-- Use hosted Supabase project `lkgxpgcmspxekggndzih` when backend integration is implemented. The CLI is linked and SQL access is verified; the frontend prototype does not yet use it.
+- Use hosted Supabase project `lkgxpgcmspxekggndzih` for accounts and profiles. The frontend and game server integrate with Auth; the profile migration is applied. See [account setup](../auth-setup.md) for public environment variables, callback URLs and production checks.
 - Reserve Docker for the future production game-server image and release validation. Docker Engine availability does not imply that an application image or deployment pipeline already exists.
 - Planned static host: Vercel, project root `apps/web`, Vite framework preset, output `dist`. Include workspace files outside the project root so `packages/shared` resolves; install from the repository workspace root.
-- No deployment is performed. Optional public `VITE_GAME_SERVER_URL` selects the server; `GAME_SERVER_PORT` defaults to 2567. No credentials are required. All `VITE_*` variables are public, never secrets.
+- No deployment is performed. Optional public `VITE_GAME_SERVER_URL` selects the server; `GAME_SERVER_PORT` defaults to 2567. Guest play needs no credentials. Accounts use the Supabase URL/publishable key on both frontend and server. All `VITE_*` variables are public, never secrets.
 - Future game server deploys separately to Compute Engine; never run it in Vercel functions.
 
 ## Initial MVP requirements

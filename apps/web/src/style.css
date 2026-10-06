@@ -1,5 +1,39 @@
 :root { --pixel-panel: #11232e; --pixel-title: #203b48; --pixel-border: #537985; --pixel-accent: #6eaaa9; --pixel-panel-bevel: inset 2px 0 #213d49, inset -2px -2px #08141d; --pixel-title-bevel: inset 2px 2px #345766, inset -2px -2px #10202c; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; color: #b4d5e7; background: #08131b; font-synthesis: none; color-scheme: dark; }
 * { box-sizing: border-box; }
+#account-screen { height: 100dvh; overflow: auto; padding: 24px 16px; display: grid; align-items: center; justify-items: center; }
+.entry-panel { width: min(100%, 440px); padding: 22px; border: 2px solid var(--pixel-border); background: var(--pixel-panel); box-shadow: var(--pixel-panel-bevel), 6px 6px 0 #060e14; }
+.entry-panel h1 { text-align: center; font-size: 22px; padding: 14px 6px; margin: 12px 0; }
+.entry-emblem { width: 64px; height: 64px; margin: auto; }
+.entry-emblem svg { width: 100%; shape-rendering: crispEdges; }
+.entry-tagline { text-align: center; font-size: 13px; line-height: 1.6; }
+.entry-panel form, #signed-in, #signed-out { display: grid; gap: 12px; }
+.entry-panel label { display: grid; gap: 7px; font-size: 13px; }
+.entry-panel input { min-width: 0; width: 100%; background: #0b1720; color: #e0eef0; font: inherit; padding: 11px; border: 2px solid #537985; border-radius: 0; box-shadow: inset 2px 2px #060e14; }
+.entry-panel input:focus-visible { outline: 2px solid #69e2ce; outline-offset: 2px; }
+.entry-panel button { font-size: 13px; text-transform: uppercase; }
+.auth-segments { display: grid; grid-template-columns: 1fr 1fr; padding: 4px; gap: 3px; border: 2px solid #537985; background: #081820; box-shadow: inset 2px 2px #060e14, 2px 2px 0 #060e14; margin: 6px 0 8px; }
+.entry-panel .auth-segments button { min-width: 0; min-height: 42px; padding: 10px 4px; border: 2px solid transparent; background: transparent; color: #9bbacb; box-shadow: none; font-weight: bold; font-size: clamp(11px, 3vw, 13px); }
+.entry-panel .auth-segments button[aria-selected="true"] { color: #e1fff7; background: #285b56; border-color: #7be4d1; box-shadow: inset 2px 2px #41877c, inset -2px -2px #163b3b; }
+.entry-panel .auth-segments button:focus-visible { outline-offset: -5px; }
+.entry-panel label { text-transform: uppercase; letter-spacing: .06em; font-size: 11px; }
+.entry-panel label input { text-transform: none; letter-spacing: normal; font-size: 13px; }
+.entry-panel input[aria-invalid="true"] { border-color: #f1a093; }
+.entry-links:has(button:not([hidden])) { margin-top: -4px; }
+.entry-links:not(:has(button:not([hidden]))) { display: none; }
+.auth-divider { display: flex; align-items: center; gap: 14px; color: #8eb4c4; font-size: 10px; letter-spacing: .12em; padding: 4px 6px; }
+.auth-divider::before, .auth-divider::after { content: ''; height: 1px; background: #537985; flex: 1; }
+#google-login { display: flex; justify-content: center; align-items: center; gap: 12px; background: #18313e; border-color: #7299a8; box-shadow: inset 2px 2px #294b58, inset -2px -2px #0b202c; }
+.google-icon { width: 18px; height: 18px; flex: none; }
+.entry-links { display: flex; flex-wrap: wrap; gap: 8px; }
+.entry-links button { flex: 1; font-size: 11px; padding: 8px; }
+.entry-panel .guest-button { background: #203b48; border-color: #7b98a8; }
+.entry-panel .note { line-height: 1.6; margin: 0; }
+#auth-message { font-size: 13px; line-height: 1.6; color: #cdffe9; overflow-wrap: anywhere; }
+#auth-message:empty { display: none; }
+#auth-message.auth-error { color: #f1a093; }
+#account-identity { color: #69e2ce; overflow-wrap: anywhere; }
+.identity-bar { display: grid; gap: 6px; margin-bottom: 10px; font-size: 11px; overflow-wrap: anywhere; }
+.identity-bar button { font-size: 10px; padding: 6px; }
 body { margin: 0; min-width: 320px; background: #0b1720; height: 100dvh; overflow: hidden; }
 main { --help-width: 190px; --sidebar-width: clamp(190px, 16vw, 220px); width: min(100%, calc(135dvh + var(--sidebar-width) + var(--help-width) - 3px)); height: 100%; margin: 0 auto; display: grid; place-items: center; }
 .play-layout { display: grid; grid-template-columns: var(--help-width) minmax(0, 1fr) var(--sidebar-width); width: 100%; height: min(100%, calc((100vw - var(--sidebar-width) - var(--help-width) - 8px) / 1.35 + 8px)); gap: 0; padding: 4px; background: #0b1720; }
