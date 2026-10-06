@@ -16,6 +16,8 @@ status and evidence for changes spanning multiple systems.
 
 ## Active integration
 
+[ADM-01: Admin panel, analytics and deployment control](admin-control-plane.md): proposed specification. Covers sidebar features, master configuration revisions, map presets, accounts/guest metrics, costs, architecture health, audited server operations and GCP release gates. All workstreams are planned; no infrastructure or admin implementation is implied.
+
 [GL-01: Points-based arena loop](game-loop.md)
 
 | Workstream | Dependencies | Status | Primary files |

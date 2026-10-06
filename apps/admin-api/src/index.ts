@@ -1,0 +1,17 @@
+import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { parseManifest } from '@shootball/admin-contracts';
+import { FixtureInventory, GcpInventory, googleComputeGet } from './inventory';
+import { assertLocalRuntime, createAdminServer } from './server';
+assertLocalRuntime(process.env);
+const port = Number(process.env.ADMIN_API_PORT ?? 2570);
+if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Invalid ADMIN_API_PORT');
+const provider = process.env.ADMIN_INVENTORY_PROVIDER ?? 'fixture';
+if (!['fixture', 'gcp'].includes(provider)) throw new Error('Invalid ADMIN_INVENTORY_PROVIDER');
+const manifestPath = process.env.ADMIN_MANIFEST_PATH ?? fileURLToPath(new URL('../../../deploy/environments.json', import.meta.url));
+const manifest = parseManifest(JSON.parse(await readFile(manifestPath, 'utf8')));
+const inventory = provider === 'gcp' ? new GcpInventory(manifest, googleComputeGet()) : new FixtureInventory();
+const server = createAdminServer({ token: process.env.ADMIN_LOCAL_TOKEN!, inventory, allowedHosts: [`127.0.0.1:${port}`], allowedOrigins: ['http://127.0.0.1:5174', 'http://127.0.0.1:5191'] });
+server.requestTimeout = 15_000; server.headersTimeout = 10_000;
+server.listen(port, '127.0.0.1', () => console.log(`Admin API: http://127.0.0.1:${port} • ${provider} inventory • read-only local development`));
+for (const signal of ['SIGINT', 'SIGTERM'] as const) process.once(signal, () => { server.close(); server.closeIdleConnections(); });

@@ -12,6 +12,11 @@ in the [account setup guide](docs/auth-setup.md) and [auth specification](docs/s
 
 ## Run locally
 
+Admin control plane development: `npm run dev:admin` starts the separate local,
+read-only dashboard at `http://127.0.0.1:5174`. Paste the local session token
+printed in the terminal. See the [admin development guide](docs/admin-development.md)
+for the GCP inventory adapter, tests and remaining hosted release gates.
+
 Game tuning lives in [packages/shared/src/config.ts](packages/shared/src/config.ts):
 player/NPC health, weapons, map layout, pickups, points or kills to win, and system
 timing. See the [configuration guide](docs/game-config.md) for units and how to

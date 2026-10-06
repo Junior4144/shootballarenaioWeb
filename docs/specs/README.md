@@ -9,6 +9,7 @@
 - [Networking](networking.md)
 - [Auth and database](auth-database.md)
 - [Deployment](deployment.md)
+- [Admin panel and GCP operations plan](../integrationspec/admin-control-plane.md) (proposed; not implemented)
 - [Art direction](art-direction.md)
 
 These specs describe core direction. Use [docs/integrationspec](../integrationspec/README.md) for concrete multi-system work plans, dependencies, acceptance checks, implementation status and verification evidence. Update the integration spec before implementing a major change and keep core specs aligned with actual behavior.

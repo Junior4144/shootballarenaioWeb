@@ -10,14 +10,16 @@
     "node": ">=22.12.0"
   },
   "scripts": {
+    "dev:admin": "node scripts/dev-admin.mjs",
+    "test:admin": "npm run test --workspace @shootball/admin-api && npm run test:e2e --workspace @shootball/admin",
     "dev": "concurrently --kill-others --names server,web \"npm run dev:server\" \"npm run dev:web\"",
     "dev:web": "npm run dev --workspace @shootball/web",
     "dev:server": "npm run dev --workspace @shootball/game-server",
     "start:server": "npm run start --workspace @shootball/game-server",
-    "build": "npm run build --workspace @shootball/game-server && npm run build --workspace @shootball/web",
+    "build": "npm run build --workspace @shootball/game-server && npm run build --workspace @shootball/web && npm run build --workspace @shootball/admin-api && npm run build --workspace @shootball/admin",
     "preview": "npm run preview --workspace @shootball/web",
-    "typecheck": "npm run typecheck --workspace @shootball/web && npm run typecheck --workspace @shootball/game-server",
-    "test": "npm run test --workspace @shootball/web && npm run test --workspace @shootball/game-server",
+    "typecheck": "npm run typecheck --workspace @shootball/web && npm run typecheck --workspace @shootball/game-server && npm run typecheck --workspace @shootball/admin-api && npm run typecheck --workspace @shootball/admin",
+    "test": "npm run test --workspace @shootball/web && npm run test --workspace @shootball/game-server && npm run test --workspace @shootball/admin-api",
     "background:generate": "node scripts/generate-background.mjs"
   },
   "dependencies": {
