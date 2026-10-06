@@ -35,10 +35,7 @@ export class PracticeConnection {
       const accessToken = this.identity.kind === 'account' ? await this.identity.getToken() : undefined;
       if (attempt !== this.attempt) return;
       const token = this.readToken();
-      const pending = token
-        ? this.client.reconnect(token)
-        : this.client.joinOrCreate(ROOM_NAME, { version: VERSION, mode: this.identity.kind, ...(accessToken ? { accessToken } : {}) });
-      const room = await new Promise<Room>((resolve, reject) => {
+      const waitForRoom = (pending: Promise<Room>) => new Promise<Room>((resolve, reject) => {
         let expired = false;
         const timer = setTimeout(() => { expired = true; reject(new Error('Join timed out')); }, 15000);
         pending.then(room => {
@@ -47,6 +44,20 @@ export class PracticeConnection {
           else resolve(room);
         }, error => { clearTimeout(timer); reject(error); });
       });
+      const joinFresh = () => waitForRoom(this.client.joinOrCreate(ROOM_NAME, { version: VERSION, mode: this.identity.kind, ...(accessToken ? { accessToken } : {}) }));
+      let room: Room;
+      if (token) {
+        try { room = await waitForRoom(this.client.reconnect(token)); }
+        catch (error) {
+          if (attempt !== this.attempt) return;
+          // A guest reservation dies with its room (including server restarts).
+          // Recover once with a new guest, never downgrade account credentials.
+          if (this.identity.kind !== 'guest') throw error;
+          this.saveToken();
+          this.setState('connecting', 'Previous guest session ended. Joining a new arena...');
+          room = await joinFresh();
+        }
+      } else room = await joinFresh();
       if (attempt !== this.attempt) { void room.leave(); return; }
       this.room = room;
       this.sequence = 0;

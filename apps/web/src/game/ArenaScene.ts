@@ -30,7 +30,8 @@ export class ArenaScene extends Phaser.Scene {
   private pickupLabels = new Map<number, Phaser.GameObjects.Text>();
   private cameraLife = '';
 
-  constructor(private identity: PlayIdentity = { kind: 'guest' }) { super('arena'); }
+  private revealed = false;
+  constructor(private identity: PlayIdentity = { kind: 'guest' }, private onReady: () => void = () => {}) { super('arena'); }
 
   create(): void {
     this.createTextures();
@@ -91,6 +92,7 @@ export class ArenaScene extends Phaser.Scene {
       status.textContent = connection.state === 'connected'
         ? 'Arena \u00b7 Connected'
         : connection.message;
+      if (['error', 'disconnected'].includes(connection.state)) this.onReady();
       join.hidden = !['error', 'disconnected'].includes(connection.state);
       leave.hidden = ['error', 'disconnected'].includes(connection.state);
     }, storage, this.identity);
@@ -144,6 +146,10 @@ export class ArenaScene extends Phaser.Scene {
     if (this.connection.state !== 'connected' || !this.focused) { this.fireQueued = false; this.radarQueued = false; }
     this.world = this.snapshots.sample(performance.now()) ?? this.world;
     this.syncVisuals(delta);
+    if (!this.revealed && this.world.players.some(player => player.id === this.connection.sessionId)) {
+      this.revealed = true;
+      this.game.events.once(Phaser.Core.Events.POST_RENDER, this.onReady);
+    }
   }
 
   private syncVisuals(delta = 0): void {

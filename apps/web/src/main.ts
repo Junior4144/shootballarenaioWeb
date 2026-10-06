@@ -2,7 +2,6 @@ import Phaser from 'phaser';
 import { GAME } from '@shootball/shared';
 import { ArenaScene } from './game/ArenaScene';
 import { attachGameplayHeader } from './game/GameplayHeader';
-import './style.css';
 import { AccountScreen } from './auth/AccountScreen';
 import { attachHoverAudio } from './auth/hoverAudio';
 import type { PlayIdentity } from './network/PracticeConnection';
@@ -31,6 +30,8 @@ function stop(): void {
 }
 function play(identity: PlayIdentity): void {
   if (game) return;
+  document.getElementById('game-loading')!.hidden = false;
+  document.getElementById('game-loading-message')!.textContent = 'Entering the arena...';
   screen.hidden = true; arena.hidden = false;
   document.getElementById('playing-identity')!.textContent = identity.kind === 'guest' ? 'GUEST / Temporary' : document.getElementById('account-identity')!.textContent;
   const label = identity.kind === 'guest' ? 'GUEST' : (document.getElementById('display-name') as HTMLInputElement).value;
@@ -38,7 +39,10 @@ function play(identity: PlayIdentity): void {
   document.getElementById('account-toggle')!.title = identity.kind === 'guest' ? 'Guest account options' : `Account: ${label}`;
   document.getElementById('return-accounts')!.textContent = identity.kind === 'guest' ? 'Log in' : 'Manage account';
   document.getElementById('gameplay-signup')!.hidden = identity.kind !== 'guest';
-  scene = new ArenaScene(identity);
+  const nextScene = new ArenaScene(identity, () => {
+    if (scene === nextScene) document.getElementById('game-loading')!.hidden = true;
+  });
+  scene = nextScene;
   game = new Phaser.Game({
     type: Phaser.AUTO,
     parent: 'game',
@@ -54,3 +58,4 @@ function play(identity: PlayIdentity): void {
 const accounts = new AccountScreen(play, stop, () => { void scene?.connection?.refreshAccount(); });
 document.getElementById('return-accounts')!.onclick = () => accounts.open('login');
 document.getElementById('gameplay-signup')!.onclick = () => accounts.open('signup');
+document.getElementById('cancel-game-loading')!.onclick = () => accounts.open('login');

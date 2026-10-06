@@ -35,3 +35,10 @@ See [accounts](auth-database.md) for token lifetime and privacy boundaries.
 
 Contracts and acceptance: [GL-01](../integrationspec/game-loop.md).
 Verification evidence: [log](../integrationspec/verification.md).
+
+If an explicitly chosen guest session cannot resume (for example, after a server
+restart or room disposal), discard its stale token and attempt one fresh guest
+join within the same Play action. Both requests have bounded timeouts; a failed
+fresh join returns an actionable error with Join / Retry. Cancellation or an
+identity change prevents the fallback. Account reconnection failures never use
+this guest fallback.

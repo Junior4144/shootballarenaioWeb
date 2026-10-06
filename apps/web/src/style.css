@@ -1,5 +1,8 @@
 :root { --pixel-panel: #11232e; --pixel-title: #203b48; --pixel-border: #537985; --pixel-accent: #6eaaa9; --pixel-panel-bevel: inset 2px 0 #213d49, inset -2px -2px #08141d; --pixel-title-bevel: inset 2px 2px #345766, inset -2px -2px #10202c; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; color: #b4d5e7; background: #08131b; font-synthesis: none; color-scheme: dark; }
 * { box-sizing: border-box; }
+.game-loading { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; background: #0b1720; padding: 24px; }
+.game-loading > div { width: min(100%, 360px); padding: 24px; text-align: center; }
+.game-loading p { color: #69e2ce; line-height: 1.6; margin: 0 0 20px; }
 #account-screen { height: 100dvh; overflow: auto; padding: 24px 16px; display: grid; align-items: center; justify-items: center; }
 .entry-panel { width: min(100%, 440px); padding: 22px; border: 2px solid var(--pixel-border); background: var(--pixel-panel); box-shadow: var(--pixel-panel-bevel), 6px 6px 0 #060e14; }
 .entry-panel h1 { text-align: center; font-size: 22px; padding: 14px 6px; margin: 12px 0; }

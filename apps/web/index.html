@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#0b1720" />
     <title>ShootBall Arena - PvP</title>
+    <style>html,body{margin:0;background:#0b1720;color:#b4d5e7}[hidden]{display:none!important}</style>
+    <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
     <section id="account-screen" aria-label="Account access">
@@ -13,7 +15,7 @@
         <h1 class="pixel-title">SHOOTBALL ARENA</h1>
         <p class="entry-tagline">Choose your identity. Enter the arena.</p>
         <p id="auth-loading" role="status">Restoring your session…</p>
-        <div id="signed-out">
+        <div id="signed-out" hidden>
           <div id="auth-tabs" class="auth-segments" role="tablist" aria-label="Account access">
             <button id="signup-tab" type="button" role="tab" aria-selected="false" aria-controls="account-form" tabindex="-1">Create account</button>
             <button id="login-tab" type="button" role="tab" aria-selected="true" aria-controls="account-form">Log in</button>
@@ -43,6 +45,7 @@
       </div>
     </section>
     <main id="arena-app" aria-label="ShootBall Arena" hidden>
+      <div id="game-loading" class="game-loading"><div class="pixel-panel"><p id="game-loading-message" role="status">Entering the arena...</p><button id="cancel-game-loading" type="button">Back to accounts</button></div></div>
       <header class="game-header" aria-label="Game toolbar">
         <div class="game-brand"><svg viewBox="0 0 32 32" aria-hidden="true"><path fill="#69d8c6" d="M8 4h16v4h4v16h-4v4H8v-4H4V8h4z"/><path fill="#b4f3e4" d="M8 8h8v4H8z"/><path fill="#ccdce0" d="M16 12h16v8H16z"/><path fill="#526979" d="M28 14h4v4h-4z"/></svg><span>SHOOTBALL ARENA</span></div>
         <div class="header-match" aria-label="Match status"><div class="mode">FREE-FOR-ALL <span id="match-clock" role="timer">0:00</span></div><span id="match-target">Target: 1000 pts</span></div>

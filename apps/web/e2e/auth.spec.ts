@@ -288,3 +288,135 @@ test('header dropdowns support keyboard, outside dismissal and working settings'
   await page.locator('.game-brand').click();
   await expect(page.locator('#account-menu')).toBeHidden();
 });
+
+test('initial HTML stays styled and hides account forms until JavaScript is ready', async ({ page }) => {
+  let release!: () => void;
+  const blocked = new Promise<void>(resolve => { release = resolve; });
+  await page.route('**/src/main.ts', async route => { await blocked; await route.continue(); });
+  await page.goto('/', { waitUntil: 'commit' });
+  try {
+    await expect(page.locator('#auth-loading')).toBeVisible();
+    await expect(page.locator('#signed-out')).toBeHidden();
+    await expect(page.locator('#signed-in')).toBeHidden();
+    await expect(page.locator('#arena-app')).toBeHidden();
+    await expect(page.locator('.entry-panel')).toHaveCSS('border-top-width', '2px');
+    await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(11, 23, 32)');
+  } finally { release(); }
+  await expect(page.locator('#guest-play')).toBeEnabled();
+});
+
+test('restored session never flashes the signed-out form while the profile loads', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(value => localStorage.setItem('sb-lkgxpgcmspxekggndzih-auth-token', JSON.stringify(value)), session());
+  let release!: () => void;
+  const blocked = new Promise<void>(resolve => { release = resolve; });
+  await page.route(`${project}/rest/v1/profiles**`, async route => {
+    await blocked;
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ display_name: 'Pixel Ace' }) });
+  });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  try {
+    await expect(page.locator('#auth-loading')).toBeVisible();
+    await expect(page.locator('#signed-out')).toBeHidden();
+    await expect(page.locator('#signed-in')).toBeHidden();
+  } finally { release(); }
+  await expect(page.locator('#account-play')).toBeEnabled();
+  await expect(page.locator('#auth-loading')).toBeHidden();
+});
+
+test('arena loading covers setup until a rendered snapshot and supports returning to accounts', async ({ page }) => {
+  await page.goto('/'); await page.locator('#guest-play').click();
+  await expect(page.locator('#game-loading')).toBeHidden();
+  await expect(page.locator('#scoreboard tr.local')).toContainText('YOU');
+  await page.locator('#account-toggle').click(); await page.locator('#return-accounts').click();
+  await expect(page.locator('#account-screen')).toBeVisible();
+  await expect(page.locator('canvas')).toHaveCount(0);
+  await page.locator('#guest-play').click();
+  await expect(page.locator('#game-loading')).toBeHidden();
+  await expect(page.locator('#scoreboard tr.local')).toContainText('YOU');
+});
+
+test('slow arena entry shows a cancellable loading screen without flashing the match', async ({ page }) => {
+  let release!: () => void;
+  const blocked = new Promise<void>(resolve => { release = resolve; });
+  await page.route('**/matchmake/**', async route => { await blocked; await route.continue(); });
+  await page.goto('/'); await page.locator('#guest-play').click();
+  try {
+    await expect(page.locator('#game-loading')).toBeVisible();
+    await expect(page.locator('#game-loading')).toHaveCSS('background-color', 'rgb(11, 23, 32)');
+    await page.locator('#cancel-game-loading').click();
+    await expect(page.locator('#arena-app')).toBeHidden();
+    await expect(page.locator('#guest-play')).toBeEnabled();
+  } finally { release(); }
+  await expect(page.locator('canvas')).toHaveCount(0);
+});
+
+for (const stale of ['disposed-room:old-token', 'malformed-token']) test(`guest automatically joins fresh after stale resume: ${stale}`, async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('#guest-play')).toBeEnabled();
+  const key = `shootball:v${VERSION}:ws://127.0.0.1:2569:guest`;
+  await page.evaluate(({ key, stale }) => sessionStorage.setItem(key, stale), { key, stale });
+  let freshJoins = 0;
+  page.on('request', request => { if (request.url().includes('/joinOrCreate/')) freshJoins++; });
+  await page.locator('#guest-play').click();
+  await expect(page.locator('#game-loading')).toBeHidden();
+  await expect(page.locator('#connection-status')).toContainText('Connected');
+  await expect(page.locator('#scoreboard tr.local')).toContainText('YOU');
+  expect(freshJoins).toBe(1);
+  const next = await page.evaluate(key => sessionStorage.getItem(key), key);
+  expect(next).toBeTruthy(); expect(next).not.toBe(stale);
+});
+
+test('expired guest reservation in a live room falls back to one fresh guest', async ({ page }) => {
+  const observer = await new Client('ws://127.0.0.1:2569').joinOrCreate(ROOM_NAME, { version: VERSION, mode: 'guest' });
+  observer.onMessage('snapshot', () => {});
+  observer.reconnection.enabled = false;
+  try {
+    await page.goto('/'); await expect(page.locator('#guest-play')).toBeEnabled();
+    await page.evaluate(({ version, token }) => sessionStorage.setItem(`shootball:v${version}:ws://127.0.0.1:2569:guest`, token), { version: VERSION, token: `${observer.roomId}:expired-token` });
+    await page.locator('#guest-play').click();
+    await expect(page.locator('#connection-status')).toContainText('Connected');
+    await expect(page.locator('#scoreboard tr.local')).toContainText('YOU');
+  } finally { await observer.leave(); }
+});
+
+test('cancelled stale guest reconnect cannot start a fallback join', async ({ page }) => {
+  let release!: () => void;
+  const blocked = new Promise<void>(resolve => { release = resolve; });
+  await page.route('**/matchmake/reconnect/**', async route => { await blocked; await route.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ code: 4212, error: 'Room disposed' }) }); });
+  await page.goto('/'); await expect(page.locator('#guest-play')).toBeEnabled();
+  await page.evaluate(version => sessionStorage.setItem(`shootball:v${version}:ws://127.0.0.1:2569:guest`, 'disposed-room:old-token'), VERSION);
+  let freshJoins = 0;
+  page.on('request', request => { if (request.url().includes('/joinOrCreate/')) freshJoins++; });
+  await page.locator('#guest-play').click();
+  await page.locator('#cancel-game-loading').click();
+  release();
+  await expect(page.locator('#guest-play')).toBeEnabled();
+  await expect(page.locator('canvas')).toHaveCount(0);
+  expect(freshJoins).toBe(0);
+});
+
+test('failed account resume never falls back to a fresh guest', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('#email').fill('fixture@example.test'); await page.locator('#password').fill('Test-password-123');
+  await page.locator('#auth-submit').click(); await expect(page.locator('#account-play')).toBeEnabled();
+  await page.evaluate(({ version, uid }) => sessionStorage.setItem(`shootball:v${version}:ws://127.0.0.1:2569:account:${uid}`, 'disposed-room:old-token'), { version: VERSION, uid });
+  let freshJoins = 0;
+  page.on('request', request => { if (request.url().includes('/joinOrCreate/')) freshJoins++; });
+  await page.locator('#account-play').click();
+  await expect(page.locator('#connection-status')).toContainText('Account join failed');
+  expect(freshJoins).toBe(0);
+});
+
+test('unavailable server stops after one guest fallback and keeps retry accessible', async ({ page }) => {
+  await page.route('**/matchmake/**', route => route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'Server unavailable' }) }));
+  await page.goto('/'); await expect(page.locator('#guest-play')).toBeEnabled();
+  await page.evaluate(version => sessionStorage.setItem(`shootball:v${version}:ws://127.0.0.1:2569:guest`, 'disposed-room:old-token'), VERSION);
+  let freshJoins = 0;
+  page.on('request', request => { if (request.url().includes('/joinOrCreate/')) freshJoins++; });
+  await page.locator('#guest-play').click();
+  await expect(page.locator('#connection-status')).toContainText('Could not connect');
+  await expect(page.locator('#join')).toBeVisible();
+  await expect(page.locator('#game-loading')).toBeHidden();
+  expect(freshJoins).toBe(1);
+});

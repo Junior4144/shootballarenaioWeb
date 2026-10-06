@@ -215,7 +215,7 @@ export class AccountScreen {
   }
   private render(): void {
     const signed = !!this.session && !this.recovery;
-    el('signed-in').hidden = !signed; el('signed-out').hidden = signed;
+    el('signed-in').hidden = !this.ready || !signed; el('signed-out').hidden = !this.ready || signed;
     el('auth-loading').hidden = this.ready; el('account-form').hidden = !this.client;
     el('email-field').hidden = this.mode === 'recovery'; el<HTMLInputElement>('email').required = this.mode !== 'recovery';
     el('password-field').hidden = this.mode === 'reset';
