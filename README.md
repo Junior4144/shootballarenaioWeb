@@ -1,8 +1,8 @@
 ﻿# ShootBall Arena
 
-A playable multiplayer target-practice game built with TypeScript, Vite, Phaser
-and an authoritative Node.js/Colyseus server. Up to eight anonymous guests share
-an arena. No accounts, credentials, database or cloud services are needed.
+A playable points-based PvP arena game built with TypeScript, Vite, Phaser
+and an authoritative Node.js/Colyseus server. Up to eight anonymous guests fight in
+an arena with server-controlled bots, cover and collectible upgrades. No accounts, credentials, database or cloud services are needed.
 
 ## Run locally
 
@@ -17,7 +17,8 @@ This starts both the game server at `ws://127.0.0.1:2567` and Vite, normally at
 `http://127.0.0.1:5173`. Open **the URL Vite prints** in two separate tabs/windows
 to play together. If 5173 is occupied, Vite chooses the next available port.
 On Windows PowerShell, use `npm.cmd` if execution policy blocks `npm.ps1`.
-Stop both processes with Ctrl+C.
+Stop both processes with Ctrl+C. After updating the game/protocol, restart both
+apps and refresh open tabs so client and server versions match.
 
 Alternatively, use separate terminals:
 
@@ -42,32 +43,54 @@ Optional configuration:
 - All `VITE_*` values are public. Never place private credentials there.
   No env file is required with default ports.
 
-## What works
+## Game loop and controls
 
-- **WASD:** move at equal speed in every direction, clamped inside the walls.
-- **Mouse:** aim the cannon. **Left click inside the arena:** one projectile.
-- Four shared targets take three hits each; all players see damage/destruction.
-- Shots have server-owned IDs, ownership, cooldown, collision and lifetime.
-- **R:** reset the shared arena for everyone (at most once every two seconds).
-- YOU identifies your cyan avatar; peers have blue tint and guest labels.
-- A full eight-player room sends new guests to a separate practice room.
-- Connection status, leave and retry controls sit above the canvas.
+Fight humans and bots, collect upgrades and points, scan for the next opportunity,
+and compete to win the round. First to **1,000 points** or highest score after
+**five minutes** wins. Equal top scores draw. Results stay visible for ten seconds,
+then the same room automatically starts a fresh round.
 
-Unexpected disconnect clears server input and owned shots. Peers see a dimmed
-avatar for a ten-second reservation. Automatic reconnect or a refresh within
-that window restores the same identity and position. The tab stores only its
-temporary reconnect token in sessionStorage. Explicit Leave removes the player
-and token; expired tokens or a server restart show a retryable error. Join/Retry
-then joins fresh. Background/focus loss clears controls; the server also stops
-movement after 250 ms without accepted input.
+| Action | Control / reward |
+| --- | --- |
+| Move / aim / fire | WASD / mouse / one left click per shot |
+| Radar Pulse | Q or HUD button; 12 s cooldown, frozen nearby markers for 3 s |
+| Player elimination | 100 points |
+| Bot elimination | 20 points; drops two +5 orbs |
+| Score orb | Walk over it for 5 points |
+| Shotgun pickup | 8 shots, five 12-damage pellets each |
+| Heavy pistol pickup | 6 shots, 50 damage each |
+| Health / speed pickups | Heal 35 up to 100 HP / +25% speed for 6 s |
+| Sound | HUD toggle; audio unlocks after keyboard/mouse interaction |
 
-The server owns all gameplay. Clients send validated movement/aim/fire intent
-at 30 Hz; the server simulates at 60 Hz and publishes snapshots at 20 Hz.
-Rendering interpolates players, projectiles and cannon angles through a 100 ms
-snapshot buffer to smooth the 20 Hz updates at the display frame rate. This adds
-about 100 ms visual delay; input prediction remains deferred, so internet latency
-will still be noticeable. Players cannot damage/block each other.
-Keyboard and mouse are required.
+Six cover blocks stop players and shots and create alternate routes. Up to four
+bots navigate and fight; their count decreases as human seats fill. Bots never
+occupy human seats or appear as contestants on the human leaderboard.
+
+The top-right leaderboard shows active humans, points, PvP kills and bot kills,
+with YOU highlighted. It moves below the arena on narrow screens. HUD displays
+health, protection/death/respawn, timer, loadout/ammo, speed and radar readiness.
+Hit flashes, hit confirmation, elimination rings, kill feed and distinct sounds
+provide combat feedback. Ground pickups are labelled. Radar shows captured
+locations/directions, not continuous tracking or a hidden-information guarantee.
+
+Humans have 100 HP; the basic gun deals 25 damage with a 150 ms cooldown. Shots
+never damage their owner and use swept collision against cover and opponents,
+including the muzzle path. Death keeps points but removes temporary upgrades.
+Respawn takes three seconds; a gold ring/SHIELD label marks 1.5 seconds of spawn
+protection. Firing ends it. Rematches reset round stats and upgrades. No R reset.
+
+All gameplay is server-authoritative: 30 Hz validated intent, 60 Hz simulation,
+20 Hz snapshots and a 100 ms presentation buffer. Ordinary movement/aim interpolate;
+death, respawn and round changes do not slide across the arena. No prediction.
+
+Unexpected disconnect clears input but leaves the avatar vulnerable for a ten-second
+reservation. Shots continue. Reconnect/refresh preserves health, points, kills,
+loadout and cooldowns. Dead disconnected players wait to reconnect before spawning.
+**Leave** pauses transport and retains the tab-local resume token; **Join / Retry**
+resumes within the reservation. Expired tokens/server restarts show a retryable
+error. New tabs are new anonymous identities; preventing identity evasion requires
+future authentication. All state is in memory. Focus loss clears controls; input
+expires after 250 ms. Keyboard and mouse required.
 
 ## Verify and build
 
@@ -96,23 +119,32 @@ Open the preview URL printed by Vite (normally `http://127.0.0.1:4173`) in two
 tabs. The frontend endpoint is selected at build time.
 
 Verification on 2026-10-05:
-- Typechecking and both production builds passed; Vite reports a large Phaser
-  bundle warning (about 1.37 MB minified / 373 KB gzip).
-- Nine tests passed: six original gameplay regressions plus protocol validation,
-  shared simulation and a real WebSocket multiplayer integration scenario.
-- Integration covers matching snapshots, movement under 200 ms on localhost,
-  stale/replayed/malformed input, shared shots/damage/destruction/reset,
-  explicit leave, automatic and manual reconnect, refresh-token restoration,
-  expired-token retry, ten-second expiry, capacity/isolation, message flooding
-  and oversized-payload disconnection. Expected rejection logs appear in tests.
-- Two SDK clients also joined the **built** server and received shared state.
-- Visual browser verification was unavailable in the implementation session.
-  Manual checks still to run: two-tab rendering, resize/aim, focus recovery,
-  visible connection states, and the Leave/Retry buttons.
+- Typechecking, 33 automated tests and both production builds pass. Existing Phaser
+  bundle warning remains (about 1.38 MB minified / 376 KB gzip).
+- Simulation covers scoring, ties, results freeze, rematch, cover collision and
+  navigation, bots, collection contention/respawn, weapons/ammo, boosts, radar,
+  death/reconnect preservation, and bounded immutable event snapshots.
+- Real WebSocket clients verify PvP and lifecycle regressions, pickup points,
+  radar and cooldown-preserving reconnect, results/rematch synchronization and
+  bot combat. Default-content bot combat also passes against the built server.
+- Presentation tests cover interpolation, respawn/round snapping and event deduplication.
+- Browser discovery reports no available surface. Two-browser visual play, responsive
+  layout, aim/focus recovery, sound quality and overall balance remain manual checks.
+  See [verification log](docs/integrationspec/verification.md) for exact coverage.
 
-Smoothing follow-up: four interpolation tests bring the total to 13 passing
-tests. Typechecking and both builds also pass. The 100 ms presentation buffer
-smooths movement between server updates without changing gameplay authority.
+For a built-server smoke, start it on a spare port and point the default-content
+network test at it. PowerShell, in separate terminals:
+
+~~~powershell
+$env:GAME_SERVER_PORT='2568'; npm.cmd run start:server
+~~~
+
+~~~powershell
+$env:ARENA_TEST_ENDPOINT='ws://127.0.0.1:2568'; npm.cmd test
+~~~
+
+Other tests still start isolated ephemeral servers, including a short test round.
+The endpoint is test-runner configuration; browser join options cannot alter rules.
 
 ## Structure and scope
 
@@ -121,15 +153,17 @@ apps/web/          Phaser rendering, controls and connection controller
 apps/game-server/  Authoritative Colyseus rooms and Node entrypoint
 packages/shared/  Platform-neutral simulation, constants and state types
 packages/protocol/ Versioned wire types, limits and input validators
-docs/specs/       Implementation guide, acceptance criteria and deferred scope
+docs/specs/       Core gameplay and technical direction
+docs/integrationspec/ Multi-system work tracker, contracts and verification evidence
 ```
 
 The [architecture](shootball-arena-architecture.md) sets the long-term direction;
-the [spec index](docs/specs/README.md) defines this implemented slice. Specifications
-were updated before implementation. The prior Unity project is reference only.
+the [spec index](docs/specs/README.md) describes core ideas. The
+[integration tracker](docs/integrationspec/README.md) records workstream dependencies,
+status, concrete rules and acceptance evidence. GL-01 was specified before implementation. The prior Unity project is reference only.
 
-Deferred: PvP damage/death/respawn, scoring and match outcomes, Supabase
-auth/persistence, leaderboards, cosmetics, ads, custom matchmaking, prediction,
+Deferred: additional maps/weapons, Supabase
+auth/persistence, persistent leaderboards, cosmetics, ads, custom matchmaking, prediction,
 Redis and distributed infrastructure. Existing Supabase packages are not used
 by gameplay. No cloud changes or deployment were performed. Vercel remains the
 planned frontend host; the game server will deploy separately to Compute Engine.

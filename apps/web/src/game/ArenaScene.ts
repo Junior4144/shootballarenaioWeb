@@ -1,23 +1,34 @@
 import Phaser from 'phaser';
 import { ARENA, GAME } from '@shootball/shared';
-import { NETWORK, type Snapshot } from '@shootball/protocol';
+import { NETWORK, emptySnapshot, type Snapshot } from '@shootball/protocol';
 import { PracticeConnection } from '../network/PracticeConnection';
 import { SnapshotBuffer } from '../network/SnapshotBuffer';
+import { EventCursor } from '../network/EventCursor';
+import { WALLS } from '@shootball/shared/arena';
+import type { ArenaEvent } from '@shootball/shared/content';
+import { ArenaHud, actorName } from './ArenaHud';
+import { CombatAudio } from './CombatAudio';
 
 export class ArenaScene extends Phaser.Scene {
-  private world: Snapshot = { tick: 0, generation: 0, players: [], targets: [], projectiles: [] };
+  private world: Snapshot = emptySnapshot();
   private connection!: PracticeConnection;
   private snapshots = new SnapshotBuffer();
   private sendElapsed = 0;
   private focused = true;
   private connectionState = '';
-  private keys!: Record<'W' | 'A' | 'S' | 'D' | 'R', Phaser.Input.Keyboard.Key>;
+  private keys!: Record<'W' | 'A' | 'S' | 'D' | 'Q', Phaser.Input.Keyboard.Key>;
   private players = new Map<string, { ball: Phaser.GameObjects.Image; cannon: Phaser.GameObjects.Image; label: Phaser.GameObjects.Text }>();
   private health!: Phaser.GameObjects.Graphics;
   private status!: Phaser.GameObjects.Text;
-  private targets = new Map<number, Phaser.GameObjects.Image>();
   private shots = new Map<number, Phaser.GameObjects.Image>();
   private fireQueued = false;
+  private radarQueued = false;
+  private hud = new ArenaHud();
+  private audio = new CombatAudio();
+  private eventCursor = new EventCursor();
+  private effects: { event: ArenaEvent; until: number }[] = [];
+  private details!: Phaser.GameObjects.Graphics;
+  private pickupLabels = new Map<number, Phaser.GameObjects.Text>();
 
   constructor() { super('arena'); }
 
@@ -29,15 +40,21 @@ export class ArenaScene extends Phaser.Scene {
     for (let x = ARENA.left; x <= ARENA.right; x += 32) floor.lineBetween(x, ARENA.top, x, ARENA.bottom);
     for (let y = ARENA.top; y <= ARENA.bottom; y += 32) floor.lineBetween(ARENA.left, y, ARENA.right, y);
     floor.lineStyle(8, 0x415867).strokeRect(ARENA.left - 4, ARENA.top - 4, ARENA.right - ARENA.left + 8, ARENA.bottom - ARENA.top + 8);
-    this.add.text(48, 30, '01 / SHARED PRACTICE', { fontFamily: 'monospace', fontSize: '16px', color: '#9db2bf' });
+    for (const wall of WALLS) {
+      floor.fillStyle(0x405563).fillRect(wall.x, wall.y, wall.width, wall.height);
+      floor.lineStyle(2, 0x78909d).strokeRect(wall.x, wall.y, wall.width, wall.height);
+      floor.fillStyle(0x526979).fillRect(wall.x + 4, wall.y + 4, wall.width - 8, 5);
+    }
+    this.add.text(48, 30, '01 / FREE-FOR-ALL', { fontFamily: 'monospace', fontSize: '16px', color: '#9db2bf' });
     this.status = this.add.text(912, 30, '', { fontFamily: 'monospace', fontSize: '16px', color: '#69e2ce' }).setOrigin(1, 0);
-    this.add.text(48, 610, 'WASD  MOVE     /     MOUSE  AIM     /     CLICK  FIRE', { fontFamily: 'monospace', fontSize: '12px', color: '#819dab' });
+    this.add.text(48, 610, 'WASD  MOVE     /     MOUSE  AIM     /     CLICK  FIRE     /     Q  SCAN', { fontFamily: 'monospace', fontSize: '12px', color: '#819dab' });
     this.health = this.add.graphics().setDepth(4);
-    this.keys = this.input.keyboard!.addKeys('W,A,S,D,R') as typeof this.keys;
+    this.details = this.add.graphics().setDepth(6);
+    this.keys = this.input.keyboard!.addKeys('W,A,S,D,Q') as typeof this.keys;
     const fire = (pointer: Phaser.Input.Pointer) => {
       if (pointer.leftButtonDown() && pointer.x >= ARENA.left && pointer.x <= ARENA.right && pointer.y >= ARENA.top && pointer.y <= ARENA.bottom) this.fireQueued = true;
     };
-    const clearInput = () => { this.fireQueued = false; this.input.keyboard!.resetKeys(); };
+    const clearInput = () => { this.fireQueued = false; this.radarQueued = false; this.input.keyboard!.resetKeys(); };
     const neutral = () => {
       clearInput();
       this.focused = false;
@@ -55,19 +72,27 @@ export class ArenaScene extends Phaser.Scene {
       if (connection.state !== this.connectionState) {
         clearInput();
         this.snapshots.clear();
+        this.eventCursor.clear(); this.effects = [];
         this.connectionState = connection.state;
       }
-      this.world = connection.snapshot ?? { tick: 0, generation: 0, players: [], targets: [], projectiles: [] };
+      this.world = connection.snapshot ?? emptySnapshot();
       if (connection.snapshot && connection.state === 'connected') {
         this.snapshots.push(connection.snapshot, performance.now());
       }
-      const count = this.world.players.filter(p => p.connected).length;
+      const count = this.world.players.filter(p => !p.bot && p.connected).length;
       status.textContent = connection.state === 'connected'
         ? `Room ${connection.room?.roomId} · ${count}/8 players · You are cyan`
         : connection.message;
       join.hidden = !['error', 'disconnected'].includes(connection.state);
       leave.hidden = ['error', 'disconnected'].includes(connection.state);
     }, storage);
+    const scan = document.getElementById('scan')!;
+    const mute = document.getElementById('mute')!;
+    const onScan = () => { this.radarQueued = true; this.audio.unlock(); };
+    const unlock = () => this.audio.unlock();
+    const onMute = () => { this.audio.muted = !this.audio.muted; mute.textContent = this.audio.muted ? 'Sound off' : 'Sound on'; mute.setAttribute('aria-pressed', String(this.audio.muted)); };
+    scan.addEventListener('click', onScan); mute.addEventListener('click', onMute);
+    document.addEventListener('pointerdown', unlock); document.addEventListener('keydown', unlock);
     const onJoin = () => { void this.connection.join(); };
     const onLeave = () => this.connection.leave();
     join.addEventListener('click', onJoin);
@@ -83,17 +108,16 @@ export class ArenaScene extends Phaser.Scene {
       document.removeEventListener('visibilitychange', visibility);
       join.removeEventListener('click', onJoin);
       leave.removeEventListener('click', onLeave);
-      this.connection.leave();
+      scan.removeEventListener('click', onScan); mute.removeEventListener('click', onMute);
+      document.removeEventListener('pointerdown', unlock); document.removeEventListener('keydown', unlock);
+      this.audio.destroy(); this.connection.leave();
     });
     this.syncVisuals();
     void this.connection.join();
   }
 
   update(_time: number, delta: number): void {
-    if (Phaser.Input.Keyboard.JustDown(this.keys.R)) {
-      this.connection.reset();
-      this.fireQueued = false;
-    }
+    if (Phaser.Input.Keyboard.JustDown(this.keys.Q)) this.radarQueued = true;
     const pointer = this.input.activePointer;
     // FIT scaling already converts pointer positions into logical canvas coordinates.
     this.sendElapsed += delta;
@@ -103,16 +127,24 @@ export class ArenaScene extends Phaser.Scene {
       moveX: Number(this.keys.D.isDown) - Number(this.keys.A.isDown),
       moveY: Number(this.keys.S.isDown) - Number(this.keys.W.isDown),
       aim: { x: Phaser.Math.Clamp(pointer.x, 0, GAME.width), y: Phaser.Math.Clamp(pointer.y, 0, GAME.height) },
-      fire: this.fireQueued,
+      fire: this.fireQueued, radar: this.radarQueued,
       });
-      this.fireQueued = false;
+      this.fireQueued = false; this.radarQueued = false;
     }
-    if (this.connection.state !== 'connected' || !this.focused) this.fireQueued = false;
+    if (this.connection.state !== 'connected' || !this.focused) { this.fireQueued = false; this.radarQueued = false; }
     this.world = this.snapshots.sample(performance.now()) ?? this.world;
     this.syncVisuals();
   }
 
   private syncVisuals(): void {
+    this.health.clear(); this.details.clear();
+    const now = performance.now();
+    for (const event of this.eventCursor.take(this.world)) {
+      this.effects.push({ event, until: now + (event.kind === 'elimination' ? 450 : 160) });
+      const me = this.world.players.find(p => p.id === this.connection?.sessionId);
+      if (me && Math.hypot(event.x - me.x, event.y - me.y) < 600) this.audio.play(event, me.id);
+    }
+    this.effects = this.effects.filter(e => e.until > now);
     for (const [id, visual] of this.players) {
       if (!this.world.players.some(p => p.id === id)) {
         visual.ball.destroy(); visual.cannon.destroy(); visual.label.destroy();
@@ -129,20 +161,17 @@ export class ArenaScene extends Phaser.Scene {
       }
       const v = this.players.get(p.id)!;
       const local = p.id === this.connection?.sessionId;
+      const alive = p.health > 0;
       const alpha = p.connected ? 1 : 0.35;
-      v.ball.setPosition(p.x, p.y).setTint(local ? 0xffffff : 0x86b8ff).setAlpha(alpha);
-      v.cannon.setPosition(p.x, p.y).setRotation(p.angle).setAlpha(alpha);
-      v.label.setPosition(p.x, p.y + 28).setText((local ? 'YOU' : 'GUEST ' + p.id.slice(0, 4)) + (p.connected ? '' : ' (away)')).setAlpha(alpha);
-    }
-    this.health.clear();
-    for (const [id, image] of this.targets) {
-      if (!this.world.targets.some(target => target.id === id)) { image.destroy(); this.targets.delete(id); }
-    }
-    for (const target of this.world.targets) {
-      if (!this.targets.has(target.id)) this.targets.set(target.id, this.add.image(target.x, target.y, 'target').setDepth(1));
-      for (let i = 0; i < GAME.targetHealth; i++) {
-        this.health.fillStyle(i < target.health ? 0xf18d7e : 0x40515b).fillRect(target.x - 18 + i * 13, target.y - 32, 10, 4);
+      v.ball.setVisible(alive); v.cannon.setVisible(alive);
+      if (alive) {
+        this.health.fillStyle(0x40515b).fillRect(p.x - 20, p.y - 30, 40, 5);
+        this.health.fillStyle(p.health <= 25 ? 0xf18d7e : 0x69e2ce).fillRect(p.x - 20, p.y - 30, 40 * p.health / (p.bot ? 75 : GAME.playerHealth), 5);
+        if (p.protectionRemaining > 0) this.health.lineStyle(2, 0xffd87c).strokeCircle(p.x, p.y, 22);
       }
+      v.ball.setPosition(p.x, p.y).setTint(this.effects.some(e => e.event.kind === 'hit' && e.event.targetId === p.id) ? 0xff5555 : local ? 0xffffff : p.bot ? 0xffc080 : 0x86b8ff).setAlpha(alpha);
+      v.cannon.setPosition(p.x, p.y).setRotation(p.angle).setAlpha(alpha);
+      v.label.setPosition(p.x, p.y + 28).setText(actorName(p.id, this.connection?.sessionId) + (!alive ? ' RESPAWN ' + Math.ceil(p.respawnRemaining) : p.protectionRemaining > 0 ? ' SHIELD' : '') + (p.connected ? '' : ' (away)')).setAlpha(alpha);
     }
     for (const [id, image] of this.shots) {
       if (!this.world.projectiles.some(shot => shot.id === id)) { image.destroy(); this.shots.delete(id); }
@@ -151,7 +180,41 @@ export class ArenaScene extends Phaser.Scene {
       if (!this.shots.has(shot.id)) this.shots.set(shot.id, this.add.image(shot.x, shot.y, 'shot').setDepth(5));
       this.shots.get(shot.id)!.setPosition(shot.x, shot.y);
     }
-    this.status.setText(!this.world.players.length ? 'JOIN TO PLAY' : this.world.targets.length ? `TARGETS LEFT  ${this.world.targets.length} / 4` : 'ARENA CLEAR!  /  R TO RESET');
+    const me = this.world.players.find(p => p.id === this.connection?.sessionId);
+    this.status.setText(!me ? 'JOIN TO PLAY' : me.health <= 0
+      ? 'ELIMINATED / RESPAWN ' + me.respawnRemaining.toFixed(1) + 's'
+      : 'HP ' + me.health + ' / 100' + (me.protectionRemaining > 0 ? ' / SHIELD ' + me.protectionRemaining.toFixed(1) + 's' : ''));
+    this.hud.render(this.world, this.connection?.sessionId);
+    for (const [id, label] of this.pickupLabels) {
+      if (!this.world.pickups.some(p => p.id === id && p.available)) { label.destroy(); this.pickupLabels.delete(id); }
+    }
+    const colors = { score: 0xffd87c, shotgun: 0xe3a4ff, heavy: 0xffaa77, speed: 0x78bfff, health: 0x78efab };
+    for (const item of this.world.pickups.filter(p => p.available)) {
+      this.details.lineStyle(2, colors[item.kind]);
+      if (item.kind === 'score') this.details.strokeTriangle(item.x, item.y - 7, item.x - 7, item.y + 6, item.x + 7, item.y + 6);
+      else {
+        this.details.strokeRect(item.x - 9, item.y - 9, 18, 18);
+        if (item.kind === 'health') { this.details.lineBetween(item.x - 5, item.y, item.x + 5, item.y); this.details.lineBetween(item.x, item.y - 5, item.x, item.y + 5); }
+      }
+      if (!this.pickupLabels.has(item.id)) this.pickupLabels.set(item.id, this.add.text(item.x, item.y + 14,
+        item.kind === 'score' ? '+5' : item.kind.toUpperCase(), { fontFamily: 'monospace', fontSize: '9px', color: '#c6d9e2' }).setOrigin(0.5).setDepth(6));
+    }
+    if (me && me.radar.remaining > 0) {
+      for (const marker of me.radar.markers) {
+        this.details.lineStyle(2, marker.kind === 'player' ? 0xff7777 : marker.kind === 'bot' ? 0xffc080 : 0xe3a4ff);
+        this.details.strokeCircle(marker.x, marker.y, 24);
+        const angle = Math.atan2(marker.y - me.y, marker.x - me.x);
+        this.details.lineBetween(me.x + Math.cos(angle) * 30, me.y + Math.sin(angle) * 30, me.x + Math.cos(angle) * 44, me.y + Math.sin(angle) * 44);
+      }
+    }
+    for (const { event, until } of this.effects) {
+      this.details.lineStyle(2, event.kind === 'hit' ? 0xffeeee : 0xffd87c, Math.min(1, (until - now) / 160));
+      if (event.kind === 'elimination') this.details.strokeCircle(event.x, event.y, 22 + (450 - (until - now)) / 10);
+      else if (event.kind === 'hit' && event.actorId === this.connection?.sessionId) {
+        this.details.lineBetween(event.x - 7, event.y - 7, event.x + 7, event.y + 7);
+        this.details.lineBetween(event.x + 7, event.y - 7, event.x - 7, event.y + 7);
+      } else if (event.kind === 'pickup') this.details.strokeCircle(event.x, event.y, 18);
+    }
   }
 
   private createTextures(): void {
@@ -168,7 +231,6 @@ export class ArenaScene extends Phaser.Scene {
       g.generateTexture(key, size, size); g.destroy();
     };
     ball('player', GAME.playerRadius, 0x69d8c6, 0xb4f3e4);
-    ball('target', GAME.targetRadius, 0xd87569, 0xf9b195);
     if (!this.textures.exists('cannon')) {
       const g = this.make.graphics({ x: 0, y: 0 });
       g.fillStyle(0x0c1823).fillRect(0, 0, 28, 12);

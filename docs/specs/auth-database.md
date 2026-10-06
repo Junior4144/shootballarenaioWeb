@@ -13,7 +13,7 @@ The current player is an anonymous Colyseus session held in memory for a ten-sec
 Multiplayer runs without accounts, credentials or persistence. An optional public game-server endpoint is the only frontend configuration. Before database integration, specify token verification, access policies, ownership, and a minimal schema with authorization tests.
 
 ## Out of scope now
-Supabase integration, authentication, profiles, persistence, leaderboards, cosmetics, inventory, ads, purchases, and database provisioning.
+Supabase integration, authentication, profiles, persistence, persistent leaderboards, cosmetics, inventory, ads, purchases, and database provisioning.
 
 ## Future upgrades
 Add identity and only the persistence required by an agreed feature. Define retention, deletion, and trusted match-result writes before collecting player data.

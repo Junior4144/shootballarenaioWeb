@@ -1,48 +1,29 @@
-﻿# Networking
+# Networking
 
-## Contract
-Colyseus over WebSockets. `packages/protocol` owns version 1, room name,
-input/reset validators and authoritative snapshot types. Default local endpoint:
-`ws://127.0.0.1:2567`; public `VITE_GAME_SERVER_URL` overrides it.
-Production requires WSS through the architecture's separate game host.
+Colyseus WebSockets; protocol v3; room arena. Default ws://127.0.0.1:2567,
+configurable through public VITE_GAME_SERVER_URL. Join with version 3.
 
-Join `practice` with `{ version: 1 }`. Input contains exactly `seq`,
-`moveX`, `moveY`, `aim: { x, y }`, `fire`. Reset contains `seq`.
-Both share a monotonically increasing sequence. Never accept client positions,
-hits or health. Snapshots contain tick, reset generation, players (ID, position,
-angle, connected), targets and projectiles (ID, owner). Full snapshots are
-Colyseus messages at 20 Hz and on join/reconnect; schema patches are unnecessary
-for this small bounded initial arena.
+Exact input: seq, moveX, moveY, aim { x, y }, fire, radar. Axes are -1/0/1,
+fire/radar are booleans, aim is finite and inside the logical canvas, sequence
+is a nonnegative safe integer increasing per connection. Never accept client
+positions, health, hits, scores, equipment, bot decisions or pickup claims.
 
-Client sends input at 30 Hz, consumes queued clicks once and sends neutral input
-on blur/hidden tab. Server expires input after 250 ms. Render through a bounded
-100 ms snapshot buffer, interpolating player/projectile positions and shortest-path
-cannon angles each display frame. Interpolation uses local snapshot receipt times;
-network jitter can still vary apparent speed. Hold the newest state on underrun,
-never extrapolate gameplay. Entity creation/removal and target health use the same
-delayed timeline, so shots and hits remain consistent. Reset generations, connection
-changes, focus recovery and snapshot gaps over 250 ms discard history instead of
-animating across discontinuities. This adds about 100 ms presentation latency;
-prediction/reconciliation remains deferred. Transport visibility on localhost
-should remain under 200 ms (separate from the presentation delay).
+Full snapshots include simulation time/tick/generation, players (including bot
+flag, HP/life/protection/respawn, points/kills/botKills/deaths, weapon/ammo/speed,
+radar cooldown/captured markers), owned damaging projectiles, pickups, bounded
+sequenced events and match state/results. Legacy targets array remains empty.
+Static cover is a shared versioned map. Radar is guidance, not fog-of-war security;
+full arena positions are already replicated.
 
-Unexpected loss disables input and displays reconnecting. Retry within the
-ten-second reservation with the SDK token, stored only in tab-local session
-storage (never URLs/logs). Refresh can reclaim the same avatar. Expired
-reservation/server restart shows retry to join fresh. Explicit leave clears
-token and state. Join failures are visible/retryable. No local-authority fallback.
+30 Hz intent, 60 Hz simulation, 20 Hz snapshots. Preserve bounded 100 ms interpolation,
+shortest-angle rotation, no extrapolation, focus/connection clearing and 250 ms
+input expiry. Discrete gameplay/events share the delayed shot timeline. Life
+changes hold then snap; round generation changes clear interpolation history.
+Events are deduplicated and historical feedback is skipped on connection recovery.
 
-## Acceptance
-Two clients see matching room/player/shot/target state; peer play continues
-during disconnect. Verify identity-preserving reconnect, expiry, fresh join,
-protocol mismatch and malformed inputs. Payload cap 1 KiB.
-Regional routing, prediction and delta compression remain deferred.
+Auto-reconnect/refresh/Leave-Join preserve the tab's reserved identity and combat
+state for ten seconds. Expired tokens yield a visible error then allow fresh retry.
+Never log tokens or place them in URLs. No persistent identity is claimed.
 
-## Implementation status (2026-10-05)
-Colyseus core 0.18.18, WS transport 0.18.4 and SDK 0.18.5 are installed and locked.
-Real WebSocket tests passed for synchronization, shared damage, input validation,
-sub-200ms localhost movement visibility, reconnect/refresh, stale-token retry,
-expiry, capacity, rate flooding and payload limits. The actual frontend connection
-controller is exercised in integration tests. No live browser surface was
-available for visual verification; UI rendering/resize/focus checks remain manual.
-API reference: [Colyseus reconnection](https://docs.colyseus.io/room/reconnection).
+Contracts and acceptance: [GL-01](../integrationspec/game-loop.md).
+Verification evidence: [log](../integrationspec/verification.md).

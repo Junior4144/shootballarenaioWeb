@@ -1,7 +1,7 @@
 import { Room, ServerError, type Client } from '@colyseus/core';
 import { Practice } from '@shootball/shared/practice';
 import { type InputIntent } from '@shootball/shared';
-import { VERSION, NETWORK, isInput, isReset, type InputMessage } from '@shootball/protocol';
+import { VERSION, NETWORK, isInput, type InputMessage } from '@shootball/protocol';
 
 interface Control {
   seq: number;
@@ -12,9 +12,8 @@ interface Control {
 }
 export class PracticeRoom extends Room {
   maxMessagesPerSecond = 120;
-  private world = new Practice();
+  protected world = new Practice();
   private controls = new Map<string, Control>();
-  private lastReset = -Infinity;
   private accumulator = 0;
 
   onCreate(): void {
@@ -23,17 +22,8 @@ export class PracticeRoom extends Room {
       if (!isInput(data) || !this.accept(client, data.seq)) return;
       const control = this.controls.get(client.sessionId)!;
       // A click survives later packets until the next tick, without a shot queue.
-      control.input = { ...data, aim: { ...data.aim }, fire: data.fire || !!control.input?.fire };
+      control.input = { ...data, aim: { ...data.aim }, fire: data.fire || !!control.input?.fire, radar: data.radar || !!control.input?.radar };
       control.receivedAt = performance.now();
-    });
-    this.onMessage('reset', (client, data: unknown) => {
-      if (!isReset(data) || !this.accept(client, data.seq)) return;
-      const now = performance.now();
-      if (now - this.lastReset < NETWORK.resetCooldownMs) return;
-      this.lastReset = now;
-      this.world.reset();
-      for (const control of this.controls.values()) control.input = undefined;
-      this.publish();
     });
     this.onMessage('*', () => {});
     let previous = performance.now();
@@ -49,6 +39,7 @@ export class PracticeRoom extends Room {
           if (control.input && now - control.receivedAt <= NETWORK.inputTimeoutMs) {
             inputs.set(id, { ...control.input });
             control.input.fire = false;
+            control.input.radar = false;
           } else control.input = undefined;
         }
         this.world.step(inputs, NETWORK.tickMs / 1000);

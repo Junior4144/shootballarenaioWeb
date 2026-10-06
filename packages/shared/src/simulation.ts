@@ -18,10 +18,10 @@ export function createWorld(): World {
 }
 
 const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
-const inside = (p: Point, r: number) => p.x >= ARENA.left + r && p.x <= ARENA.right - r && p.y >= ARENA.top + r && p.y <= ARENA.bottom - r;
+export const inside = (p: Point, r: number) => p.x >= ARENA.left + r && p.x <= ARENA.right - r && p.y >= ARENA.top + r && p.y <= ARENA.bottom - r;
 
 // First contact along the segment, including shots that start inside a target.
-function hitFraction(from: Point, to: Point, target: Point, radius: number): number | undefined {
+export function hitFraction(from: Point, to: Point, target: Point, radius: number): number | undefined {
   const dx = to.x - from.x, dy = to.y - from.y;
   const ox = from.x - target.x, oy = from.y - target.y;
   const c = ox * ox + oy * oy - radius * radius;

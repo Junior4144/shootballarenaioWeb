@@ -42,7 +42,7 @@ export class SnapshotBuffer {
       ...from.state,
       players: from.state.players.map(p => {
         const next = players.get(p.id);
-        if (!next || next.connected !== p.connected) return p;
+        if (!next || next.connected !== p.connected || next.lifeId !== p.lifeId || (next.health === 0) !== (p.health === 0)) return p;
         return { ...p, x: lerp(p.x, next.x, t), y: lerp(p.y, next.y, t), angle: angleLerp(p.angle, next.angle, t) };
       }),
       projectiles: from.state.projectiles.map(p => {

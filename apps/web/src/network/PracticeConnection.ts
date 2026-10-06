@@ -13,6 +13,7 @@ export class PracticeConnection {
   private attempt = 0;
   private deadline?: ReturnType<typeof setTimeout>;
   private storageKey: string;
+  private token?: string;
 
   constructor(endpoint: string, private changed: () => void, private storage?: Storage) {
     this.client = new Client(endpoint);
@@ -23,7 +24,7 @@ export class PracticeConnection {
   async join(): Promise<void> {
     if (this.state === 'connecting' || this.state === 'connected' || this.state === 'reconnecting') return;
     const attempt = ++this.attempt;
-    this.setState('connecting', 'Connecting to shared practice…');
+    this.setState('connecting', 'Connecting to PvP arena…');
     try {
       const token = this.readToken();
       const room = token
@@ -49,13 +50,14 @@ export class PracticeConnection {
           void room.leave();
         }, NETWORK.reconnectSeconds * 1000);
       });
-      room.onReconnect(() => {
+      // SDK rotates its token immediately after invoking onReconnect.
+      room.onReconnect(() => queueMicrotask(() => {
         if (this.room !== room) return;
         clearTimeout(this.deadline);
         this.sequence = 0;
         this.saveToken(room.reconnectionToken);
         this.setState('connected', 'Connected');
-      });
+      }));
       room.onLeave(() => { if (this.room === room) this.finish('Disconnected. Join again.'); });
       room.onError(() => {
         if (this.room !== room) return;
@@ -71,23 +73,20 @@ export class PracticeConnection {
     }
   }
   send(input: InputIntent): void {
-    if (this.state === 'connected') this.room?.send('input', { ...input, seq: this.sequence++ });
-  }
-  reset(): void {
-    if (this.state === 'connected') this.room?.send('reset', { seq: this.sequence++ });
+    if (this.state === 'connected') this.room?.send('input', { ...input, radar: input.radar ?? false, seq: this.sequence++ });
   }
   leave(): void {
     const room = this.room;
-    if (room) room.reconnection.enabled = false;
+    if (room) { this.saveToken(room.reconnectionToken); room.reconnection.enabled = false; }
     ++this.attempt;
-    this.finish('Disconnected. Join again.');
-    if (room) void room.leave();
+    this.finish('Paused. Join within 10 seconds to resume; your avatar remains vulnerable.', true);
+    if (room) room.connection.close();
   }
-  private finish(message: string): void {
+  private finish(message: string, retainToken = false): void {
     clearTimeout(this.deadline);
     this.room = undefined;
     this.snapshot = undefined;
-    this.saveToken();
+    if (!retainToken) this.saveToken();
     this.setState('disconnected', message);
   }
   private setState(state: ConnectionState, message: string): void {
@@ -96,9 +95,10 @@ export class PracticeConnection {
     this.changed();
   }
   private readToken(): string | undefined {
-    try { return this.storage?.getItem(this.storageKey) ?? undefined; } catch { return undefined; }
+    try { return this.token ?? this.storage?.getItem(this.storageKey) ?? undefined; } catch { return undefined; }
   }
   private saveToken(token?: string): void {
+    this.token = token;
     try {
       if (token) this.storage?.setItem(this.storageKey, token);
       else this.storage?.removeItem(this.storageKey);

@@ -1,33 +1,19 @@
-﻿# Frontend
+# Frontend
 
-TypeScript strict mode, Vite and Phaser 3 remain the frontend stack. Preserve
-the 960 x 640 FIT-scaled arena, generated textures, WASD/mouse/click controls,
-health bars and target counter. Shared simulation lives in `packages/shared`;
-the browser renders server snapshots and never advances gameplay.
+Strict TypeScript, Vite, Phaser, 960 x 640 FIT arena. Preserve WASD, independent
+mouse aim, click fire, focus clearing, retry and reconnect. Add Q radar and an
+optional sound toggle. The browser presents server state; it does not award points,
+resolve collisions, spawn bots, collect pickups or compute radar results.
 
-Automatically join shared practice. Accessible DOM status displays connecting,
-connected (room/player count), reconnecting, disconnected and errors. Provide
-leave and retry/join buttons. R requests shared reset. Local avatar says YOU;
-remote guests have labels and blue tint. Disconnected avatars are dimmed.
+The top-right sidebar shows active human players, points, PvP kills and bot kills,
+with YOU highlighted. It moves below the arena on narrow screens. The HUD includes
+match timer/goal, loadout/ammo/boost, health, protection, death/respawn, radar readiness
+and a scanned objective hint. Results show winner/draw, rankings and rematch countdown.
+Cover, pickups, amber bots, hit flashes/confirmation, elimination effects and kill
+feed make the loop readable. Synthesized audio unlocks on user interaction; mute
+is optional and gameplay remains usable without sound.
 
-Send intent at 30 Hz; clear keys/queued shots on blur, visibility loss and
-connection changes. Disable input outside connected state. Interpolate snapshots
-with a 100 ms presentation buffer; do not predict gameplay. Clear buffer on
-connection/focus changes and reset generations. Preserve input interval remainder
-between frames to avoid reducing the intended 30 Hz send rate through rounding.
-Clear visuals on permanent leave; clean up listeners on shutdown.
-
-Acceptance: two clients, movement, resize aiming, shared shooting/destruction,
-reset, focus recovery, failure/retry and reconnect. Root npm scripts must work
-without accounts/credentials. Auth, ads, cosmetics, touch and effects are deferred.
-
-Implemented: server snapshot rendering, multi-avatar labels, connection states,
-join/leave/retry and focus clearing. Typecheck/build and connection-controller
-integration passed. Visual two-tab, resize/aim and focus smoke tests still need a
-browser; none was available during implementation.
-
-Smoothing follow-up: a bounded 100 ms buffer now interpolates presentation each
-frame. Tests cover intermediate positions, angle wrapping, uneven arrivals,
-underruns, authoritative-state immutability and reset/lifecycle discontinuities.
-Typechecking, all 13 tests and production builds pass. Visual feel still needs
-browser playtesting; local prediction remains a separate latency improvement.
+Preserve the 100 ms snapshot buffer; life and round changes snap. Deduplicate
+server events and skip historical audio/effects on join/reconnect. Verification:
+[GL-01 evidence](../integrationspec/verification.md). Browser visual/audio checks
+remain a separate acceptance gate from automated simulation/transport tests.

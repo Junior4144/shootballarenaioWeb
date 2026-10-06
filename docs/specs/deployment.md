@@ -25,8 +25,8 @@ Implemented: `npm run dev` launches both apps; separate `dev:web` and
 Colyseus as installed runtime dependencies. `npm run start:server` runs the built
 server; `npm run preview` serves the built frontend. Both bind to loopback for
 local verification. Production host binding/TLS/packaging remain deployment work.
-Typecheck, nine tests, build and a built-server two-client smoke passed on
-2026-10-05. Vite's large-bundle warning remains; no deployment was performed.
+Game-loop typechecking, 33 automated tests and both production builds pass on
+2026-10-05. Real SDK clients verify combat, pickups, radar, reconnect, results and rematches. See ../integrationspec/verification.md for evidence. Vite's large-bundle warning remains; no deployment was performed.
 
 ## Out of scope now
 Cloud provisioning, deployment workflows, Docker/Terraform, Redis, load balancers, Kubernetes, scaling infrastructure, and secret management integrations.

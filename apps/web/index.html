@@ -1,18 +1,20 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#101923" />
-    <title>ShootBall Arena - Shared Practice</title>
+    <title>ShootBall Arena - PvP</title>
   </head>
   <body>
     <main>
-      <header><div><p class="eyebrow">SHOOTBALL ARENA</p><h1>Target practice<span class="dot">.</span></h1></div><span class="badge">MULTIPLAYER PRACTICE</span></header>
+      <header><div><p class="eyebrow">SHOOTBALL ARENA</p><h1>Free-for-all<span class="dot">.</span></h1></div><span class="badge">LIVE PVP</span></header>
       <div class="connection"><span id="connection-status" role="status" aria-live="polite">Connecting...</span><button id="join" hidden>Join / Retry</button><button id="leave" hidden>Leave</button></div>
-      <div id="game" aria-label="ShootBall Arena. WASD to move, mouse to aim, left click to fire, R to reset the shared arena."></div>
-      <footer><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move <b>&middot;</b> Mouse aim <b>&middot;</b> Left click fire</span><span><kbd>R</kbd> Reset shared arena</span></footer>
-      <p class="note">Clear four shared targets together. Three hits each. R resets the room for everyone. Keyboard + mouse required.</p>
+      <div id="match-clock" role="timer"></div>
+      <div class="play-layout"><div class="arena-wrap"><div id="game" aria-label="ShootBall Arena. WASD to move, mouse to aim, left click to fire, Q to scan."></div><section id="results" hidden aria-label="Round results"><h2 id="winner"></h2><p id="rematch"></p><ol id="final-standings"></ol></section></div>
+      <aside><section class="scores" aria-label="Live scoreboard"><h2>Leaderboard</h2><p id="active-count"></p><table><thead><tr><th>Player</th><th>Pts</th><th>PvP</th><th>Bots</th></tr></thead><tbody id="scoreboard"></tbody></table></section><section class="loadout-panel"><p id="loadout"></p><button id="scan">Q / Radar ready</button><p id="objective"></p><button id="mute" aria-pressed="false">Sound on</button></section><section><h2>Kill feed</h2><ul id="kill-feed"></ul></section></aside></div>
+      <footer><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move <b>&middot;</b> Mouse aim <b>&middot;</b> Left click fire</span><span><kbd>Q</kbd> Radar pulse</span></footer>
+      <p class="note">First to 1,000 points or five minutes. Player kill: 100. Bot kill: 20. Orb: 5. Walk over labelled pickups. Gold ring = brief spawn shield; firing ends it. Leave pauses for 10 seconds; your avatar stays vulnerable. Keyboard + mouse required.</p>
     </main>
     <script type="module" src="/src/main.ts"></script>
   </body>

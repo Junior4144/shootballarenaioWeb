@@ -1,13 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { SnapshotBuffer } from '../src/network/SnapshotBuffer';
-import type { Snapshot } from '@shootball/protocol';
+import { emptySnapshot, type Snapshot } from '@shootball/protocol';
+import { createActor } from '@shootball/shared/content';
 
 function frame(tick: number, x: number, angle = 0): Snapshot {
   return {
-    tick, generation: 0,
-    players: [{ id: 'a', x, y: 140, angle, connected: true }],
-    projectiles: [{ id: 1, ownerId: 'a', x: x + 28, y: 140, vx: 520, vy: 0, life: 1 }],
+    ...emptySnapshot(), tick, generation: 0,
+    players: [{ ...createActor('a'), x, y: 140, angle, connected: true, health: 100, kills: 0, deaths: 0, respawnRemaining: 0, protectionRemaining: 0, lifeId: 1 }],
+    projectiles: [{ id: 1, ownerId: 'a', damage: 25, x: x + 28, y: 140, vx: 520, vy: 0, life: 1 }],
     targets: [{ id: 0, x: 530, y: 220, health: 3 }],
   };
 }
@@ -65,4 +66,18 @@ test('uneven arrivals stay continuous and long gaps/new rooms discard old motion
   const newRoom = frame(0, 240);
   buffer.push(newRoom, 1510);
   assert.equal(buffer.sample(1510), newRoom);
+});
+
+test('death and life changes hold then snap without interpolating across the arena', () => {
+  const buffer = new SnapshotBuffer();
+  const alive = frame(0, 240), dead = frame(3, 260), respawn = frame(6, 816);
+  dead.players[0].health = 0; dead.players[0].deaths = 1;
+  respawn.players[0].lifeId = 2; respawn.players[0].deaths = 1;
+  buffer.push(alive, 0); buffer.push(dead, 50); buffer.push(respawn, 100);
+  assert.equal(buffer.sample(125)!.players[0].x, 240);
+  assert.equal(buffer.sample(150)!.players[0].health, 0);
+  assert.equal(buffer.sample(175)!.players[0].x, 260);
+  assert.equal(buffer.sample(199)!.players[0].health, 0);
+  assert.equal(buffer.sample(200)!.players[0].x, 816);
+  assert.equal(buffer.sample(200)!.players[0].health, 100);
 });
