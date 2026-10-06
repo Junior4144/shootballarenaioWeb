@@ -34,7 +34,7 @@ export class ArenaScene extends Phaser.Scene {
 
   create(): void {
     this.createTextures();
-    this.cameras.main.setBounds(0, 0, ARENA.right + CONFIG.map.cameraPadding, ARENA.bottom + CONFIG.map.cameraPadding);
+    this.cameras.main.setBounds(ARENA.left - 4, ARENA.top - 4, ARENA.right - ARENA.left + 8, ARENA.bottom - ARENA.top + 8);
     const floor = this.add.graphics();
     floor.fillStyle(0x1b2c39).fillRect(ARENA.left, ARENA.top, ARENA.right - ARENA.left, ARENA.bottom - ARENA.top);
     floor.lineStyle(1, 0x243745);
@@ -46,16 +46,21 @@ export class ArenaScene extends Phaser.Scene {
       floor.lineStyle(2, 0x78909d).strokeRect(wall.x, wall.y, wall.width, wall.height);
       floor.fillStyle(0x526979).fillRect(wall.x + 4, wall.y + 4, wall.width - 8, 5);
     }
-    // Insets define the visible play window independently of map dimensions.
-    const { topInset, bottomInset, sideInset } = CONFIG.presentation.viewport;
-    this.add.graphics().setScrollFactor(0).setDepth(20).fillStyle(0x0b1720)
-      .fillRect(0, 0, GAME.width, topInset).fillRect(0, GAME.height - bottomInset, GAME.width, bottomInset)
-      .fillRect(0, topInset, sideInset, GAME.height - topInset - bottomInset).fillRect(GAME.width - sideInset, topInset, sideInset, GAME.height - topInset - bottomInset);
+    const resize = () => {
+      const camera = this.cameras.main;
+      camera.setSize(this.scale.width, this.scale.height);
+      // Uniform zoom fills every aspect ratio without stretching pixel sprites.
+      camera.setZoom(Math.max(this.scale.width / 960, this.scale.height / 640));
+      this.cameraLife = '';
+    };
+    resize();
+    this.scale.on(Phaser.Scale.Events.RESIZE, resize);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.scale.off(Phaser.Scale.Events.RESIZE, resize));
     this.health = this.add.graphics().setDepth(4);
     this.details = this.add.graphics().setDepth(6);
     this.keys = this.input.keyboard!.addKeys('W,A,S,D,Q,SHIFT') as typeof this.keys;
     const fire = (pointer: Phaser.Input.Pointer) => {
-      if (pointer.leftButtonDown() && pointer.x >= sideInset && pointer.x <= GAME.width - sideInset && pointer.y >= topInset && pointer.y <= GAME.height - bottomInset) this.fireQueued = true;
+      if (pointer.leftButtonDown() && pointer.x >= 0 && pointer.x <= this.scale.width && pointer.y >= 0 && pointer.y <= this.scale.height) this.fireQueued = true;
     };
     const clearInput = () => { this.fireQueued = false; this.radarQueued = false; this.input.keyboard!.resetKeys(); };
     const neutral = () => {
@@ -91,6 +96,7 @@ export class ArenaScene extends Phaser.Scene {
     }, storage, this.identity);
     const scan = document.getElementById('scan')!;
     const mute = document.getElementById('mute')!;
+    this.audio.muted = mute.getAttribute('aria-pressed') === 'true';
     const onScan = () => { this.radarQueued = true; this.audio.unlock(); };
     const unlock = () => this.audio.unlock();
     const onMute = () => { this.audio.muted = !this.audio.muted; mute.setAttribute('aria-label', this.audio.muted ? 'Unmute sound' : 'Mute sound'); mute.setAttribute('title', this.audio.muted ? 'Sound off' : 'Sound on'); mute.setAttribute('aria-pressed', String(this.audio.muted)); };
@@ -190,10 +196,11 @@ export class ArenaScene extends Phaser.Scene {
       const life = `${this.world.generation}:${me.id}:${me.lifeId}`;
       // Ease over about a tenth of a second, independently of frame rate.
       // Clamp the destination first so edges do not build up camera lag.
-      const x = Phaser.Math.Clamp(me.x - GAME.width / 2, 0, Math.max(0, ARENA.right + CONFIG.map.cameraPadding - GAME.width));
-      const y = Phaser.Math.Clamp(me.y - CONFIG.presentation.cameraOffsetY - GAME.height / 2, 0, Math.max(0, ARENA.bottom + CONFIG.map.cameraPadding - GAME.height));
+      const halfWidth = camera.width / camera.zoom / 2, halfHeight = camera.height / camera.zoom / 2;
+      const x = Phaser.Math.Clamp(me.x, ARENA.left - 4 + halfWidth, ARENA.right + 4 - halfWidth);
+      const y = Phaser.Math.Clamp(me.y - CONFIG.presentation.cameraOffsetY, ARENA.top - 4 + halfHeight, ARENA.bottom + 4 - halfHeight);
       const blend = life === this.cameraLife ? 1 - Math.exp(-Math.max(0, delta) / CONFIG.presentation.cameraEaseMs) : 1;
-      camera.setScroll(camera.scrollX + (x - camera.scrollX) * blend, camera.scrollY + (y - camera.scrollY) * blend);
+      camera.centerOn(camera.midPoint.x + (x - camera.midPoint.x) * blend, camera.midPoint.y + (y - camera.midPoint.y) * blend);
       this.cameraLife = life;
     }
     this.hud.render(this.world, this.connection?.sessionId);

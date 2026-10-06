@@ -42,7 +42,7 @@ npm run test:e2e --workspace @shootball/web
 Playwright starts an isolated Vite frontend on port 5189 and the real Node/Colyseus
 server on port 2569, then stops them after testing. Keep those ports free; the
 suite deliberately does not reuse an existing development server. No Docker or
-hosted backend is needed. Tests cover four viewport sizes, the live HUD, canvas
+hosted backend is needed. Tests cover desktop (including 1080p and 1440p) and mobile viewport sizes, live resizing without reconnection, the live HUD, canvas
 alignment, mute, authoritative movement/fire, and leave/rejoin identity. A second
 Colyseus client observes snapshots to verify browser inputs reach the server.
 Screenshots, failure traces, and the HTML report are in `.test-artifacts/`.

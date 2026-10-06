@@ -43,7 +43,25 @@
       </div>
     </section>
     <main id="arena-app" aria-label="ShootBall Arena" hidden>
-      <div class="play-layout">
+      <header class="game-header" aria-label="Game toolbar">
+        <div class="game-brand"><svg viewBox="0 0 32 32" aria-hidden="true"><path fill="#69d8c6" d="M8 4h16v4h4v16h-4v4H8v-4H4V8h4z"/><path fill="#b4f3e4" d="M8 8h8v4H8z"/><path fill="#ccdce0" d="M16 12h16v8H16z"/><path fill="#526979" d="M28 14h4v4h-4z"/></svg><span>SHOOTBALL ARENA</span></div>
+        <div class="header-match" aria-label="Match status"><div class="mode">FREE-FOR-ALL <span id="match-clock" role="timer">0:00</span></div><span id="match-target">Target: 1000 pts</span></div>
+        <div class="header-actions">
+          <div class="header-dropdown">
+            <button id="account-toggle" type="button" aria-label="Your account" aria-expanded="false" aria-controls="account-menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 2h8v2h2v8h-2v2H8v-2H6V4h2zm-4 14h16v2h2v6H2v-6h2z"/></svg><span id="account-toggle-name">GUEST</span><span class="dropdown-chevron" aria-hidden="true">&#9662;</span></button>
+            <section id="account-menu" class="header-menu pixel-panel" aria-label="Your account" hidden>
+              <p id="playing-identity">GUEST / Temporary</p>
+              <button id="return-accounts" type="button">Log in</button><button id="gameplay-signup" type="button">Create account</button>
+              <p class="note">Account setup leaves the current match.</p>
+            </section>
+          </div>
+          <div class="header-dropdown header-settings">
+            <button id="settings-toggle" type="button" aria-label="Settings" aria-expanded="false" aria-controls="settings-menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M9 1h6v3h3v3h3v3h2v4h-2v3h-3v3h-3v3H9v-3H6v-3H3v-3H1v-4h2V7h3V4h3zm0 7v2H7v4h2v2h6v-2h2v-4h-2V8z"/></svg></button>
+            <section id="settings-menu" class="header-menu pixel-panel" aria-label="Game settings" hidden><p>SETTINGS</p><button id="settings-sound" type="button" aria-pressed="false">Mute sound</button><button id="settings-guide" type="button">Toggle field guide</button></section>
+          </div>
+        </div>
+      </header>
+      <div class="play-viewport"><div class="play-layout">
         <div class="help-rail">
           <details class="help-widget" id="help-widget" open>
             <summary><span class="pixel-mark" aria-hidden="true">✚</span> FIELD GUIDE</summary>
@@ -67,7 +85,6 @@
         </div>
         <div class="arena-stage"><div class="arena-wrap">
           <div id="game" aria-label="ShootBall Arena. WASD to move, hold Shift to sprint, mouse to aim, left click to fire, Q to scan."></div>
-          <div class="arena-heading"><div class="mode">FREE-FOR-ALL <span id="match-clock" role="timer">0:00</span></div><span id="match-target">Target: 1000 pts</span></div>
           <div class="status-strip" aria-label="Player status">
             <div class="vitals"><svg class="heart" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 2h5v2h4V2h5v7h-2v2h-2v2H9v2H7v-2H5v-2H3V9H1z" fill="currentColor"/></svg><span id="health-value">&mdash;</span><div id="health-meter" role="progressbar" aria-label="Health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="health-fill"></div></div></div>
             <span id="speed" title="Speed boost">&#991; SPD</span>
@@ -82,13 +99,13 @@
         </div>
         </div>
         <aside>
-          <div class="identity-bar"><span id="playing-identity">GUEST</span><button id="return-accounts" type="button">Accounts / Exit</button></div>
           <section class="scores" aria-label="Live scoreboard"><h2>Leaderboard</h2><p id="active-count">0/8 players</p><table><thead><tr><th>Player</th><th scope="col">Pts</th><th scope="col" title="Player kills">PvP</th><th scope="col" title="Bot kills">Bots</th></tr></thead><tbody id="scoreboard"></tbody></table></section>
           <section class="feed-panel"><h2>Kill feed</h2><ul id="kill-feed"></ul></section>
           <section class="round-panel"><h2>Round <span id="round-number">1</span></h2><dl><div><dt>Time</dt><dd id="round-time">0:00 / 5:00</dd></div><div><dt>Target</dt><dd id="round-target">1000 pts</dd></div></dl></section>
           <div class="match-actions"><button id="join" hidden>Join / Retry</button><button id="leave" hidden>Leave Match</button></div>
           <div class="connection"><span id="connection-status" role="status" aria-live="polite">Connecting...</span></div>
         </aside>
+      </div>
       </div>
     </main>
     <script type="module" src="/src/main.ts"></script>

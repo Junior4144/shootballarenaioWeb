@@ -34,5 +34,5 @@ Restrained hit flash/cross, elimination rings and kill feed explain combat.
 Synthesized shot/hit/death/pickup tones are optional; no imported audio assets.
 
 Leaderboard sits at top right outside the playfield (below on narrow screens).
-Preserve readability under FIT scaling. Cosmetics and complex effects are deferred.
+Preserve readability under responsive canvas resizing and uniform camera zoom. Keep sprites proportional and the playfield flush with the header and side panels. Cosmetics and complex effects are deferred.
 Implementation and visual/audio acceptance: [GL-01](../integrationspec/README.md).

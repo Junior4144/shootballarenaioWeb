@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME } from '@shootball/shared';
 import { ArenaScene } from './game/ArenaScene';
+import { attachGameplayHeader } from './game/GameplayHeader';
 import './style.css';
 import { AccountScreen } from './auth/AccountScreen';
 import { attachHoverAudio } from './auth/hoverAudio';
@@ -15,10 +16,13 @@ document.getElementById('help-close')!.addEventListener('click', () => {
 let game: Phaser.Game | undefined;
 let scene: ArenaScene | undefined;
 const screen = document.getElementById('account-screen')!;
-const detachHoverAudio = attachHoverAudio(screen);
+const detachHoverAudio = attachHoverAudio(document.body);
 if (import.meta.hot) import.meta.hot.dispose(detachHoverAudio);
 const arena = document.getElementById('arena-app')!;
+const header = attachGameplayHeader();
+if (import.meta.hot) import.meta.hot.dispose(header.destroy);
 function stop(): void {
+  header.close();
   scene?.connection?.endIdentity();
   // Phaser destroys on its next frame; remove the scene now so a new game cannot overlap.
   if (game) { game.scene.stop('arena'); game.scene.remove('arena'); game.destroy(true); }
@@ -29,6 +33,11 @@ function play(identity: PlayIdentity): void {
   if (game) return;
   screen.hidden = true; arena.hidden = false;
   document.getElementById('playing-identity')!.textContent = identity.kind === 'guest' ? 'GUEST / Temporary' : document.getElementById('account-identity')!.textContent;
+  const label = identity.kind === 'guest' ? 'GUEST' : (document.getElementById('display-name') as HTMLInputElement).value;
+  document.getElementById('account-toggle-name')!.textContent = label;
+  document.getElementById('account-toggle')!.title = identity.kind === 'guest' ? 'Guest account options' : `Account: ${label}`;
+  document.getElementById('return-accounts')!.textContent = identity.kind === 'guest' ? 'Log in' : 'Manage account';
+  document.getElementById('gameplay-signup')!.hidden = identity.kind !== 'guest';
   scene = new ArenaScene(identity);
   game = new Phaser.Game({
     type: Phaser.AUTO,
@@ -38,9 +47,10 @@ function play(identity: PlayIdentity): void {
     backgroundColor: '#131e2a',
     pixelArt: true,
     roundPixels: true,
-    scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+    scale: { mode: Phaser.Scale.RESIZE },
     scene,
   });
 }
-new AccountScreen(play, stop, () => { void scene?.connection?.refreshAccount(); });
-document.getElementById('return-accounts')!.onclick = stop;
+const accounts = new AccountScreen(play, stop, () => { void scene?.connection?.refreshAccount(); });
+document.getElementById('return-accounts')!.onclick = () => accounts.open('login');
+document.getElementById('gameplay-signup')!.onclick = () => accounts.open('signup');

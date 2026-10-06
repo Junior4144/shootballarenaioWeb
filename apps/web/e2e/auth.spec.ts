@@ -136,7 +136,7 @@ test('guest reload waits for choice then resumes the same temporary identity', a
     await page.locator('#guest-play').click(); await expect(page.locator('#connection-status')).toContainText('Connected');
     await expect.poll(() => snapshot?.players.find(p => p.id === id)?.connected).toBe(true);
     await expect(page.locator('#playing-identity')).toContainText('GUEST');
-    await page.locator('#return-accounts').click(); await page.locator('#guest-play').click();
+    await page.locator('#account-toggle').click(); await page.locator('#return-accounts').click(); await page.locator('#guest-play').click();
     await expect(page.locator('#connection-status')).toContainText('Connected');
     await page.locator('#leave').click(); await page.locator('#join').click();
     await expect(page.locator('#connection-status')).toContainText('Connected');
@@ -156,4 +156,135 @@ test('login in another tab exits guest gameplay and discards guest resume tokens
     expect(await page.evaluate(() => Object.keys(sessionStorage).filter(key => key.startsWith('shootball:v')))).toEqual([]);
     await other.locator('#account-signout').click(); await expect(page.locator('#guest-play')).toBeEnabled();
   } finally { await other.close(); }
+});
+
+for (const width of [1366, 390]) test(`gameplay account controls at ${width}px open the requested form`, async ({ page }, info) => {
+  await page.setViewportSize({ width, height: 844 });
+  await page.goto('/');
+  await page.locator('#guest-play').click();
+  await expect(page.locator('#connection-status')).toContainText('Connected');
+  await expect(page.locator('#account-toggle')).toBeInViewport();
+  await page.locator('#account-toggle').click();
+  await expect(page.locator('#playing-identity')).toHaveText('GUEST / Temporary');
+  await page.screenshot({ path: info.outputPath('gameplay-account.png'), fullPage: true });
+  await page.locator('#gameplay-signup').click();
+  await expect(page.locator('#signup-tab')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('#signup-tab')).toBeFocused();
+  await expect(page.locator('#confirm-password')).toBeVisible();
+  await expect(page.locator('canvas')).toHaveCount(0);
+  expect(await page.evaluate(() => Object.keys(sessionStorage).filter(key => key.startsWith('shootball:v')))).toEqual([]);
+  await page.locator('#guest-play').click();
+  await expect(page.locator('#connection-status')).toContainText('Connected');
+  await page.locator('#account-toggle').click(); await page.locator('#return-accounts').click();
+  await expect(page.locator('#login-tab')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('#login-tab')).toBeFocused();
+  await page.locator('#email').fill('fixture@example.test');
+  await page.locator('#password').fill('Test-password-123');
+  await page.locator('#auth-submit').click();
+  await expect(page.locator('#account-play')).toBeEnabled();
+  await page.locator('#account-play').click();
+  // Auth is mocked here; the real server rejects the fixture token. The account UI still works.
+  await expect(page.locator('#playing-identity')).toHaveText('ACCOUNT / Pixel Ace');
+  await expect(page.locator('#gameplay-signup')).toBeHidden();
+  await expect(page.locator('#return-accounts')).toHaveText('Manage account');
+  await page.locator('#account-toggle').click(); await page.locator('#return-accounts').click();
+  await expect(page.locator('#display-name')).toBeFocused();
+  await page.locator('#account-signout').click();
+  await expect(page.locator('#guest-play')).toBeEnabled();
+});
+
+test('hover audio produces real Web Audio tones, supports keyboard focus and respects mute', async ({ page }) => {
+  await page.addInitScript(() => {
+    const start = OscillatorNode.prototype.start;
+    Object.defineProperty(window, 'uiTones', { value: [], configurable: true });
+    OscillatorNode.prototype.start = function (...args) {
+      if (this.type === 'triangle') {
+        (window as unknown as { uiTones: string[] }).uiTones.push(this.context.state);
+      }
+      return start.apply(this, args);
+    };
+  });
+  const count = () => page.evaluate(() => (window as unknown as { uiTones: string[] }).uiTones.length);
+  await page.goto('/');
+  await expect(page.locator('#guest-play')).toBeEnabled();
+  await page.locator('#email').click(); // Browser user gesture unlocks audio.
+  await page.locator('#google-login').hover();
+  await expect.poll(count).toBeGreaterThan(0);
+  expect(await page.evaluate(() => (window as unknown as { uiTones: string[] }).uiTones.every(state => state === 'running'))).toBe(true);
+  const beforeKeyboard = await count();
+  await page.waitForTimeout(100); // The short tone's debounce window.
+  await page.locator('#password').focus();
+  await page.keyboard.press('Tab');
+  await expect(page.locator('#auth-submit')).toBeFocused();
+  await expect.poll(count).toBeGreaterThan(beforeKeyboard);
+  await page.locator('#guest-play').click();
+  await expect(page.locator('#connection-status')).toContainText('Connected');
+  await page.locator('#mute').click();
+  await expect(page.locator('#mute')).toHaveAttribute('aria-pressed', 'true');
+  const muted = await count();
+  await page.waitForTimeout(100);
+  await page.locator('#account-toggle').hover();
+  expect(await count()).toBe(muted);
+  await page.locator('#mute').click();
+  await page.waitForTimeout(100);
+  await page.locator('#account-toggle').hover();
+  await expect.poll(count).toBeGreaterThan(muted);
+});
+
+for (const viewport of [{ width: 2560, height: 1440 }, { width: 1920, height: 1080 }, { width: 1366, height: 768 }, { width: 800, height: 600 }, { width: 390, height: 844 }, { width: 320, height: 568 }]) {
+  test(`compact header fits long account names at ${viewport.width}x${viewport.height}`, async ({ page }, info) => {
+    await page.setViewportSize(viewport);
+    await page.route(`${project}/rest/v1/profiles**`, route => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ display_name: 'ABCDEFGHIJKLMNOPQRST' }) }));
+    await page.goto('/');
+    await page.locator('#email').fill('fixture@example.test');
+    await page.locator('#password').fill('Test-password-123');
+    await page.locator('#auth-submit').click();
+    await expect(page.locator('#account-play')).toBeEnabled();
+    await page.locator('#account-play').click();
+    await expect(page.locator('#account-toggle-name')).toHaveText('ABCDEFGHIJKLMNOPQRST');
+    const geometry = await page.evaluate(() => {
+      const box = (selector: string) => {
+        const r = document.querySelector(selector)!.getBoundingClientRect();
+        return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: r.width, height: r.height };
+      };
+      return { header: box('.game-header'), brand: box('.game-brand'), match: box('.header-match'), actions: box('.header-actions'), account: box('#account-toggle'), settings: box('#settings-toggle'), width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight };
+    });
+    expect(geometry.width).toBeLessThanOrEqual(viewport.width);
+    expect(geometry.height).toBeLessThanOrEqual(viewport.height);
+    expect(geometry.header.height).toBe(112);
+    expect(geometry.brand.right).toBeLessThanOrEqual(geometry.match.left);
+    expect(geometry.match.right).toBeLessThanOrEqual(geometry.actions.left);
+    expect(geometry.account.right).toBeLessThanOrEqual(geometry.settings.left);
+    if (viewport.width > 700) expect(Math.abs((geometry.match.left + geometry.match.right) / 2 - (geometry.header.left + geometry.header.right) / 2)).toBeLessThan(1);
+    await page.locator('.game-header').screenshot({ path: info.outputPath('header.png') });
+    await page.locator('#account-toggle').click();
+    await expect(page.locator('#playing-identity')).toHaveText('ACCOUNT / ABCDEFGHIJKLMNOPQRST');
+    const menu = await page.locator('#account-menu').boundingBox();
+    expect(menu!.x).toBeGreaterThanOrEqual(0);
+    expect(menu!.x + menu!.width).toBeLessThanOrEqual(viewport.width);
+    await page.screenshot({ path: info.outputPath('account-dropdown.png') });
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#account-menu')).toBeHidden();
+    await expect(page.locator('#account-toggle')).toBeFocused();
+  });
+}
+
+test('header dropdowns support keyboard, outside dismissal and working settings', async ({ page }) => {
+  await page.goto('/'); await page.locator('#guest-play').click();
+  await expect(page.locator('#connection-status')).toContainText('Connected');
+  await page.locator('#account-toggle').focus(); await page.keyboard.press('ArrowDown');
+  await expect(page.locator('#return-accounts')).toBeFocused();
+  await page.locator('#settings-toggle').click();
+  await expect(page.locator('#account-menu')).toBeHidden();
+  await page.locator('#settings-sound').click();
+  await expect(page.locator('#mute')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#settings-sound')).toHaveText('Unmute sound');
+  await page.locator('#settings-sound').click();
+  await expect(page.locator('#mute')).toHaveAttribute('aria-pressed', 'false');
+  await page.locator('#settings-guide').click();
+  await expect(page.locator('#help-widget')).not.toHaveAttribute('open', '');
+  await expect(page.locator('#settings-menu')).toBeHidden();
+  await page.locator('#account-toggle').click();
+  await page.locator('.game-brand').click();
+  await expect(page.locator('#account-menu')).toBeHidden();
 });

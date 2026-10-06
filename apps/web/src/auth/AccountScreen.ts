@@ -89,6 +89,12 @@ export class AccountScreen {
     el('cancel-recovery').onclick = () => { el('account-signout').click(); };
     this.render(); void this.initialize();
   }
+  open(mode: 'login' | 'signup' = 'login'): void {
+    this.stop();
+    if (!this.recovery) this.mode = mode;
+    this.show(''); this.render();
+    el(this.session ? 'display-name' : this.client ? `${mode}-tab` : 'guest-play').focus();
+  }
   private redirect(recovery = false): string { return `${location.origin}/${recovery ? '?recovery=1' : ''}`; }
   private api(): SupabaseClient {
     if (!this.client) throw new Error('Accounts are not configured yet. Guest play is available.');

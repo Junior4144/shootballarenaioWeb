@@ -16,6 +16,7 @@ export function attachHoverAudio(root: HTMLElement): () => void {
     if (!button || !root.contains(button) || button.disabled || !button.getClientRects().length) return;
     if (related instanceof Node && button.contains(related)) return;
     if (!context || context.state !== 'running' || document.hidden) return;
+    if (document.getElementById('mute')?.getAttribute('aria-pressed') === 'true') return;
     const now = context.currentTime;
     if (now - lastTone < 0.075) return;
     lastTone = now;

@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { Client } from '@colyseus/sdk';
 import { ROOM_NAME, VERSION, type Snapshot } from '@shootball/protocol';
 
-for (const viewport of [{ width: 1920, height: 1080 }, { width: 1366, height: 768 }, { width: 800, height: 600 }, { width: 390, height: 844 }]) {
+for (const viewport of [{ width: 2560, height: 1440 }, { width: 1920, height: 1080 }, { width: 1366, height: 768 }, { width: 800, height: 600 }, { width: 390, height: 844 }]) {
   test(`live HUD fits ${viewport.width}x${viewport.height}`, async ({ page }, testInfo) => {
     const errors: string[] = [];
     page.on('pageerror', error => errors.push(error.message));
@@ -17,24 +17,28 @@ for (const viewport of [{ width: 1920, height: 1080 }, { width: 1366, height: 76
         const r = document.querySelector(selector)!.getBoundingClientRect();
         return { x: r.x, y: r.y, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
       };
-      return { arena: box('.arena-wrap'), sidebar: box('aside'), canvas: box('canvas'), health: box('#health-meter'), mute: box('#mute'),
+      return { header: box('.game-header'), field: box('#game'), arena: box('.arena-wrap'), sidebar: box('aside'), canvas: box('canvas'), health: box('#health-meter'), mute: box('#mute'),
         width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight };
     });
     expect(geometry.width).toBeLessThanOrEqual(viewport.width);
     expect(geometry.height).toBeLessThanOrEqual(viewport.height);
-    expect(geometry.arena.width / geometry.arena.height).toBeCloseTo(1.35, 2);
-    // The only clipped pixels must be the original 48px blank canvas rails.
-    expect(geometry.arena.x - geometry.canvas.x).toBeCloseTo(geometry.canvas.width * .05, 0);
-    expect(geometry.canvas.right - geometry.arena.right).toBeCloseTo(geometry.canvas.width * .05, 0);
-    if (viewport.width > 700) {
-      expect(Math.abs(geometry.sidebar.x - geometry.arena.right)).toBeLessThan(2);
-      expect(geometry.sidebar.width).toBeLessThanOrEqual(220);
-      const playfieldTop = geometry.canvas.y + geometry.canvas.height * (80 / 640);
-      const playfieldBottom = geometry.canvas.y + geometry.canvas.height * (592 / 640);
-      expect(Math.abs(geometry.sidebar.y - playfieldTop)).toBeLessThan(2);
-      expect(Math.abs(geometry.sidebar.bottom - playfieldBottom)).toBeLessThan(2);
+    // The full available rectangle is used, with no letterboxing or stretched canvas.
+    expect(geometry.arena.y - geometry.header.bottom).toBeLessThanOrEqual(8);
+    expect(Math.abs(geometry.canvas.x - geometry.field.x)).toBeLessThan(2);
+    expect(Math.abs(geometry.canvas.y - geometry.field.y)).toBeLessThan(2);
+    expect(Math.abs(geometry.canvas.width - geometry.field.width)).toBeLessThan(2);
+    expect(Math.abs(geometry.canvas.height - geometry.field.height)).toBeLessThan(2);
+    expect(geometry.arena.bottom - geometry.field.bottom).toBe(48);
+    if (viewport.width > 1100) {
+      expect(geometry.sidebar.x - geometry.arena.right).toBeLessThanOrEqual(8);
+      expect(geometry.sidebar.width).toBeLessThanOrEqual(330);
+      expect(Math.abs(geometry.sidebar.y - geometry.arena.y)).toBeLessThan(2);
+      expect(Math.abs(geometry.sidebar.bottom - geometry.arena.bottom)).toBeLessThan(2);
+      expect(viewport.height - geometry.arena.bottom).toBeLessThanOrEqual(8);
+      expect(viewport.width - geometry.sidebar.right).toBeLessThanOrEqual(8);
     } else {
       expect(geometry.sidebar.y).toBeGreaterThanOrEqual(geometry.arena.bottom - 1);
+      expect(viewport.height - geometry.sidebar.bottom).toBeLessThanOrEqual(8);
     }
     expect(geometry.health.x).toBeGreaterThanOrEqual(geometry.arena.x);
     expect(geometry.mute.right).toBeLessThanOrEqual(geometry.arena.right + 1);
@@ -52,9 +56,9 @@ for (const viewport of [{ width: 1920, height: 1080 }, { width: 1366, height: 76
     });
     expect(overflow).toEqual([]);
     const helpBox = await page.locator('#help-widget').boundingBox();
-    if (viewport.width > 700) {
+    if (viewport.width > 1100) {
       expect(helpBox!.x + helpBox!.width).toBeLessThanOrEqual(geometry.arena.x);
-      expect(Math.abs(helpBox!.y - (geometry.canvas.y + geometry.canvas.height * .125))).toBeLessThan(2);
+      expect(Math.abs(helpBox!.y - geometry.arena.y)).toBeLessThan(2);
     } else {
       expect(helpBox!.y).toBeGreaterThanOrEqual(geometry.arena.bottom);
       const content = await page.locator('.help-content').boundingBox();
@@ -120,4 +124,25 @@ test('browser inputs reach authority; HUD and leave/rejoin reflect server state'
     await expect.poll(() => snapshot?.players.find(p => p.id === id)?.connected).toBe(true);
     await expect(page.locator('#scoreboard tr.local')).toContainText('YOU');
   } finally { await observer.leave(); }
+});
+
+test('live gameplay fills its container after resizing without reconnecting', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  let sockets = 0;
+  page.on('websocket', socket => { if (new URL(socket.url()).port === '2569') sockets++; });
+  await page.goto('/'); await page.locator('#guest-play').click();
+  await expect(page.locator('#connection-status')).toContainText('Connected');
+  for (const viewport of [{ width: 1920, height: 1080 }, { width: 2560, height: 1440 }, { width: 390, height: 844 }, { width: 800, height: 600 }]) {
+    await page.setViewportSize(viewport);
+    await expect.poll(async () => page.evaluate(() => {
+      const parent = document.querySelector('#game')!.getBoundingClientRect();
+      const canvas = document.querySelector('canvas')!.getBoundingClientRect();
+      return Math.max(Math.abs(parent.width - canvas.width), Math.abs(parent.height - canvas.height));
+    })).toBeLessThan(2);
+    await expect(page.locator('#connection-status')).toContainText('Connected');
+    await expect(page.locator('#scoreboard tr.local')).toContainText('YOU');
+  }
+  expect(sockets).toBe(1);
+  expect(errors).toEqual([]);
 });

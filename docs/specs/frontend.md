@@ -3,7 +3,7 @@
 Every frontend surface follows the [2D pixel UI standard](art-direction.md),
 including the results/win screen and connection, respawn and rematch states.
 
-Strict TypeScript, Vite, Phaser, 960 x 640 FIT arena. Preserve WASD, independent
+Strict TypeScript, Vite, Phaser. The canvas uses RESIZE to fill the available playfield below the header, with uniform camera zoom based on a 960 x 640 reference. Desktop side panels fill the remaining screen height; the HUD has a separate 48px row. Camera bounds exclude blank map margins. Preserve WASD, independent
 mouse aim, click fire, focus clearing, retry and reconnect. Add Q radar and an
 optional sound toggle. The browser presents server state; it does not award points,
 resolve collisions, spawn bots, collect pickups or compute radar results.
