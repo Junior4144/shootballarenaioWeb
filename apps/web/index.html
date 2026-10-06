@@ -98,6 +98,7 @@
         </div>
         <div class="arena-stage"><div class="arena-wrap">
           <div id="game" aria-label="ShootBall Arena. WASD to move, hold Shift to sprint, mouse to aim, left click to fire, Q to scan."></div>
+          <section class="scores gameplay-leaderboard" aria-label="Live scoreboard"><h2>Leaderboard</h2><p id="active-count">0/8 players</p><table><thead><tr><th scope="col">Player</th><th scope="col">Points</th></tr></thead><tbody id="scoreboard"></tbody></table></section>
           <div class="status-strip" aria-label="Player status">
             <div class="vitals"><svg class="heart" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 2h5v2h4V2h5v7h-2v2h-2v2H9v2H7v-2H5v-2H3V9H1z" fill="currentColor"/></svg><span id="health-value">&mdash;</span><div id="health-meter" role="progressbar" aria-label="Health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="health-fill"></div></div></div>
             <span id="speed" title="Speed boost">&#991; SPD</span>
@@ -112,7 +113,6 @@
         </div>
         </div>
         <aside>
-          <section class="scores" aria-label="Live scoreboard"><h2>Leaderboard</h2><p id="active-count">0/8 players</p><table><thead><tr><th>Player</th><th scope="col">Pts</th><th scope="col" title="Player kills">PvP</th><th scope="col" title="Bot kills">Bots</th></tr></thead><tbody id="scoreboard"></tbody></table></section>
           <section class="feed-panel"><h2>Kill feed</h2><ul id="kill-feed"></ul></section>
           <section class="round-panel"><h2>Match</h2><dl><div><dt>Time</dt><dd id="round-time">0:00</dd></div><div><dt>Target</dt><dd id="round-target">1000 pts</dd></div></dl></section>
           <div class="match-actions"><button id="game-main-menu" type="button">Main menu</button><button id="join" hidden>Join / Retry</button><button id="leave" hidden>Leave Match</button></div>

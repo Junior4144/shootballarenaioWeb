@@ -213,3 +213,27 @@ aside .connection { border-top: 2px solid #294754; color: #a9c8d9; }
 #menu-background::after { content: ''; position: absolute; inset: 0; background: rgba(5, 14, 22, .64); }
 #account-screen, #lobby-screen { position: relative; background: transparent; }
 @media (prefers-reduced-motion: reduce) { #menu-background video { display: none; } }
+
+/* Scoreboard floats over the playfield without intercepting aim/fire. */
+.gameplay-leaderboard { position: absolute; top: 10px; right: 10px; z-index: 1; width: min(390px, 58%); padding: 18px; pointer-events: none; background: rgba(6, 19, 27, .64); border: 2px solid rgba(110, 170, 169, .8); color: #e0eef0;
+  box-shadow: inset 2px 2px rgba(153, 223, 214, .18), inset -2px -2px rgba(0, 8, 14, .7);
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, calc(100% - 8px) 4px, calc(100% - 4px) 4px, calc(100% - 4px) 8px, 100% 8px, 100% calc(100% - 8px), calc(100% - 4px) calc(100% - 8px), calc(100% - 4px) calc(100% - 4px), calc(100% - 8px) calc(100% - 4px), calc(100% - 8px) 100%, 8px 100%, 8px calc(100% - 4px), 4px calc(100% - 4px), 4px calc(100% - 8px), 0 calc(100% - 8px), 0 8px, 4px 8px, 4px 4px, 8px 4px);
+  text-shadow: 1px 1px #061019; }
+.gameplay-leaderboard h2 { margin: 0 0 9px; padding: 6px 8px; font-size: 22px; color: #d5fff0; text-transform: uppercase; letter-spacing: .04em; background: rgba(48, 85, 97, .45); border: 2px solid rgba(110, 170, 169, .65); box-shadow: inset 2px 2px rgba(153, 223, 214, .16), inset -2px -2px rgba(0, 8, 14, .45); text-shadow: 2px 2px #061019; }
+.gameplay-leaderboard #active-count { font-size: 15px; margin: 0 0 9px; color: #a4c2d3; }
+.gameplay-leaderboard table { table-layout: fixed; font-size: 18px; }
+.gameplay-leaderboard th { font-size: 16px; text-transform: uppercase; border-bottom: 2px solid rgba(110, 170, 169, .4); }
+.gameplay-leaderboard tbody tr + tr { border-top: 1px solid rgba(110, 170, 169, .16); }
+.gameplay-leaderboard tbody tr:nth-child(even):not(.local) { background: rgba(83, 121, 133, .1); }
+.gameplay-leaderboard th:last-child { width: 7ch; }
+.gameplay-leaderboard th, .gameplay-leaderboard td { padding: 6px; }
+.gameplay-leaderboard td:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gameplay-leaderboard tr.local { background: rgba(69, 233, 196, .16); box-shadow: inset 3px 0 #72e1ca, inset 0 2px rgba(114, 225, 202, .22), inset 0 -2px rgba(0, 8, 14, .35); color: #72e1ca; }
+@media (max-width: 1100px) {
+  .gameplay-leaderboard { top: 6px; right: 6px; width: min(270px, 60%); padding: 9px; }
+  .gameplay-leaderboard h2 { font-size: 16px; margin-bottom: 6px; }
+  .gameplay-leaderboard #active-count { font-size: 11px; margin-bottom: 6px; }
+  .gameplay-leaderboard table { font-size: 12px; }
+  .gameplay-leaderboard th, .gameplay-leaderboard td { padding: 2px; }
+  .gameplay-leaderboard th { font-size: 10px; }
+}

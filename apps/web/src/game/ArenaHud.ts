@@ -28,7 +28,10 @@ export class ArenaHud {
       this.signature = signature;
       element('scoreboard').replaceChildren(...rows.map(p => {
         const row = document.createElement('tr'); if (p.id === localId) row.className = 'local';
-        for (const text of [actorName(p.id, localId, state.identities) + (!p.connected ? ' (away)' : p.health <= 0 ? ' (down)' : ''), String(p.points), String(p.kills), String(p.botKills)]) {
+        const identity = state.identities?.[p.id];
+        const name = identity?.kind === 'account' ? identity.displayName : 'GUEST ' + p.id.slice(0, 4);
+        const label = name + (p.id === localId ? ' (YOU)' : '') + (!p.connected ? ' (away)' : p.health <= 0 ? ' (down)' : '');
+        for (const text of [label, String(p.points)]) {
           const cell = document.createElement('td'); cell.textContent = text; row.append(cell);
         }
         return row;
