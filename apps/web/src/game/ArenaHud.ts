@@ -55,9 +55,19 @@ export class ArenaHud {
       const signature = JSON.stringify([state.match.round, state.match.standings, localId]);
       if (this.resultSignature !== signature) {
         this.resultSignature = signature;
-        element('winner').textContent = !state.match.winnerIds.length ? 'No winner this round' : state.match.winnerIds.length > 1 ? 'Draw!' : actorName(state.match.winnerIds[0], localId) + ' wins!';
+        const localWinner = !!localId && state.match.winnerIds.includes(localId);
+        results.dataset.outcome = !state.match.winnerIds.length ? 'empty' : state.match.winnerIds.length > 1 ? 'draw' : localWinner ? 'win' : 'loss';
+        element('winner').textContent = !state.match.winnerIds.length ? 'No winner this round' : state.match.winnerIds.length > 1 ? 'Draw!' : localWinner ? 'VICTORY!' : actorName(state.match.winnerIds[0], localId) + ' wins!';
         element('final-standings').replaceChildren(...state.match.standings.map((p, i) => {
-          const item = document.createElement('li'); item.textContent = `${i + 1}. ${actorName(p.id, localId)} / ${p.points} points / ${p.kills} PvP / ${p.botKills} bots`; return item;
+          const item = document.createElement('li');
+          if (p.id === localId) item.className = 'local';
+          const rank = document.createElement('span'), name = document.createElement('strong');
+          const points = document.createElement('span'), kills = document.createElement('span');
+          rank.className = 'result-rank'; rank.textContent = String(i + 1).padStart(2, '0');
+          name.className = 'result-name'; name.textContent = actorName(p.id, localId);
+          points.className = 'result-points'; points.textContent = `${p.points} PTS`;
+          kills.className = 'result-kills'; kills.textContent = `${p.kills} PvP / ${p.botKills} bots`;
+          item.append(rank, name, points, kills); return item;
         }));
       }
     }

@@ -3,6 +3,12 @@ import { GAME } from '@shootball/shared';
 import { ArenaScene } from './game/ArenaScene';
 import './style.css';
 
+const helpWidget = document.querySelector<HTMLDetailsElement>('#help-widget')!;
+document.getElementById('help-close')!.addEventListener('click', () => {
+  helpWidget.open = false;
+  helpWidget.querySelector('summary')!.focus();
+});
+
 new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'game',

@@ -34,6 +34,10 @@ hosted backend is needed. Tests cover four viewport sizes, the live HUD, canvas
 alignment, mute, authoritative movement/fire, and leave/rejoin identity. A second
 Colyseus client observes snapshots to verify browser inputs reach the server.
 Screenshots, failure traces, and the HTML report are in `.test-artifacts/`.
+The suite also uses explicit HUD snapshot fixtures for victory, another player's
+win, draw and empty results at desktop/narrow sizes. These presentation checks
+are separate from live-server gameplay verification. All frontend UI follows
+the [pixel-style standard](docs/specs/art-direction.md).
 
 Alternatively, use separate terminals:
 

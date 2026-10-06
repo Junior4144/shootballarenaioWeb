@@ -9,31 +9,46 @@
   <body>
     <main aria-label="ShootBall Arena">
       <div class="play-layout">
+        <div class="help-rail">
+          <details class="help-widget" id="help-widget" open>
+            <summary><span class="pixel-mark" aria-hidden="true">✚</span> FIELD GUIDE</summary>
+            <button id="help-close" type="button" aria-label="Close controls and abilities" title="Close guide">×</button>
+            <div class="help-content">
+              <h2 class="help-title">CONTROLS &amp; ABILITIES</h2>
+              <dl class="control-list">
+                <div><dt><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></dt><dd>Move</dd></div>
+                <div><dt>Mouse</dt><dd>Aim</dd></div>
+                <div><dt>Left click</dt><dd>Fire</dd></div>
+                <div><dt><kbd>Q</kbd></dt><dd>Radar pulse</dd></div>
+              </dl>
+              <button id="scan">Q / Radar ready</button>
+              <p id="objective" class="note"></p>
+              <p class="note">Walk over upgrades to collect them. Gold ring = spawn shield; firing ends it.</p>
+              <p class="note">Leave pauses for 10 seconds. Your avatar stays vulnerable.</p>
+            </div>
+          </details>
+        </div>
         <div class="arena-stage"><div class="arena-wrap">
           <div id="game" aria-label="ShootBall Arena. WASD to move, mouse to aim, left click to fire, Q to scan."></div>
           <div class="arena-heading"><div class="mode">FREE-FOR-ALL <span id="match-clock" role="timer">0:00</span></div><span id="match-target">Target: 1000 pts</span></div>
           <div class="status-strip" aria-label="Player status">
-            <div class="vitals"><span class="heart" aria-hidden="true">&#9829;</span><span id="health-value">&mdash;</span><div id="health-meter" role="progressbar" aria-label="Health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="health-fill"></div></div></div>
+            <div class="vitals"><svg class="heart" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 2h5v2h4V2h5v7h-2v2h-2v2H9v2H7v-2H5v-2H3V9H1z" fill="currentColor"/></svg><span id="health-value">&mdash;</span><div id="health-meter" role="progressbar" aria-label="Health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="health-fill"></div></div></div>
             <span id="speed" title="Speed boost">&#991; SPD</span>
             <span id="loadout">BASIC</span><span id="ammo">&infin;</span>
             <svg class="weapon-icon" viewBox="0 0 32 24" aria-hidden="true"><path d="M2 5h28v7H17l-4 10H6l3-10H2z" fill="currentColor"/><path d="M21 7h7v2h-7z" fill="#648392"/></svg>
-            <button id="mute" aria-pressed="false" aria-label="Mute sound" title="Sound on"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4zM16 8q5 4 0 8M19 5q8 7 0 14"/></svg></button>
+            <button id="mute" aria-pressed="false" aria-label="Mute sound" title="Sound on"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h4V7h2V5h3v14H9v-2H7v-2H3z M16 8h2v8h-2 M20 5h2v14h-2"/></svg></button>
           </div>
+
           <div id="player-status" role="status"></div>
-          <section id="results" hidden aria-label="Round results"><h2 id="winner"></h2><p id="rematch"></p><ol id="final-standings"></ol></section>
+          <section id="results" class="pixel-panel" hidden aria-label="Round results"><h2 class="pixel-title">ROUND COMPLETE</h2><p id="winner" role="status"></p><p id="rematch"></p><ol id="final-standings" aria-label="Final rankings"></ol></section>
         </div>
         </div>
         <aside>
-          <section class="scores" aria-label="Live scoreboard"><h2>Leaderboard</h2><p id="active-count">0/8 players</p><table><thead><tr><th>Player</th><th>Pts</th><th>PvP</th><th>Bots</th></tr></thead><tbody id="scoreboard"></tbody></table></section>
+          <section class="scores" aria-label="Live scoreboard"><h2>Leaderboard</h2><p id="active-count">0/8 players</p><table><thead><tr><th>Player</th><th scope="col">Pts</th><th scope="col" title="Player kills">PvP</th><th scope="col" title="Bot kills">Bots</th></tr></thead><tbody id="scoreboard"></tbody></table></section>
           <section class="feed-panel"><h2>Kill feed</h2><ul id="kill-feed"></ul></section>
           <section class="round-panel"><h2>Round <span id="round-number">1</span></h2><dl><div><dt>Time</dt><dd id="round-time">0:00 / 5:00</dd></div><div><dt>Target</dt><dd id="round-target">1000 pts</dd></div></dl></section>
           <div class="match-actions"><button id="join" hidden>Join / Retry</button><button id="leave" hidden>Leave Match</button></div>
-          <div class="secondary-controls">
-      <div class="connection"><span id="connection-status" role="status" aria-live="polite">Connecting...</span></div>
-      <footer><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move <span class="separator">·</span> Mouse aim <span class="separator">·</span> Left click fire</span><button id="scan">Q / Radar ready</button></footer>
-      <p id="objective" class="note"></p>
-      <p class="note">Leave pauses for 10 seconds; your avatar stays vulnerable. Keyboard + mouse required.</p>
-          </div>
+          <div class="connection"><span id="connection-status" role="status" aria-live="polite">Connecting...</span></div>
         </aside>
       </div>
     </main>

@@ -8,7 +8,7 @@ for (const viewport of [{ width: 1920, height: 1080 }, { width: 1366, height: 76
     page.on('pageerror', error => errors.push(error.message));
     await page.setViewportSize(viewport);
     await page.goto('/');
-    await expect(page.locator('#connection-status')).toContainText('You are cyan');
+    await expect(page.locator('#connection-status')).toContainText('Arena \u00b7 Connected');
     await expect(page.locator('#scoreboard tr.local')).toContainText('YOU');
     await expect(page.locator('#health-value')).toHaveText(/\d+/);
     const geometry = await page.evaluate(() => {
@@ -37,6 +37,35 @@ for (const viewport of [{ width: 1920, height: 1080 }, { width: 1366, height: 76
     }
     expect(geometry.health.x).toBeGreaterThanOrEqual(geometry.arena.x);
     expect(geometry.mute.right).toBeLessThanOrEqual(geometry.arena.right + 1);
+    const beforeHelp = await page.locator('.arena-wrap').boundingBox();
+    await expect(page.locator('#help-widget')).toHaveAttribute('open', '');
+    await expect(page.locator('.help-content')).toBeVisible();
+    expect(await page.locator('.arena-wrap').boundingBox()).toEqual(beforeHelp);
+    await expect(page.locator('#scan')).toBeVisible();
+    const overflow = await page.evaluate(() => {
+      const selectors = ['aside', '.help-content', '.scores', '.round-panel', '.feed-panel', '.control-list'];
+      return selectors.flatMap(selector => {
+        const node = document.querySelector<HTMLElement>(selector)!;
+        return node.scrollWidth > node.clientWidth + 1 ? [`${selector}: ${node.scrollWidth} > ${node.clientWidth}`] : [];
+      });
+    });
+    expect(overflow).toEqual([]);
+    const helpBox = await page.locator('#help-widget').boundingBox();
+    if (viewport.width > 700) {
+      expect(helpBox!.x + helpBox!.width).toBeLessThanOrEqual(geometry.arena.x);
+      expect(Math.abs(helpBox!.y - (geometry.canvas.y + geometry.canvas.height * .125))).toBeLessThan(2);
+    } else {
+      expect(helpBox!.y).toBeGreaterThanOrEqual(geometry.arena.bottom);
+      const content = await page.locator('.help-content').boundingBox();
+      expect(content!.y).toBeGreaterThanOrEqual(geometry.arena.bottom);
+    }
+    await page.screenshot({ path: testInfo.outputPath('help.png'), fullPage: true });
+    await page.getByRole('button', { name: 'Close controls and abilities' }).click();
+    await expect(page.locator('.help-content')).toBeHidden();
+    expect(await page.locator('.arena-wrap').boundingBox()).toEqual(beforeHelp);
+    await page.locator('#help-widget summary').click();
+    await expect(page.locator('.help-content')).toBeVisible();
+    expect(await page.locator('.arena-wrap').boundingBox()).toEqual(beforeHelp);
     await page.locator('#mute').click();
     await expect(page.locator('#mute')).toHaveAttribute('aria-pressed', 'true');
     await page.screenshot({ path: testInfo.outputPath('arena.png'), fullPage: true });
@@ -50,7 +79,7 @@ test('browser inputs reach authority; HUD and leave/rejoin reflect server state'
   observer.onMessage<Snapshot>('snapshot', value => { snapshot = value; });
   try {
     await page.goto('/');
-    await expect(page.locator('#connection-status')).toContainText('You are cyan');
+    await expect(page.locator('#connection-status')).toContainText('Arena \u00b7 Connected');
     await expect(page.locator('#active-count')).toHaveText('2/8 players');
     await expect.poll(() => snapshot?.players.filter(p => !p.bot && p.connected).length).toBe(2);
     const player = () => snapshot!.players.find(p => !p.bot && p.id !== observer.sessionId && p.connected)!;
@@ -69,7 +98,7 @@ test('browser inputs reach authority; HUD and leave/rejoin reflect server state'
     await expect(page.locator('#join')).toBeVisible();
     await expect.poll(() => snapshot?.players.find(p => p.id === id)?.connected).toBe(false);
     await page.locator('#join').click();
-    await expect(page.locator('#connection-status')).toContainText('You are cyan');
+    await expect(page.locator('#connection-status')).toContainText('Arena \u00b7 Connected');
     await expect.poll(() => snapshot?.players.find(p => p.id === id)?.connected).toBe(true);
     await expect(page.locator('#scoreboard tr.local')).toContainText('YOU');
   } finally { await observer.leave(); }

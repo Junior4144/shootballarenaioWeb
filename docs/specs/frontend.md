@@ -1,5 +1,8 @@
 # Frontend
 
+Every frontend surface follows the [2D pixel UI standard](art-direction.md),
+including the results/win screen and connection, respawn and rematch states.
+
 Strict TypeScript, Vite, Phaser, 960 x 640 FIT arena. Preserve WASD, independent
 mouse aim, click fire, focus clearing, retry and reconnect. Add Q radar and an
 optional sound toggle. The browser presents server state; it does not award points,

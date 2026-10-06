@@ -47,7 +47,7 @@ export class ArenaScene extends Phaser.Scene {
       floor.fillStyle(0x526979).fillRect(wall.x + 4, wall.y + 4, wall.width - 8, 5);
     }
     // Keep the original 864 x 512 play window and HUD while the world scrolls.
-    this.add.graphics().setScrollFactor(0).setDepth(20).fillStyle(0x0c1823)
+    this.add.graphics().setScrollFactor(0).setDepth(20).fillStyle(0x0b1720)
       .fillRect(0, 0, GAME.width, 80).fillRect(0, 592, GAME.width, 48)
       .fillRect(0, 80, 48, 512).fillRect(912, 80, 48, 512);
     this.health = this.add.graphics().setDepth(4);
@@ -82,9 +82,8 @@ export class ArenaScene extends Phaser.Scene {
       if (connection.snapshot && connection.state === 'connected') {
         this.snapshots.push(connection.snapshot, performance.now());
       }
-      const count = this.world.players.filter(p => !p.bot && p.connected).length;
       status.textContent = connection.state === 'connected'
-        ? `Room ${connection.room?.roomId} · ${count}/8 players · You are cyan`
+        ? 'Arena \u00b7 Connected'
         : connection.message;
       join.hidden = !['error', 'disconnected'].includes(connection.state);
       leave.hidden = ['error', 'disconnected'].includes(connection.state);

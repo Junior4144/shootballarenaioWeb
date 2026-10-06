@@ -26,6 +26,91 @@ input bounds, networking, combat, scoring, pickups and round lifecycle.
 
 ## Acceptance
 
+### HUD-03O: Frontend-wide pixel styling
+
+Promote the approved panel style to the core art-direction/frontend specs.
+Apply shared palette/bevel primitives to remaining buttons, health HUD, status
+badges and all round outcomes. Results use a pixel title bar, outcome message,
+readable ranked stat rows and rematch badge. Preserve game rules and layout.
+Verify win/loss/draw/empty-result fixtures at desktop and narrow sizes alongside
+the existing live-server browser suite. No outcome is computed by the client.
+
+Verified: 13 Playwright tests pass (10.5s): 5 live-server/layout checks plus
+8 presentation fixtures for win/loss/draw/empty results at 1366px and 390px.
+Fixtures call the real ArenaHud renderer with explicit snapshots and do not
+alter production game rules. Assertions cover outcome text, ranking count,
+local highlight, countdown, shared pixel styling, horizontal containment and
+scroll access to the eighth player. Desktop/narrow victory screenshots inspected.
+Frontend typecheck/build pass. Core art-direction is now the required UI standard.
+
+### HUD-03N: Pixel-edge and content containment
+
+Audit both widgets for horizontal overflow and text touching pixel borders.
+Keep the established layout, but provide internal breathing room and contain
+decorative pixels inside their panels. Check desktop and narrow layouts in
+Playwright, including help controls and scoreboard/round/feed sections.
+
+Verified: no horizontal overflow in either panel, scoreboard, round/feed or
+control list at all four tested sizes. Added scoreboard edge padding so text
+clears the inset pixel border, constrained horizontal panel overflow, and isolated
+canvas stacking. All 5 Playwright tests pass (8.2s); frontend build passes.
+
+### HUD-03M: Matching pixel-style scoreboard
+
+Apply the Field Guide's navy/teal palette, hard two-pixel borders, inset bevels,
+uppercase title bars and pixel-style buttons to the right sidebar. Retain its
+current width, playfield alignment, data, and responsive behavior. Verify existing
+Playwright geometry/interaction checks and inspect the rendered desktop panel.
+
+Verified: frontend typecheck/build pass; all 5 Playwright tests pass (8.6s).
+Desktop screenshot inspected: both panels share hard teal frames, inset title
+bars and beveled buttons. Sidebar remains aligned to the playable grid. An initial
+test-runner startup crash left isolated servers running; cleaned up those verified
+processes and reran successfully. No gameplay changes.
+
+### HUD-03L: Default-open pixel help widget
+
+The left widget opens automatically on page load, with a blocky pixel-style
+frame, beveled keys/buttons, and a clearly labeled close control. Closing leaves
+a compact reopen tab in the same rail; neither action shifts gameplay. No saved
+closed preference: a fresh page opens the instructions again. Keep responsive
+placement and scroll access to long content. Verify default state, close/reopen,
+and unchanged gameplay bounds using Playwright.
+
+Verified: all 5 Playwright tests pass (8.5s), including default-open state,
+explicit close and reopen, no page overflow, and stable arena bounds. Fixed
+short-screen overflow by constraining content to the rail height with internal
+scrolling. Desktop pixel styling visually inspected; frontend build passes.
+
+### HUD-03K: Controls outside the playfield
+
+Move help into a dedicated left rail, aligned to the playable grid top. Reserve
+the rail's width regardless of expansion so toggling never moves/resizes gameplay.
+Keep the right panel flush and preserve the canvas aspect ratio. On narrow screens,
+place the help toggle in a fixed-height row below gameplay, with its popup over
+the information panel rather than the game. Verify no overlap with gameplay and
+unchanged arena bounds when opening/closing the widget.
+
+Verified: all 5 Playwright tests pass (8.5s), including help placement outside
+gameplay and stable arena geometry on expansion. Desktop screenshot inspected;
+left help aligns with the top of the playable grid. Frontend typecheck/build pass.
+
+### HUD-03J: Readable stats and floating help
+
+Keep the accepted game/sidebar geometry. Match the canvas header/footer masks
+to the page navy. Increase right-panel text contrast and hierarchy; remove raw
+room identifiers and duplicated player/control explanations. Use "Arena" as a
+friendly label (there is no authoritative room number). Put instructions and
+the existing scan button/hint in a collapsed left-side overlay widget that never
+resizes the canvas or sidebar. Preserve connection errors, retry, and leave.
+Verify widget expansion leaves geometry unchanged at all four tested sizes.
+
+Verified: 5 Playwright tests pass (9.1s), including unchanged arena bounds during
+help expansion and help contained within the playfield at all four sizes. Inspected
+desktop/narrow screenshots and corrected narrow help overflow with an internally
+scrolling panel. Frontend typecheck/build passes. Existing radar mechanics remain
+unchanged; this widget relocates the already available scan control only.
+
 ### HUD-03I: Align sidebar to the playable grid only
 
 Latest screenshot corrects HUD-03H: the desktop sidebar spans canvas y=80..592
