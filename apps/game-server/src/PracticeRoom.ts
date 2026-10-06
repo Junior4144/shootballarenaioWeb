@@ -1,6 +1,6 @@
 import { Room, ServerError, type Client } from '@colyseus/core';
 import { Practice } from '@shootball/shared/practice';
-import { type InputIntent } from '@shootball/shared';
+import { CONFIG, type InputIntent } from '@shootball/shared';
 import { VERSION, NETWORK, isInput, type InputMessage } from '@shootball/protocol';
 
 interface Control {
@@ -11,7 +11,7 @@ interface Control {
   count: number;
 }
 export class PracticeRoom extends Room {
-  maxMessagesPerSecond = 120;
+  maxMessagesPerSecond = NETWORK.roomMaxMessagesPerSecond;
   protected world = new Practice();
   private controls = new Map<string, Control>();
   private accumulator = 0;
@@ -31,7 +31,7 @@ export class PracticeRoom extends Room {
       const current = performance.now();
       const delta = current - previous;
       previous = current;
-      this.accumulator = Math.min(this.accumulator + delta, NETWORK.tickMs * 3);
+      this.accumulator = Math.min(this.accumulator + delta, NETWORK.tickMs * CONFIG.simulation.maxCatchUpTicks);
       while (this.accumulator >= NETWORK.tickMs) {
         const inputs = new Map<string, InputIntent>();
         const now = performance.now();

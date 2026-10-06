@@ -33,7 +33,7 @@ export class PracticeConnection {
       if (attempt !== this.attempt) { void room.leave(); return; }
       this.room = room;
       this.sequence = 0;
-      Object.assign(room.reconnection, { minUptime: 0, minDelay: 250, maxDelay: 1000, delay: 250, maxRetries: 40, maxEnqueuedMessages: 0 });
+      Object.assign(room.reconnection, { minUptime: 0, minDelay: NETWORK.reconnectMinDelayMs, maxDelay: NETWORK.reconnectMaxDelayMs, delay: NETWORK.reconnectMinDelayMs, maxRetries: NETWORK.reconnectMaxRetries, maxEnqueuedMessages: 0 });
       this.saveToken(room.reconnectionToken);
       room.onMessage<Snapshot>('snapshot', snapshot => {
         if (this.room !== room) return;
@@ -42,7 +42,7 @@ export class PracticeConnection {
       });
       room.onDrop(() => {
         if (this.room !== room) return;
-        this.setState('reconnecting', 'Connection lost — reconnecting (up to 10 seconds)…');
+        this.setState('reconnecting', `Connection lost — reconnecting (up to ${NETWORK.reconnectSeconds} seconds)…`);
         this.deadline = setTimeout(() => {
           if (this.room !== room) return;
           room.reconnection.enabled = false;
@@ -79,7 +79,7 @@ export class PracticeConnection {
     const room = this.room;
     if (room) { this.saveToken(room.reconnectionToken); room.reconnection.enabled = false; }
     ++this.attempt;
-    this.finish('Paused. Join within 10 seconds to resume; your avatar remains vulnerable.', true);
+    this.finish(`Paused. Join within ${NETWORK.reconnectSeconds} seconds to resume; your avatar remains vulnerable.`, true);
     if (room) room.connection.close();
   }
   private finish(message: string, retainToken = false): void {

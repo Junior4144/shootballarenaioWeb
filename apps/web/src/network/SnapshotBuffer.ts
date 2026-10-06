@@ -1,8 +1,9 @@
+import { CONFIG } from '@shootball/shared';
 import type { Snapshot } from '@shootball/protocol';
 
-const DELAY_MS = 100;
-const MAX_GAP_MS = 250;
-const MAX_SNAPSHOTS = 12;
+const DELAY_MS = CONFIG.network.interpolationDelayMs;
+const MAX_GAP_MS = CONFIG.network.interpolationMaxGapMs;
+const MAX_SNAPSHOTS = CONFIG.network.interpolationMaxSnapshots;
 interface Frame { state: Snapshot; receivedAt: number }
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const angleLerp = (a: number, b: number, t: number) =>

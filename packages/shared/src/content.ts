@@ -1,18 +1,15 @@
+import { CONFIG, type WinCondition } from './config';
 import type { Player, Point, Projectile } from './index';
-
+export type { PickupKind } from './config';
+import type { PickupKind } from './config';
 export const LOOP = {
-  matchSeconds: 300, scoreLimit: 1000, resultsSeconds: 10,
-  humanKillPoints: 100, botKillPoints: 20, orbPoints: 5,
-  radarCooldown: 12, radarDuration: 3, radarRange: 360,
-  pickupRadius: 28, speedDuration: 6, speedMultiplier: 1.25,
-} as const;
-export const WEAPONS = {
-  basic: { damage: 25, cooldown: 0.15, speed: 520, life: 1.2, pellets: 1, spread: 0, ammo: 0 },
-  shotgun: { damage: 12, cooldown: 0.6, speed: 450, life: 0.65, pellets: 5, spread: 0.24, ammo: 8 },
-  heavy: { damage: 50, cooldown: 0.55, speed: 650, life: 1, pellets: 1, spread: 0, ammo: 6 },
-} as const;
+  matchSeconds: CONFIG.match.durationSeconds, scoreLimit: CONFIG.match.scoreLimit, resultsSeconds: CONFIG.match.resultsSeconds,
+  humanKillPoints: CONFIG.match.humanKillPoints, botKillPoints: CONFIG.match.npcKillPoints, orbPoints: CONFIG.match.orbPoints,
+  radarCooldown: CONFIG.radar.cooldownSeconds, radarDuration: CONFIG.radar.durationSeconds, radarRange: CONFIG.radar.range,
+  pickupRadius: CONFIG.pickups.collectRadius, speedDuration: CONFIG.pickups.speedDurationSeconds, speedMultiplier: CONFIG.pickups.speedMultiplier,
+};
+export const WEAPONS = CONFIG.weapons;
 export type Weapon = keyof typeof WEAPONS;
-export type PickupKind = 'score' | 'shotgun' | 'heavy' | 'speed' | 'health';
 export interface RadarMarker extends Point { id: string; kind: 'player' | 'bot' | PickupKind }
 export interface RadarScan { remaining: number; origin: Point; markers: RadarMarker[] }
 export interface ActorState extends Player {
@@ -37,11 +34,11 @@ export interface Pickup extends Point {
 export interface Standing { id: string; points: number; kills: number; botKills: number; deaths: number }
 export interface MatchState {
   round: number; phase: 'playing' | 'results'; remaining: number;
-  scoreLimit: number; winnerIds: string[]; standings: Standing[];
+  durationSeconds: number; scoreLimit: number; winCondition: WinCondition; killsToWin: number; winnerIds: string[]; standings: Standing[];
 }
 export interface ArenaEvent extends Point {
   id: number; time: number; kind: 'shot' | 'hit' | 'elimination' | 'pickup';
   actorId: string; targetId?: string; targetBot?: boolean; value?: number;
 }
-export const rankPlayers = <T extends Standing>(players: T[]): T[] => [...players].sort((a, b) =>
-  b.points - a.points || b.kills - a.kills || a.deaths - b.deaths || a.id.localeCompare(b.id));
+export const rankPlayers = <T extends Standing>(players: T[], mode: WinCondition = CONFIG.match.winCondition): T[] => [...players].sort((a, b) =>
+  (mode === 'kills' ? b.kills - a.kills || b.points - a.points : b.points - a.points || b.kills - a.kills) || a.deaths - b.deaths || a.id.localeCompare(b.id));

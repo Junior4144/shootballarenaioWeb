@@ -7,7 +7,7 @@ import { PracticeRoom } from './PracticeRoom';
 export function createServer(rules?: ArenaRules): Server {
   const server = new Server({
     transport: new WebSocketTransport({
-      maxPayload: NETWORK.maxPayload, pingInterval: 1000, pingMaxRetries: 2,
+      maxPayload: NETWORK.maxPayload, pingInterval: NETWORK.pingInterval, pingMaxRetries: NETWORK.pingMaxRetries,
     }),
     greet: false,
     gracefullyShutdown: false,

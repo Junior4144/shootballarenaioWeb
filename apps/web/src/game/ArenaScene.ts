@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
-import { ARENA, GAME } from '@shootball/shared';
-import { NETWORK, emptySnapshot, type Snapshot } from '@shootball/protocol';
+import { CONFIG, ARENA, GAME } from '@shootball/shared';
+import { NETWORK, neutralInput, emptySnapshot, type Snapshot } from '@shootball/protocol';
 import { PracticeConnection } from '../network/PracticeConnection';
 import { SnapshotBuffer } from '../network/SnapshotBuffer';
 import { EventCursor } from '../network/EventCursor';
@@ -34,33 +34,34 @@ export class ArenaScene extends Phaser.Scene {
 
   create(): void {
     this.createTextures();
-    this.cameras.main.setBounds(0, 0, ARENA.right + 48, ARENA.bottom + 48);
+    this.cameras.main.setBounds(0, 0, ARENA.right + CONFIG.map.cameraPadding, ARENA.bottom + CONFIG.map.cameraPadding);
     const floor = this.add.graphics();
     floor.fillStyle(0x1b2c39).fillRect(ARENA.left, ARENA.top, ARENA.right - ARENA.left, ARENA.bottom - ARENA.top);
     floor.lineStyle(1, 0x243745);
-    for (let x = ARENA.left; x <= ARENA.right; x += 32) floor.lineBetween(x, ARENA.top, x, ARENA.bottom);
-    for (let y = ARENA.top; y <= ARENA.bottom; y += 32) floor.lineBetween(ARENA.left, y, ARENA.right, y);
+    for (let x = ARENA.left; x <= ARENA.right; x += CONFIG.map.gridSize) floor.lineBetween(x, ARENA.top, x, ARENA.bottom);
+    for (let y = ARENA.top; y <= ARENA.bottom; y += CONFIG.map.gridSize) floor.lineBetween(ARENA.left, y, ARENA.right, y);
     floor.lineStyle(8, 0x415867).strokeRect(ARENA.left - 4, ARENA.top - 4, ARENA.right - ARENA.left + 8, ARENA.bottom - ARENA.top + 8);
     for (const wall of WALLS) {
       floor.fillStyle(0x405563).fillRect(wall.x, wall.y, wall.width, wall.height);
       floor.lineStyle(2, 0x78909d).strokeRect(wall.x, wall.y, wall.width, wall.height);
       floor.fillStyle(0x526979).fillRect(wall.x + 4, wall.y + 4, wall.width - 8, 5);
     }
-    // Keep the original 864 x 512 play window and HUD while the world scrolls.
+    // Insets define the visible play window independently of map dimensions.
+    const { topInset, bottomInset, sideInset } = CONFIG.presentation.viewport;
     this.add.graphics().setScrollFactor(0).setDepth(20).fillStyle(0x0b1720)
-      .fillRect(0, 0, GAME.width, 80).fillRect(0, 592, GAME.width, 48)
-      .fillRect(0, 80, 48, 512).fillRect(912, 80, 48, 512);
+      .fillRect(0, 0, GAME.width, topInset).fillRect(0, GAME.height - bottomInset, GAME.width, bottomInset)
+      .fillRect(0, topInset, sideInset, GAME.height - topInset - bottomInset).fillRect(GAME.width - sideInset, topInset, sideInset, GAME.height - topInset - bottomInset);
     this.health = this.add.graphics().setDepth(4);
     this.details = this.add.graphics().setDepth(6);
     this.keys = this.input.keyboard!.addKeys('W,A,S,D,Q') as typeof this.keys;
     const fire = (pointer: Phaser.Input.Pointer) => {
-      if (pointer.leftButtonDown() && pointer.x >= 48 && pointer.x <= 912 && pointer.y >= 80 && pointer.y <= 592) this.fireQueued = true;
+      if (pointer.leftButtonDown() && pointer.x >= sideInset && pointer.x <= GAME.width - sideInset && pointer.y >= topInset && pointer.y <= GAME.height - bottomInset) this.fireQueued = true;
     };
     const clearInput = () => { this.fireQueued = false; this.radarQueued = false; this.input.keyboard!.resetKeys(); };
     const neutral = () => {
       clearInput();
       this.focused = false;
-      this.connection.send({ moveX: 0, moveY: 0, aim: { x: 480, y: 336 }, fire: false });
+      this.connection.send(neutralInput());
     };
     const focus = () => { clearInput(); this.snapshots.clear(); this.cameraLife = ''; this.focused = !document.hidden; };
     const visibility = () => { if (document.hidden) neutral(); else focus(); };
@@ -69,7 +70,7 @@ export class ArenaScene extends Phaser.Scene {
     const leave = document.querySelector<HTMLButtonElement>('#leave')!;
     let storage: Storage | undefined;
     try { storage = sessionStorage; } catch { /* Storage is optional. */ }
-    this.connection = new PracticeConnection(import.meta.env.VITE_GAME_SERVER_URL || 'ws://127.0.0.1:2567', () => {
+    this.connection = new PracticeConnection(import.meta.env.VITE_GAME_SERVER_URL || `ws://${CONFIG.server.host}:${CONFIG.server.port}`, () => {
       const connection = this.connection;
       if (connection.state !== this.connectionState) {
         clearInput();
@@ -143,9 +144,9 @@ export class ArenaScene extends Phaser.Scene {
     this.health.clear(); this.details.clear();
     const now = performance.now();
     for (const event of this.eventCursor.take(this.world)) {
-      this.effects.push({ event, until: now + (event.kind === 'elimination' ? 450 : 160) });
+      this.effects.push({ event, until: now + (event.kind === 'elimination' ? CONFIG.presentation.eliminationEffectMs : CONFIG.presentation.effectMs) });
       const me = this.world.players.find(p => p.id === this.connection?.sessionId);
-      if (me && Math.hypot(event.x - me.x, event.y - me.y) < 600) this.audio.play(event, me.id);
+      if (me && Math.hypot(event.x - me.x, event.y - me.y) < CONFIG.presentation.audioRange) this.audio.play(event, me.id);
     }
     this.effects = this.effects.filter(e => e.until > now);
     for (const [id, visual] of this.players) {
@@ -169,7 +170,7 @@ export class ArenaScene extends Phaser.Scene {
       v.ball.setVisible(alive); v.cannon.setVisible(alive);
       if (alive) {
         this.health.fillStyle(0x40515b).fillRect(p.x - 20, p.y - 30, 40, 5);
-        this.health.fillStyle(p.health <= 25 ? 0xf18d7e : 0x69e2ce).fillRect(p.x - 20, p.y - 30, 40 * p.health / (p.bot ? 75 : GAME.playerHealth), 5);
+        this.health.fillStyle(p.health <= (p.bot ? CONFIG.npc.health : GAME.playerHealth) * CONFIG.presentation.lowHealthFraction ? 0xf18d7e : 0x69e2ce).fillRect(p.x - 20, p.y - 30, 40 * p.health / (p.bot ? CONFIG.npc.health : GAME.playerHealth), 5);
         if (p.protectionRemaining > 0) this.health.lineStyle(2, 0xffd87c).strokeCircle(p.x, p.y, 22);
       }
       v.ball.setPosition(p.x, p.y).setTint(this.effects.some(e => e.event.kind === 'hit' && e.event.targetId === p.id) ? 0xff5555 : local ? 0xffffff : p.bot ? 0xffc080 : 0x86b8ff).setAlpha(alpha);
@@ -189,9 +190,9 @@ export class ArenaScene extends Phaser.Scene {
       const life = `${this.world.generation}:${me.id}:${me.lifeId}`;
       // Ease over about a tenth of a second, independently of frame rate.
       // Clamp the destination first so edges do not build up camera lag.
-      const x = Phaser.Math.Clamp(me.x - GAME.width / 2, 0, ARENA.right + 48 - GAME.width);
-      const y = Phaser.Math.Clamp(me.y - 16 - GAME.height / 2, 0, ARENA.bottom + 48 - GAME.height);
-      const blend = life === this.cameraLife ? 1 - Math.exp(-Math.max(0, delta) / 110) : 1;
+      const x = Phaser.Math.Clamp(me.x - GAME.width / 2, 0, Math.max(0, ARENA.right + CONFIG.map.cameraPadding - GAME.width));
+      const y = Phaser.Math.Clamp(me.y - CONFIG.presentation.cameraOffsetY - GAME.height / 2, 0, Math.max(0, ARENA.bottom + CONFIG.map.cameraPadding - GAME.height));
+      const blend = life === this.cameraLife ? 1 - Math.exp(-Math.max(0, delta) / CONFIG.presentation.cameraEaseMs) : 1;
       camera.setScroll(camera.scrollX + (x - camera.scrollX) * blend, camera.scrollY + (y - camera.scrollY) * blend);
       this.cameraLife = life;
     }
@@ -208,7 +209,7 @@ export class ArenaScene extends Phaser.Scene {
         if (item.kind === 'health') { this.details.lineBetween(item.x - 5, item.y, item.x + 5, item.y); this.details.lineBetween(item.x, item.y - 5, item.x, item.y + 5); }
       }
       if (!this.pickupLabels.has(item.id)) this.pickupLabels.set(item.id, this.add.text(item.x, item.y + 14,
-        item.kind === 'score' ? '+5' : item.kind.toUpperCase(), { fontFamily: 'monospace', fontSize: '9px', color: '#c6d9e2' }).setOrigin(0.5).setDepth(6));
+        item.kind === 'score' ? `+${CONFIG.match.orbPoints}` : item.kind.toUpperCase(), { fontFamily: 'monospace', fontSize: '9px', color: '#c6d9e2' }).setOrigin(0.5).setDepth(6));
     }
     if (me && me.radar.remaining > 0) {
       for (const marker of me.radar.markers) {
@@ -219,8 +220,8 @@ export class ArenaScene extends Phaser.Scene {
       }
     }
     for (const { event, until } of this.effects) {
-      this.details.lineStyle(2, event.kind === 'hit' ? 0xffeeee : 0xffd87c, Math.min(1, (until - now) / 160));
-      if (event.kind === 'elimination') this.details.strokeCircle(event.x, event.y, 22 + (450 - (until - now)) / 10);
+      this.details.lineStyle(2, event.kind === 'hit' ? 0xffeeee : 0xffd87c, Math.min(1, (until - now) / CONFIG.presentation.effectMs));
+      if (event.kind === 'elimination') this.details.strokeCircle(event.x, event.y, 22 + (CONFIG.presentation.eliminationEffectMs - (until - now)) / 10);
       else if (event.kind === 'hit' && event.actorId === this.connection?.sessionId) {
         this.details.lineBetween(event.x - 7, event.y - 7, event.x + 7, event.y + 7);
         this.details.lineBetween(event.x + 7, event.y - 7, event.x - 7, event.y + 7);
@@ -251,9 +252,10 @@ export class ArenaScene extends Phaser.Scene {
     }
     if (!this.textures.exists('shot')) {
       const g = this.make.graphics({ x: 0, y: 0 });
-      g.fillStyle(0xffd87c).fillRect(0, 0, 8, 8);
-      g.fillStyle(0xfff2be).fillRect(2, 2, 4, 4);
-      g.generateTexture('shot', 8, 8); g.destroy();
+      const size = GAME.shotRadius * 2;
+      g.fillStyle(0xffd87c).fillRect(0, 0, size, size);
+      g.fillStyle(0xfff2be).fillRect(size / 4, size / 4, size / 2, size / 2);
+      g.generateTexture('shot', size, size); g.destroy();
     }
   }
 }

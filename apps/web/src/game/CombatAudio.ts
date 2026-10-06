@@ -1,3 +1,4 @@
+import { CONFIG } from '@shootball/shared';
 import type { ArenaEvent } from '@shootball/shared/content';
 
 export class CombatAudio {
@@ -12,11 +13,11 @@ export class CombatAudio {
     if (event.kind === 'pickup' && event.actorId !== localId) return;
     const ctx = this.context, now = ctx.currentTime;
     const tone = ctx.createOscillator(), volume = ctx.createGain();
-    const settings = { shot: [220, 90, 0.055], hit: [700, 400, 0.08], elimination: [180, 45, 0.22], pickup: [500, 950, 0.12] }[event.kind];
+    const settings = CONFIG.presentation.audio.tones[event.kind];
     tone.type = event.kind === 'pickup' ? 'sine' : 'triangle';
     tone.frequency.setValueAtTime(settings[0], now);
     tone.frequency.exponentialRampToValueAtTime(settings[1], now + settings[2]);
-    volume.gain.setValueAtTime(0.025, now); volume.gain.exponentialRampToValueAtTime(0.001, now + settings[2]);
+    volume.gain.setValueAtTime(CONFIG.presentation.audio.volume, now); volume.gain.exponentialRampToValueAtTime(CONFIG.presentation.audio.endVolume, now + settings[2]);
     tone.connect(volume); volume.connect(ctx.destination); tone.start(now); tone.stop(now + settings[2]);
     tone.onended = () => { tone.disconnect(); volume.disconnect(); };
   }

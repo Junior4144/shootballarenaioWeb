@@ -1,13 +1,9 @@
-import { ARENA, type InputIntent, type Target } from '@shootball/shared';
+import { CONFIG, ARENA, type InputIntent, type Target } from '@shootball/shared';
 import { LOOP, type ActorState, type Shot, type Pickup, type MatchState, type ArenaEvent } from '@shootball/shared/content';
 
-export const VERSION = 4;
+export const VERSION = 5;
 export const ROOM_NAME = 'arena';
-export const NETWORK = {
-  maxPlayers: 8, tickMs: 1000 / 60, snapshotMs: 50, inputMs: 1000 / 30,
-  inputTimeoutMs: 250, reconnectSeconds: 10,
-  maxMessagesPerSecond: 60, maxPayload: 1024,
-} as const;
+export const NETWORK = CONFIG.network;
 export interface InputMessage extends InputIntent { seq: number; radar: boolean }
 export type NetworkPlayer = ActorState;
 export type NetworkProjectile = Shot;
@@ -22,7 +18,7 @@ export interface Snapshot {
   projectiles: NetworkProjectile[];
   targets: Target[];
 }
-export const neutralInput = (): InputIntent => ({ moveX: 0, moveY: 0, aim: { x: 480, y: 336 }, fire: false, radar: false });
+export const neutralInput = (): InputIntent => ({ moveX: 0, moveY: 0, aim: { x: CONFIG.map.left + CONFIG.map.width / 2, y: CONFIG.map.top + CONFIG.map.height / 2 }, fire: false, radar: false });
 
 function exact(value: unknown, keys: string[]): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value)
@@ -40,4 +36,4 @@ export function isInput(value: unknown): value is InputMessage {
 }
 
 export const emptySnapshot = (): Snapshot => ({ tick: 0, generation: 0, time: 0, players: [], projectiles: [], targets: [], pickups: [], events: [],
-  match: { round: 1, phase: 'playing', remaining: LOOP.matchSeconds, scoreLimit: LOOP.scoreLimit, winnerIds: [], standings: [] } });
+  match: { round: 1, phase: 'playing', remaining: LOOP.matchSeconds, durationSeconds: LOOP.matchSeconds, scoreLimit: LOOP.scoreLimit, winCondition: CONFIG.match.winCondition, killsToWin: CONFIG.match.killsToWin, winnerIds: [], standings: [] } });

@@ -6,6 +6,11 @@ an arena with server-controlled bots, cover and collectible upgrades. No account
 
 ## Run locally
 
+Game tuning lives in [packages/shared/src/config.ts](packages/shared/src/config.ts):
+player/NPC health, weapons, map layout, pickups, points or kills to win, and system
+timing. See the [configuration guide](docs/game-config.md) for units and how to
+apply changes.
+
 Use Node.js 22.12+ (verified with Node 24.15) and npm. From the repository root:
 
 ```sh

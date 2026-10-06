@@ -1,10 +1,24 @@
-export const ARENA = { left: 48, top: 80, right: 1344, bottom: 848 } as const;
+import { CONFIG } from './config';
+import { validateConfig } from './config-validation';
+export { CONFIG, type GameConfig } from './config';
+export { validateConfig } from './config-validation';
+const configErrors = validateConfig(CONFIG);
+if (configErrors.length) throw new Error(`Invalid game config:\n${configErrors.join('\n')}`);
+// Compatibility views. All editable values live in config.ts.
+export const ARENA = {
+  left: CONFIG.map.left, top: CONFIG.map.top,
+  right: CONFIG.map.left + CONFIG.map.width, bottom: CONFIG.map.top + CONFIG.map.height,
+};
 export const GAME = {
-  width: 960, height: 640, playerRadius: 16, playerSpeed: 220,
-  muzzleOffset: 28, shotRadius: 4, shotSpeed: 520, shotLifetime: 1.2,
-  playerHealth: 100, shotDamage: 25, respawnDelay: 3, spawnProtection: 1.5,
-  shotCooldown: 0.15, targetRadius: 20, targetHealth: 3,
-} as const;
+  width: CONFIG.presentation.viewport.width, height: CONFIG.presentation.viewport.height,
+  playerRadius: CONFIG.player.radius, playerSpeed: CONFIG.player.speed,
+  muzzleOffset: CONFIG.projectile.muzzleOffset, shotRadius: CONFIG.projectile.radius,
+  shotSpeed: CONFIG.weapons.basic.speed, shotLifetime: CONFIG.weapons.basic.life,
+  playerHealth: CONFIG.player.health, shotDamage: CONFIG.weapons.basic.damage,
+  respawnDelay: CONFIG.player.respawnSeconds, spawnProtection: CONFIG.player.spawnProtectionSeconds,
+  shotCooldown: CONFIG.weapons.basic.cooldown,
+  targetRadius: CONFIG.practiceTargets.radius, targetHealth: CONFIG.practiceTargets.health,
+};
 
 export interface Point { x: number; y: number }
 export interface Player extends Point { angle: number }

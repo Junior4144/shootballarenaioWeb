@@ -1,6 +1,6 @@
-import type { Snapshot } from '@shootball/protocol';
-import { GAME } from '@shootball/shared';
-import { LOOP, WEAPONS, rankPlayers } from '@shootball/shared/content';
+import { NETWORK, type Snapshot } from '@shootball/protocol';
+import { CONFIG, GAME } from '@shootball/shared';
+import { WEAPONS, rankPlayers } from '@shootball/shared/content';
 export const actorName = (id: string, localId?: string) => id === localId ? 'YOU' : id.startsWith('bot:') ? 'BOT ' + id.slice(4) : 'GUEST ' + id.slice(0, 4);
 const element = (id: string) => document.getElementById(id)!;
 const time = (seconds: number) => `${Math.floor(Math.ceil(seconds) / 60)}:${String(Math.ceil(seconds) % 60).padStart(2, '0')}`;
@@ -9,14 +9,15 @@ export class ArenaHud {
   private resultSignature = '';
   render(state: Snapshot, localId?: string): void {
     const humans = state.players.filter(p => !p.bot), me = humans.find(p => p.id === localId);
-    const elapsed = time(Math.floor(Math.max(0, LOOP.matchSeconds - state.match.remaining)));
+    const elapsed = time(Math.floor(Math.max(0, state.match.durationSeconds - state.match.remaining)));
     element('match-clock').textContent = state.match.phase === 'playing' ? elapsed : 'RESULTS';
-    element('match-target').textContent = `Target: ${state.match.scoreLimit} pts`;
+    const target = state.match.winCondition === 'kills' ? `${state.match.killsToWin} kills` : `${state.match.scoreLimit} pts`;
+    element('match-target').textContent = `Target: ${target}`;
     element('round-number').textContent = String(state.match.round);
-    element('round-time').textContent = state.match.phase === 'playing' ? `${elapsed} / ${time(LOOP.matchSeconds)}` : 'Finished';
-    element('round-target').textContent = `${state.match.scoreLimit} pts`;
-    element('active-count').textContent = `${humans.filter(p => p.connected).length}/8 players`;
-    const rows = rankPlayers(humans);
+    element('round-time').textContent = state.match.phase === 'playing' ? `${elapsed} / ${time(state.match.durationSeconds)}` : 'Finished';
+    element('round-target').textContent = target;
+    element('active-count').textContent = `${humans.filter(p => p.connected).length}/${NETWORK.maxPlayers} players`;
+    const rows = rankPlayers(humans, state.match.winCondition);
     const signature = JSON.stringify([localId, rows.map(p => [p.id, p.points, p.kills, p.botKills, p.connected, p.health > 0])]);
     if (signature !== this.signature) {
       this.signature = signature;
@@ -33,7 +34,7 @@ export class ArenaHud {
     element('health-fill').style.width = `${hp / GAME.playerHealth * 100}%`;
     element('health-meter').setAttribute('aria-valuemax', String(GAME.playerHealth));
     element('health-meter').setAttribute('aria-valuenow', String(hp));
-    element('health-meter').classList.toggle('low', hp <= 25);
+    element('health-meter').classList.toggle('low', hp <= GAME.playerHealth * CONFIG.presentation.lowHealthFraction);
     element('loadout').textContent = me ? me.weapon.toUpperCase() : '—';
     element('ammo').textContent = !me ? '—' : me.weapon === 'basic' ? '∞' : `${me.ammo} / ${WEAPONS[me.weapon].ammo}`;
     element('ammo').setAttribute('aria-label', !me ? 'No weapon' : me.weapon === 'basic' ? 'Unlimited ammo' : `${me.ammo} of ${WEAPONS[me.weapon].ammo} shots`);
@@ -71,7 +72,7 @@ export class ArenaHud {
         }));
       }
     }
-    element('kill-feed').replaceChildren(...state.events.filter(e => e.kind === 'elimination').slice(-4).reverse().map(e => {
+    element('kill-feed').replaceChildren(...state.events.filter(e => e.kind === 'elimination').slice(-CONFIG.presentation.killFeedCount).reverse().map(e => {
       const item = document.createElement('li');
       const actor = document.createElement('span'), target = document.createElement('span');
       actor.className = e.actorId === localId ? 'feed-local' : 'feed-actor';

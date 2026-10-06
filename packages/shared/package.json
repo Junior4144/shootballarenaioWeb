@@ -9,6 +9,7 @@
     "./practice": "./src/practice.ts",
     "./content": "./src/content.ts",
     "./arena": "./src/arena.ts",
+    "./config": "./src/config.ts",
     "./bots": "./src/bots.ts"
   }
 }

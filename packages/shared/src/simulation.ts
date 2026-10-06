@@ -1,4 +1,4 @@
-import { ARENA, GAME, type InputIntent, type Player, type Point, type Projectile, type Target } from './index';
+import { CONFIG, ARENA, GAME, type InputIntent, type Player, type Point, type Projectile, type Target } from './index';
 
 export interface World {
   player: Player;
@@ -10,8 +10,8 @@ export interface World {
 
 export function createWorld(): World {
   return {
-    player: { x: 240, y: 336, angle: 0 },
-    targets: [{ x: 530, y: 220 }, { x: 740, y: 220 }, { x: 530, y: 450 }, { x: 740, y: 450 }]
+    player: { ...CONFIG.practiceTargets.playerSpawn, angle: 0 },
+    targets: CONFIG.practiceTargets.positions
       .map((position, id) => ({ ...position, id, health: GAME.targetHealth })),
     projectiles: [], cooldown: 0, nextId: 0,
   };
@@ -41,7 +41,7 @@ export function stepWorld(world: World, input: InputIntent, deltaSeconds: number
 }
 
 export function stepActor(world: World, input: InputIntent, deltaSeconds: number): void {
-  const dt = clamp(deltaSeconds, 0, 0.05);
+  const dt = clamp(deltaSeconds, 0, CONFIG.simulation.maxStepSeconds);
   const p = world.player;
   const length = Math.max(1, Math.hypot(input.moveX, input.moveY));
   p.x = clamp(p.x + input.moveX / length * GAME.playerSpeed * dt, ARENA.left + GAME.playerRadius, ARENA.right - GAME.playerRadius);
@@ -57,7 +57,7 @@ export function stepActor(world: World, input: InputIntent, deltaSeconds: number
 }
 
 export function stepProjectiles(world: Pick<World, 'projectiles' | 'targets'>, deltaSeconds: number): void {
-  const dt = clamp(deltaSeconds, 0, 0.05);
+  const dt = clamp(deltaSeconds, 0, CONFIG.simulation.maxStepSeconds);
   world.projectiles = world.projectiles.filter(shot => {
     const travelTime = Math.min(dt, shot.life);
     const next = { x: shot.x + shot.vx * travelTime, y: shot.y + shot.vy * travelTime };
@@ -68,7 +68,7 @@ export function stepProjectiles(world: Pick<World, 'projectiles' | 'targets'>, d
       const t = hitFraction(shot, next, target, GAME.targetRadius + GAME.shotRadius);
       if (t !== undefined && t < firstTime) { firstTarget = target; firstTime = t; }
     }
-    if (firstTarget) { firstTarget.health--; return false; }
+    if (firstTarget) { firstTarget.health -= CONFIG.practiceTargets.damagePerHit; return false; }
     shot.x = next.x; shot.y = next.y; shot.life -= dt;
     return shot.life > 0 && inside(shot, GAME.shotRadius);
   });

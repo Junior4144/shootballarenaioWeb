@@ -1,24 +1,7 @@
-import { ARENA, GAME, type Point } from './index';
+import { CONFIG, ARENA, GAME, type Point } from './index';
 export interface Wall { x: number; y: number; width: number; height: number }
-export const WALLS: readonly Wall[] = [
-  { x: 280, y: 220, width: 64, height: 128 },
-  { x: 616, y: 324, width: 64, height: 128 },
-  { x: 432, y: 200, width: 96, height: 48 },
-  { x: 432, y: 424, width: 96, height: 48 },
-  { x: 168, y: 400, width: 80, height: 48 },
-  { x: 712, y: 224, width: 80, height: 48 },
-  { x: 1000, y: 200, width: 64, height: 128 },
-  { x: 1120, y: 440, width: 112, height: 48 },
-  { x: 880, y: 584, width: 64, height: 128 },
-  { x: 576, y: 664, width: 128, height: 48 },
-  { x: 280, y: 624, width: 64, height: 128 },
-];
-export const SPAWNS: Point[] = [
-  { x: 144, y: 160 }, { x: 816, y: 512 }, { x: 816, y: 160 }, { x: 144, y: 512 },
-  { x: 480, y: 128 }, { x: 480, y: 544 }, { x: 112, y: 336 }, { x: 848, y: 336 },
-  { x: 1232, y: 160 }, { x: 1232, y: 752 }, { x: 1056, y: 624 },
-  { x: 752, y: 784 }, { x: 144, y: 752 },
-];
+export const WALLS: readonly Wall[] = CONFIG.map.walls;
+export const SPAWNS: Point[] = CONFIG.map.spawns;
 // Swept point against expanded rectangle. Conservative square hull for circles.
 export function wallFraction(from: Point, to: Point, wall: Wall, radius: number): number | undefined {
   let entry = 0, exit = 1;
@@ -87,7 +70,7 @@ export function moveActor(p: Point, dx: number, dy: number, walls: readonly Wall
 }
 // Visibility graph keeps navigation off expanded wall corners and out of cover.
 export function route(from: Point, goal: Point, walls: readonly Wall[] = WALLS): Point[] {
-  const r = GAME.playerRadius + 3;
+  const r = GAME.playerRadius + CONFIG.simulation.navigationCornerPadding;
   const nodes = [from, goal, ...walls.flatMap(w => [
     { x: w.x - r, y: w.y - r }, { x: w.x + w.width + r, y: w.y - r },
     { x: w.x - r, y: w.y + w.height + r }, { x: w.x + w.width + r, y: w.y + w.height + r },
@@ -103,7 +86,7 @@ export function route(from: Point, goal: Point, walls: readonly Wall[] = WALLS):
     for (let i = 1; i < nodes.length; i++) {
       // Collision can leave endpoints closer than the navigation safety margin.
       // Use the physical hull there so an actor pressed against cover can leave.
-      const clearance = current === 0 || i === 1 ? GAME.playerRadius : GAME.playerRadius + 1;
+      const clearance = current === 0 || i === 1 ? GAME.playerRadius : GAME.playerRadius + CONFIG.simulation.navigationClearance;
       if (visited.has(i) || firstWall(nodes[current], nodes[i], clearance, walls) !== Infinity) continue;
       const cost = distances[current] + Math.hypot(nodes[current].x - nodes[i].x, nodes[current].y - nodes[i].y);
       if (cost < distances[i]) { distances[i] = cost; previous[i] = current; }

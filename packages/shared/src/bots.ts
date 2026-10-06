@@ -1,9 +1,8 @@
-import { GAME, type InputIntent, type Point } from './index';
+import { CONFIG, GAME, type InputIntent, type Point } from './index';
 import type { ActorState } from './content';
 import { SPAWNS, clearPoint, firstWall, moveActor, route, type Wall } from './arena';
 
-export const BOT = { detectRange: 300, loseRange: 380, fireRange: 280, thinkSeconds: 0.2,
-  routeSeconds: 0.9, searchSeconds: 2.5, spacing: 64 } as const;
+export const BOT = CONFIG.npc.ai;
 export type BotMode = 'patrol' | 'chase' | 'combat' | 'search' | 'retreat';
 export interface BotBrain {
   remaining: number; path: Point[]; targetId?: string; patrolIndex?: number;
@@ -41,7 +40,7 @@ export function botInput(bot: ActorState, humans: ActorState[], brain: BotBrain,
   if (brain.mode === 'search' && brain.memoryRemaining <= 0) {
     forgetTarget(brain); setMode(brain, 'patrol'); target = undefined;
   }
-  let visible = !!target && distance(bot, target) <= BOT.loseRange && firstWall(bot, target, 4, walls) === Infinity;
+  let visible = !!target && distance(bot, target) <= BOT.loseRange && firstWall(bot, target, CONFIG.projectile.radius, walls) === Infinity;
   if (target && !visible) setMode(brain, brain.lastSeen && brain.memoryRemaining > 0 ? 'search' : 'patrol');
   // Perception is 5 Hz; keep the current target to avoid rapid target switching.
   if (brain.thinkRemaining <= 0) {
@@ -51,7 +50,7 @@ export function botInput(bot: ActorState, humans: ActorState[], brain: BotBrain,
       let replacement: ActorState | undefined;
       for (const human of humans) {
         const d = distance(bot, human);
-        if (human.health <= 0 || !human.connected || d >= BOT.detectRange || d > nearest || firstWall(bot, human, 4, walls) !== Infinity) continue;
+        if (human.health <= 0 || !human.connected || d >= BOT.detectRange || d > nearest || firstWall(bot, human, CONFIG.projectile.radius, walls) !== Infinity) continue;
         if (d < nearest || (d === nearest && human.id < (replacement?.id ?? ''))) { replacement = human; nearest = d; }
       }
       if (replacement) {
@@ -67,10 +66,10 @@ export function botInput(bot: ActorState, humans: ActorState[], brain: BotBrain,
     const previous = brain.mode;
     if (target && visible) {
       const d = distance(bot, target);
-      const retreatDistance = previous === 'retreat' ? 155 : 110;
-      const injuredDistance = previous === 'retreat' ? 255 : 230;
-      const combatDistance = previous === 'combat' ? BOT.fireRange + 20 : BOT.fireRange;
-      setMode(brain, d < retreatDistance || (bot.health <= 25 && d < injuredDistance) ? 'retreat'
+      const retreatDistance = previous === 'retreat' ? BOT.retreatExitRange : BOT.retreatRange;
+      const injuredDistance = previous === 'retreat' ? BOT.injuredRetreatExitRange : BOT.injuredRetreatRange;
+      const combatDistance = previous === 'combat' ? BOT.fireRange + BOT.combatRangeHysteresis : BOT.fireRange;
+      setMode(brain, d < retreatDistance || (bot.health <= BOT.injuredHealth && d < injuredDistance) ? 'retreat'
         : d <= combatDistance ? 'combat' : 'chase');
     } else setMode(brain, brain.lastSeen && brain.memoryRemaining > 0 ? 'search' : 'patrol');
     if (brain.mode === 'patrol') { target = undefined; visible = false; forgetTarget(brain); }
@@ -82,40 +81,40 @@ export function botInput(bot: ActorState, humans: ActorState[], brain: BotBrain,
   if (target && brain.visible && brain.mode !== 'search' && brain.mode !== 'patrol') {
     const d = Math.max(1, distance(bot, target));
     const nx = (target.x - bot.x) / d, ny = (target.y - bot.y) / d;
-    const forward = brain.mode === 'retreat' ? -1 : brain.mode === 'chase' ? 1 : d > 210 ? 0.4 : d < 160 ? -0.4 : 0;
-    const strafe = brain.mode === 'chase' ? 0.15 : 0.65;
+    const forward = brain.mode === 'retreat' ? -1 : brain.mode === 'chase' ? 1 : d > BOT.approachRange ? BOT.combatForward : d < BOT.backoffRange ? -BOT.combatForward : 0;
+    const strafe = brain.mode === 'chase' ? BOT.chaseStrafe : BOT.combatStrafe;
     dx = nx * forward - ny * brain.side * strafe;
     dy = ny * forward + nx * brain.side * strafe;
     aim = { x: target.x, y: target.y };
   } else {
     if (brain.mode === 'search') {
       brain.goal = brain.lastSeen;
-      if (!brain.goal || brain.memoryRemaining <= 0 || distance(bot, brain.goal) < 18) {
+      if (!brain.goal || brain.memoryRemaining <= 0 || distance(bot, brain.goal) < BOT.goalArrivalRadius) {
         setMode(brain, 'patrol'); forgetTarget(brain); target = undefined;
       }
     }
-    if (brain.mode === 'patrol' && (!brain.goal || distance(bot, brain.goal) < 18)) {
+    if (brain.mode === 'patrol' && (!brain.goal || distance(bot, brain.goal) < BOT.goalArrivalRadius)) {
       brain.path = []; brain.goal = undefined; brain.routePosition = undefined;
       brain.patrolIndex ??= hashId(bot.id) % SPAWNS.length;
       for (let i = 0; i < SPAWNS.length; i++) {
         const goal = SPAWNS[brain.patrolIndex++ % SPAWNS.length];
-        if (distance(bot, goal) > 80 && clearPoint(goal, GAME.playerRadius, walls)) { brain.goal = goal; break; }
+        if (distance(bot, goal) > BOT.patrolMinDistance && clearPoint(goal, GAME.playerRadius, walls)) { brain.goal = goal; break; }
       }
     }
-    while (brain.path.length && distance(bot, brain.path[0]) < 10) brain.path.shift();
+    while (brain.path.length && distance(bot, brain.path[0]) < BOT.waypointArrivalRadius) brain.path.shift();
     // At most one visibility-graph route per bot per 0.9 seconds, even if stuck.
     if (brain.goal && brain.remaining <= 0) {
       brain.remaining = BOT.routeSeconds;
-      const stalled = brain.routePosition && distance(bot, brain.routePosition) < 8;
-      const blocked = brain.path[0] && firstWall(bot, brain.path[0], GAME.playerRadius + 1, walls) !== Infinity;
+      const stalled = brain.routePosition && distance(bot, brain.routePosition) < BOT.stalledDistance;
+      const blocked = brain.path[0] && firstWall(bot, brain.path[0], GAME.playerRadius + CONFIG.simulation.navigationClearance, walls) !== Infinity;
       if (!brain.path.length || stalled || blocked || brain.mode === 'search') {
-        brain.path = firstWall(bot, brain.goal, GAME.playerRadius + 1, walls) === Infinity
+        brain.path = firstWall(bot, brain.goal, GAME.playerRadius + CONFIG.simulation.navigationClearance, walls) === Infinity
           ? [{ ...brain.goal }] : route(bot, brain.goal, walls);
       }
       brain.routePosition = { x: bot.x, y: bot.y };
       if (!brain.path.length && brain.mode === 'patrol') brain.goal = undefined;
     }
-    while (brain.path.length && distance(bot, brain.path[0]) < 10) brain.path.shift();
+    while (brain.path.length && distance(bot, brain.path[0]) < BOT.waypointArrivalRadius) brain.path.shift();
     const waypoint = brain.path[0];
     if (waypoint) { const d = Math.max(1, distance(bot, waypoint)); dx = (waypoint.x - bot.x) / d; dy = (waypoint.y - bot.y) / d; aim = waypoint; }
   }
@@ -125,7 +124,7 @@ export function botInput(bot: ActorState, humans: ActorState[], brain: BotBrain,
     const d = distance(bot, other);
     if (d >= BOT.spacing) continue;
     const direction = bot.id < other.id ? -1 : 1;
-    const strength = 2 * (1 - d / BOT.spacing);
+    const strength = BOT.separationStrength * (1 - d / BOT.spacing);
     dx += (d > 0.001 ? (bot.x - other.x) / d : direction) * strength;
     dy += (d > 0.001 ? (bot.y - other.y) / d : 0) * strength;
   }
@@ -138,7 +137,7 @@ export function botInput(bot: ActorState, humans: ActorState[], brain: BotBrain,
 // Fixed passes resolve residual overlap without a physics engine. Only bots
 // are displaced; wall sweeps keep the correction out of cover.
 export function separateBots(actors: readonly ActorState[], walls: readonly Wall[]): void {
-  const gap = GAME.playerRadius * 2 + 2;
+  const gap = GAME.playerRadius * 2 + BOT.separationGap;
   const pushBot = (bot: ActorState, dx: number, dy: number) => {
     const start = { x: bot.x, y: bot.y }, push = Math.hypot(dx, dy);
     moveActor(bot, dx, dy, walls, false);
@@ -148,15 +147,15 @@ export function separateBots(actors: readonly ActorState[], walls: readonly Wall
     const cost = (point: Point) => actors.reduce((sum, other) => other.id === bot.id || other.health <= 0 || !other.connected
       ? sum : sum + Math.max(0, gap - distance(point, other)) ** 2, 0);
     let best: Point = { x: bot.x, y: bot.y }, bestCost = cost(best);
-    for (let i = 0; i < 8; i++) {
-      const candidate = { ...start }, angle = i * Math.PI / 4;
+    for (let i = 0; i < BOT.separationDirections; i++) {
+      const candidate = { ...start }, angle = i * Math.PI * 2 / BOT.separationDirections;
       moveActor(candidate, Math.cos(angle) * push, Math.sin(angle) * push, walls, false);
       const score = cost(candidate);
       if (score < bestCost - 1e-8) { best = candidate; bestCost = score; }
     }
     bot.x = best.x; bot.y = best.y;
   };
-  for (let pass = 0; pass < 4; pass++) for (let i = 0; i < actors.length; i++) {
+  for (let pass = 0; pass < BOT.separationPasses; pass++) for (let i = 0; i < actors.length; i++) {
     const a = actors[i];
     if (a.health <= 0 || !a.connected) continue;
     for (let j = i + 1; j < actors.length; j++) {
