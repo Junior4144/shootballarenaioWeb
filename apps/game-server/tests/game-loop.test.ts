@@ -146,18 +146,26 @@ test('GL-B: wall blocks swept shots and muzzle shots; opponent in front of wall 
 
 test('GL-C: bot population scales without consuming human slots; bot navigation and combat work solo', () => {
   const w = new Practice(); w.add('human');
-  assert.equal([...w.players.values()].filter(p => p.bot).length, 4);
+  assert.equal([...w.players.values()].filter(p => p.bot).length, 7);
   // Start one bot in sight; distant bots now patrol instead of pursuing globally.
   Object.assign(w.players.get('bot:1')!, { x: 208, y: 160 });
   const before = w.snapshot(); advance(w, 3);
   assert.ok(w.events.some(e => e.kind === 'shot' && e.actorId.startsWith('bot:')));
   assert.ok(w.players.get('human')!.health < 100 || w.players.get('human')!.deaths > 0);
   assert.ok(before.players.filter(p => p.bot).some(p => Math.hypot(p.x - w.players.get(p.id)!.x, p.y - w.players.get(p.id)!.y) > 20));
-  for (let i = 1; i < 8; i++) w.add('human' + i);
+  for (let i = 1; i < 8; i++) {
+    w.add('human' + i);
+    assert.equal([...w.players.values()].filter(p => p.bot).length, 7 - i);
+    assert.equal(w.players.size, 8);
+  }
   assert.equal([...w.players.values()].filter(p => p.bot).length, 0);
   assert.equal(w.players.size, 8);
-  for (let i = 1; i < 8; i++) w.remove('human' + i);
-  assert.equal([...w.players.values()].filter(p => p.bot).length, 4);
+  for (let i = 1; i < 8; i++) {
+    w.remove('human' + i);
+    assert.equal([...w.players.values()].filter(p => p.bot).length, i);
+    assert.equal(w.players.size, 8);
+  }
+  assert.equal([...w.players.values()].filter(p => p.bot).length, 7);
   w.remove('human'); assert.equal(w.players.size, 0);
 });
 

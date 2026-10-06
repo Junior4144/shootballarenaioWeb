@@ -14,8 +14,9 @@ export const CONFIG = {
   },
   npc: {
     enabled: true, health: 75, speed: 165, respawnSeconds: 4,
-    // Fill toward targetPopulation, capped at maxCount; no bots without humans.
-    maxCount: 4, targetPopulation: 6,
+    // Fill eight total slots: 1 human + 7 NPCs, 4 + 4, 8 + 0.
+    // No NPCs without humans; reconnecting humans retain their reserved slots.
+    maxCount: 7, targetPopulation: 8,
     shotDamage: 12, shotCooldownSeconds: 0.85,
     ai: {
       detectRange: 300, loseRange: 380, fireRange: 280, thinkSeconds: 0.2,
@@ -27,6 +28,13 @@ export const CONFIG = {
       goalArrivalRadius: 18, waypointArrivalRadius: 10, patrolMinDistance: 80,
       stalledDistance: 8, separationStrength: 2, separationGap: 2,
       separationPasses: 4, separationDirections: 8,
+      variation: {
+        patrolJitterRadius: 64, patrolPointAttempts: 6, patrolHistory: 2,
+        // Timing variation is a fraction of the base interval.
+        thinkJitter: 0.25, routeJitter: 0.2,
+        maneuverMinSeconds: 0.8, maneuverMaxSeconds: 2.2,
+        strafeStrengthJitter: 0.25, combatDistanceJitter: 20,
+      },
     },
   },
   match: {
@@ -51,8 +59,8 @@ export const CONFIG = {
   },
   radar: { cooldownSeconds: 12, durationSeconds: 3, range: 360 },
   map: {
-    // Playable width/height, independent of the viewport below.
-    left: 48, top: 80, width: 1296, height: 768,
+    // Default playable map size, independent of the viewport below.
+    left: 48, top: 80, width: 1600, height: 1200,
     cameraPadding: 48, gridSize: 32,
     walls: [
       { x: 280, y: 220, width: 64, height: 128 },
@@ -66,12 +74,20 @@ export const CONFIG = {
       { x: 880, y: 584, width: 64, height: 128 },
       { x: 576, y: 664, width: 128, height: 48 },
       { x: 280, y: 624, width: 64, height: 128 },
+      // Cover in the expanded eastern and southern areas.
+      { x: 1408, y: 304, width: 64, height: 160 },
+      { x: 1408, y: 688, width: 112, height: 48 },
+      { x: 256, y: 960, width: 128, height: 48 },
+      { x: 672, y: 944, width: 64, height: 160 },
+      { x: 1088, y: 1024, width: 160, height: 48 },
     ],
     spawns: [
       { x: 144, y: 160 }, { x: 816, y: 512 }, { x: 816, y: 160 }, { x: 144, y: 512 },
       { x: 480, y: 128 }, { x: 480, y: 544 }, { x: 112, y: 336 }, { x: 848, y: 336 },
       { x: 1232, y: 160 }, { x: 1232, y: 752 }, { x: 1056, y: 624 },
       { x: 752, y: 784 }, { x: 144, y: 752 },
+      { x: 1552, y: 160 }, { x: 1552, y: 592 }, { x: 1552, y: 1184 },
+      { x: 1056, y: 1184 }, { x: 528, y: 1184 }, { x: 144, y: 1184 },
     ],
     pickupPads: [
       { x: 1168, y: 336, kind: 'shotgun' }, { x: 1056, y: 752, kind: 'heavy' },
@@ -84,6 +100,20 @@ export const CONFIG = {
       { x: 584, y: 336, kind: 'health' },
       { x: 208, y: 160, kind: 'score' }, { x: 752, y: 512, kind: 'score' }, { x: 376, y: 160, kind: 'score' }, { x: 584, y: 512, kind: 'score' },
         { x: 480, y: 288, kind: 'score' }, { x: 480, y: 384, kind: 'score' }, { x: 112, y: 256, kind: 'score' }, { x: 848, y: 416, kind: 'score' },
+      { x: 1552, y: 480, kind: 'shotgun' }, { x: 1456, y: 1104, kind: 'heavy' },
+      { x: 848, y: 960, kind: 'speed' }, { x: 144, y: 1056, kind: 'health' },
+      { x: 1328, y: 864, kind: 'health' },
+      { x: 1552, y: 240, kind: 'score' }, { x: 1552, y: 816, kind: 'score' },
+      { x: 1552, y: 1200, kind: 'score' }, { x: 1168, y: 1184, kind: 'score' },
+      { x: 848, y: 1184, kind: 'score' }, { x: 496, y: 1056, kind: 'score' },
+      { x: 144, y: 1200, kind: 'score' },
+      // Extra health and speed throughout the map: 12 health and 8 speed pads.
+      { x: 176, y: 544, kind: 'health' }, { x: 560, y: 160, kind: 'health' },
+      { x: 944, y: 496, kind: 'health' }, { x: 1344, y: 192, kind: 'health' },
+      { x: 960, y: 912, kind: 'health' }, { x: 416, y: 1184, kind: 'health' },
+      { x: 400, y: 128, kind: 'speed' }, { x: 848, y: 384, kind: 'speed' },
+      { x: 1120, y: 560, kind: 'speed' }, { x: 1552, y: 960, kind: 'speed' },
+      { x: 416, y: 880, kind: 'speed' },
     ] as { x: number; y: number; kind: PickupKind }[],
   },
   practiceTargets: {

@@ -51,6 +51,15 @@ export function validateConfig(config: GameConfig): string[] {
     'presentation.killFeedCount': config.presentation.killFeedCount,
   })) check(Number.isInteger(value) && value > 0, `${path} must be a positive integer`);
   check(['points', 'kills'].includes(config.match.winCondition), 'match.winCondition must be points or kills');
+  const variation = config.npc.ai.variation;
+  check(variation.thinkJitter < 1 && variation.strafeStrengthJitter <= 1,
+    'npc.ai.variation.thinkJitter must be below 1 and strafeStrengthJitter at most 1');
+  check(variation.maneuverMinSeconds > 0 && variation.maneuverMaxSeconds >= variation.maneuverMinSeconds,
+    'npc.ai.variation maneuver times must be positive and ordered min <= max');
+  check(Number.isInteger(variation.patrolHistory) && variation.patrolHistory > 0,
+    'npc.ai.variation.patrolHistory must be a positive integer');
+  check(Number.isInteger(variation.patrolPointAttempts) && variation.patrolPointAttempts > 0,
+    'npc.ai.variation.patrolPointAttempts must be a positive integer');
   check(config.network.tickMs / 1000 <= config.simulation.maxStepSeconds,
     'network.tickMs must not exceed simulation.maxStepSeconds * 1000');
   check(Number.isInteger(config.network.interpolationMaxSnapshots) && config.network.interpolationMaxSnapshots >= 2,

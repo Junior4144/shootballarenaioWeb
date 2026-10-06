@@ -7,7 +7,54 @@ import { ARENA, GAME } from '@shootball/shared';
 import { Practice } from '@shootball/shared/practice';
 
 const actor = (id: string, x: number, y: number, bot = true) => ({ ...createActor(id, bot), x, y, health: 75 });
-const brain = (): BotBrain => ({ remaining: 0, path: [] });
+const brain = (): BotBrain => ({ remaining: 0, path: [], randomState: 123456789 });
+
+test('randomized patrols are repeatable by seed, diverse across seeds, and clear of cover', () => {
+  const b = actor('bot:1', 144, 160);
+  const a = brain(), replay = brain();
+  assert.deepEqual(botInput(b, [], a, 0.01, WALLS), botInput(b, [], replay, 0.01, WALLS));
+  assert.deepEqual(a, replay);
+  const destinations = new Set<string>();
+  for (let i = 1; i <= 20; i++) {
+    const memory = { ...brain(), randomState: i * 9876543 };
+    botInput(b, [], memory, 0.01, WALLS);
+    assert.ok(memory.goal && clearPoint(memory.goal, GAME.playerRadius, WALLS));
+    assert.ok(memory.path.length > 0);
+    destinations.add(JSON.stringify(memory.goal));
+  }
+  assert.ok(destinations.size > 10, 'same bot ID does not fix its patrol');
+});
+
+test('patrol choices avoid recently visited areas and stay cached between plans', () => {
+  const b = actor('bot:1', 144, 160), memory = brain();
+  for (let i = 0; i < 20; i++) {
+    const recent = [...(memory.recentPatrols ?? [])];
+    memory.goal = undefined; memory.remaining = 0;
+    botInput(b, [], memory, 0.01, WALLS);
+    assert.ok(!recent.includes(memory.recentPatrols!.at(-1)!));
+    const goal = memory.goal, path = memory.path;
+    botInput(b, [], memory, 0.01, WALLS);
+    assert.equal(memory.goal, goal); assert.equal(memory.path, path);
+    assert.ok(memory.remaining >= BOT.routeSeconds - 0.01);
+  }
+});
+
+test('combat maneuvers hold steady between decisions but vary direction and distance over time', () => {
+  const b = actor('bot:1', 200, 300), h = actor('human', 400, 300, false), memory = brain();
+  const sides = new Set<number>(), offsets = new Set<number>();
+  for (let i = 0; i < 20; i++) {
+    memory.maneuverRemaining = 0;
+    const input = botInput(b, [h], memory, 0.01, []);
+    assert.equal(input.fire, true);
+    assert.ok(memory.maneuverRemaining! >= BOT.variation.maneuverMinSeconds);
+    assert.ok(memory.maneuverRemaining! <= BOT.variation.maneuverMaxSeconds);
+    assert.ok(Math.abs(memory.combatDistanceOffset!) <= BOT.variation.combatDistanceJitter);
+    assert.ok(Math.abs(memory.strafeScale! - 1) <= BOT.variation.strafeStrengthJitter);
+    sides.add(memory.side!); offsets.add(memory.combatDistanceOffset!);
+    assert.deepEqual(botInput(b, [h], memory, 0.01, []), input, 'no random twitch each tick');
+  }
+  assert.equal(sides.size, 2); assert.ok(offsets.size > 10);
+});
 
 test('smaller perception range, chase, strafing combat, and retreat use explicit states', () => {
   const b = actor('bot:1', 200, 160), h = actor('human', 550, 160, false), memory = brain();

@@ -4,7 +4,7 @@ import type { AddressInfo } from 'node:net';
 import { Client, type Room } from '@colyseus/sdk';
 import { createServer } from '../src/server';
 import { neutralInput, ROOM_NAME, VERSION, type Snapshot } from '@shootball/protocol';
-import { firstWall } from '@shootball/shared/arena';
+import { firstWall, route, WALLS } from '@shootball/shared/arena';
 
 const pause = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 async function until(check: () => boolean, label: string, timeout = 3000) {
@@ -28,7 +28,7 @@ test('GL-F: real clients collect, scan, reconnect, see results and start a fresh
     const b = await client.joinOrCreate(ROOM_NAME, { version: VERSION }); rooms.push(b); b.reconnection.enabled = false;
     const sb = observe(b);
     await until(() => sa.latest?.players.filter(p => !p.bot).length === 2 && !!sb.latest, 'two humans');
-    assert.equal(sa.latest.players.filter(p => p.bot).length, 4, 'join options cannot disable bots');
+    assert.equal(sa.latest.players.filter(p => p.bot).length, 6, 'two humans leave six NPC slots; join options cannot disable bots');
     assert.equal(sa.latest.match.scoreLimit, 1000, 'join cannot override rules');
     a.send('input', { ...neutralInput(), seq: 0, moveX: 1 });
     await until(() => sb.latest.players.find(p => p.id === a.sessionId)!.points === 5, 'ground collectible score');
@@ -62,7 +62,7 @@ test('GL-F: real clients collect, scan, reconnect, see results and start a fresh
   }
 });
 
-test('GL-F: default-content real clients fight bots and receive shared combat events', { timeout: 20000 }, async () => {
+test('GL-F: default-content real clients fight bots and receive shared combat events', { timeout: 30000 }, async () => {
   const external = process.env.ARENA_TEST_ENDPOINT;
   const server = external ? undefined : createServer();
   if (server) await server.listen(0, '127.0.0.1');
@@ -79,11 +79,18 @@ test('GL-F: default-content real clients fight bots and receive shared combat ev
     let seq = 0;
     interval = setInterval(() => {
       const me = sa.latest.players.find(p => p.id === a.sessionId)!;
-      const target = sa.latest.players.filter(p => p.bot && p.health > 0 && firstWall(me, p, 4) === Infinity)
+      const target = sa.latest.players.filter(p => p.bot && p.health > 0)
         .sort((x, y) => Math.hypot(x.x - me.x, x.y - me.y) - Math.hypot(y.x - me.x, y.y - me.y))[0];
-      a.send('input', { ...neutralInput(), seq: seq++, aim: target ? { x: target.x, y: target.y } : { x: 480, y: 336 }, fire: !!target, radar: seq === 1 });
+      // Seek combat across the expanded map instead of waiting at the spawn.
+      const visible = !!target && firstWall(me, target, 4) === Infinity;
+      const approach = target && (!visible || Math.hypot(target.x - me.x, target.y - me.y) > 220);
+      const waypoint = approach ? route(me, target, WALLS)[0] : undefined;
+      a.send('input', { ...neutralInput(), seq: seq++,
+        moveX: waypoint && Math.abs(waypoint.x - me.x) > 8 ? Math.sign(waypoint.x - me.x) : 0,
+        moveY: waypoint && Math.abs(waypoint.y - me.y) > 8 ? Math.sign(waypoint.y - me.y) : 0,
+        aim: target ? { x: target.x, y: target.y } : neutralInput().aim, fire: visible, radar: seq === 1 });
     }, 170);
-    await until(() => sb.latest.players.find(p => p.id === a.sessionId)!.botKills > 0, 'human earns bot kill in live default arena', 12000);
+    await until(() => sb.latest.players.find(p => p.id === a.sessionId)!.botKills > 0, 'human earns bot kill in live default arena', 20000);
     const me = sb.latest.players.find(p => p.id === a.sessionId)!;
     assert.ok(me.points >= 20); assert.equal(me.kills, 0);
     assert.ok(sb.latest.events.some(e => e.kind === 'elimination' && e.actorId === a.sessionId && e.targetBot));

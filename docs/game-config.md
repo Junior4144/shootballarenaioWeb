@@ -26,7 +26,7 @@ weapon trajectory, with their own damage and fire cooldown.
 
 - Player health: `player.health`.
 - NPC health: `npc.health`.
-- Map size: `map.width` and `map.height` (currently 1296 by 768).
+- Map size: `map.width` and `map.height` (currently 1600 by 1200).
 - Point-based victory: `match.winCondition: 'points'` and `match.scoreLimit`.
 - Kill-based victory: `match.winCondition: 'kills'` and `match.killsToWin`.
   Only human-player kills count toward this target; NPC kills still award points.
@@ -34,6 +34,19 @@ weapon trajectory, with their own damage and fire cooldown.
   metric; equal leading metrics produce a draw. Zero leading score/kills has no winner.
 - Disable NPCs: `npc.enabled: false`. With NPCs enabled, they fill toward
   `targetPopulation`, up to `maxCount`, and appear only when humans are present.
+  Defaults fill eight total slots: 1 human + 7 NPCs, 4 humans + 4 NPCs, or
+  8 humans + no NPCs. Reconnecting humans keep their reserved slots until expiry.
+
+The default 1600 by 1200 map includes 12 health pads and 8 speed pads, spread
+throughout the arena. Their positions are editable under `map.pickupPads`.
+
+NPC behavior variation is under `npc.ai.variation`: patrol destination offsets
+and recent-area avoidance, decision/planning timer variation, and combat
+maneuver duration, strafe strength and preferred-distance variation. NPCs pick
+random patrol areas rather than following the spawn list in order. Combat
+maneuvers hold for 0.8–2.2 seconds before choosing a new strafe direction,
+strength and distance offset. Each life gets an independent random stream;
+visibility, collision, retreat thresholds and weapon cooldowns still apply.
 
 Walls, spawns and pickup pads use absolute coordinates. Resizing the map does
 not stretch or relocate them. Update their positions too when shrinking it.
