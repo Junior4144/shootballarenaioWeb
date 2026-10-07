@@ -32,9 +32,9 @@ The `shootball-game` identity reads only the image repository and has storage-re
 
 **`gbjunior014@gmail.com`** is the application admin, separate from the GCP operator account. Its existing verified Supabase user has the **viewer** role for `local` and `gcp-test`. The current panel is read-only; production access and mutations are not granted.
 
-Sign in at `/admin/` with email/password, then enroll or verify your authenticator. TOTP is enabled on the hosted project. Your own authenticator enrollment must be completed by you. Admin Google OAuth is not implemented.
+Sign in at `/admin/` with email/password. The verified `gbjunior014@gmail.com` account does not require an authenticator, as requested. The exemption checks its immutable user ID and current verified email in the database; it does not trust browser metadata. Other admin memberships retain their existing MFA policy. Admin Google OAuth is not implemented.
 
-The sign-in shell is public. Protected `/admin/v1/*` data requires a verified user, an active session, current environment membership and MFA. Membership and audit records are in an unexposed RLS-protected schema. Ordinary accounts and anonymous requests cannot read the dashboard. Runtime authentication uses only the publishable key.
+The sign-in shell is public. Protected `/admin/v1/*` data requires a verified user, an active session, current environment membership. MFA remains required for accounts without the explicit primary-account exemption. Membership and audit records are in an unexposed RLS-protected schema. Ordinary accounts and anonymous requests cannot read the dashboard. Runtime authentication uses only the publishable key.
 
 ## Local development and remaining work
 

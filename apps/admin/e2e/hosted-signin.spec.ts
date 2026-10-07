@@ -1,4 +1,6 @@
 import { test, expect } from '@playwright/test';
+import { dashboard } from '../../admin-api/src/dashboard';
+import { FixtureInventory } from '../../admin-api/src/inventory';
 const project = 'https://lkgxpgcmspxekggndzih.supabase.co';
 const user = { id: '00000000-0000-4000-8000-000000000001', email: 'admin@example.test', aud: 'authenticated', app_metadata: {}, user_metadata: {}, created_at: new Date().toISOString() };
 test('hosted /admin denies ordinary users and guides approved admins into MFA', async ({ page }) => {
@@ -16,4 +18,20 @@ test('hosted /admin denies ordinary users and guides approved admins into MFA', 
   await page.getByLabel('Password', { exact: true }).fill('fixture-password'); await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page.getByLabel('Six-digit code')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Humans online' })).toHaveCount(0);
+});
+
+test('approved primary account opens the dashboard after normal sign-in without an authenticator', async ({ page }) => {
+  let mfaRequests = 0;
+  await page.route('**/admin/config', r => r.fulfill({ json: { mode: 'supabase', supabaseUrl: project, publishableKey: 'sb_publishable_fixture', environment: 'gcp-test' } }));
+  await page.route(project + '/auth/v1/token**', r => r.fulfill({ json: { access_token: 'fixture', refresh_token: 'refresh', expires_in: 3600, token_type: 'bearer', user: { ...user, email: 'gbjunior014@gmail.com' } } }));
+  await page.route(project + '/auth/v1/factors**', r => { mfaRequests++; return r.fulfill({ status: 400 }); });
+  await page.route('**/admin/v1/session?**', r => r.fulfill({ json: { status: 'allowed' } }));
+  await page.route('**/admin/v1/dashboard?**', async r => r.fulfill({ json: await dashboard('gcp-test', new FixtureInventory()) }));
+  await page.goto('/admin/');
+  await page.getByLabel('Email', { exact: true }).fill('gbjunior014@gmail.com');
+  await page.getByLabel('Password', { exact: true }).fill('fixture-password');
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Humans online' })).toBeVisible();
+  await expect(page.getByLabel('Six-digit code')).toHaveCount(0);
+  expect(mfaRequests).toBe(0);
 });

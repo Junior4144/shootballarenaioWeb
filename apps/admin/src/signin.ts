@@ -19,7 +19,7 @@ export async function accessToken(): Promise<string | null> {
 export async function signOut() { if (client) await client.auth.signOut({ scope: 'local' }); }
 const text = (element: HTMLElement, value: string) => { element.textContent = value; };
 export function renderSignIn(root: HTMLElement, environment: Environment, completed: (token: string) => void, initialError = '') {
-  root.innerHTML = `<main class="login panel"><p class="eyebrow">SHOOTBALL / ADMINISTRATION</p><h1>Admin sign in</h1><p>Use your existing account. Access requires an admin membership and an authenticator code.</p><form id="admin-login"><label>Email<input name="email" type="email" autocomplete="username" required></label><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button class="primary">Sign in</button></form><div id="mfa"></div><p id="auth-error" role="alert"></p><a href="/">Back to game</a></main>`;
+  root.innerHTML = `<main class="login panel"><p class="eyebrow">SHOOTBALL / ADMINISTRATION</p><h1>Admin sign in</h1><p>Sign in with your existing administrator account.</p><form id="admin-login"><label>Email<input name="email" type="email" autocomplete="username" required></label><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button class="primary">Sign in</button></form><div id="mfa"></div><p id="auth-error" role="alert"></p><a href="/">Back to game</a></main>`;
   const message = root.querySelector<HTMLElement>('#auth-error')!;
   text(message, initialError);
   const form = root.querySelector<HTMLFormElement>('form')!;
