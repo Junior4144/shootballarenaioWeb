@@ -41,6 +41,9 @@ one panel to see accounts list, amount of guest, active guest, active player, to
 people who clicked guest
 you know all the details 
 
+so ability to config map size and other preset like desnity of barriers and npc to player amount -
+npc health, player healthj and all that - to relay again all hardcoded to be manipulate
+would be nice if you could make it like a config file (master config file that shows all the values all in one file) and that interface manipulate that
 
 
 # we need to setup the supabase account
@@ -80,3 +83,9 @@ so if you interact with wall you dont just stop you like glide with it
 
 make the map bigger while the scope of player view same if that make sense
 have the bots have a moving system where they just move around if nothing is happening
+
+
+
+# before implementing accounts
+
+i want to improve the UI in terms of actual gameplay now
