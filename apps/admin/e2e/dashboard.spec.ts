@@ -17,7 +17,7 @@ for (const viewport of [{ width: 1920, height: 1080 }, { width: 2560, height: 14
     if (viewport.width < 700) await page.getByRole('button', { name: 'Menu' }).click();
     await page.getByRole('navigation').getByRole('button', { name: 'Architecture & health' }).click();
     await page.getByRole('button', { name: /Player frontend/ }).first().click();
-    await expect(page.getByText('Vercel is the planned host.', { exact: false })).toBeVisible();
+    await expect(page.getByText('No deployment or domain is registered.', { exact: false })).toBeVisible();
     await page.screenshot({ path: `../../.test-artifacts/admin/architecture-${viewport.width}.png`, fullPage: true });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.getByLabel('Environment', { exact: true }).selectOption('gcp-test');
