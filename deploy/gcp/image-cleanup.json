@@ -1,0 +1,4 @@
+[
+  { "name": "delete-old-test-images", "action": { "type": "Delete" }, "condition": { "tagState": "any", "olderThan": "7d" } },
+  { "name": "keep-two-revisions", "action": { "type": "Keep" }, "mostRecentVersions": { "keepCount": 2 } }
+]

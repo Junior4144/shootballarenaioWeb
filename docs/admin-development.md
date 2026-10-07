@@ -1,9 +1,8 @@
 # Admin control plane development
 
-The first ADM-01 increment is a **local, read-only foundation**. It includes an
-independent API, separate browser bundle, environment contracts, manifest
-validation, an injectable fixture provider and a scoped Compute Engine reader.
-It is not the hosted administrator authentication or operations release.
+The control plane supports verified Supabase sessions, current membership and MFA.
+It remains read-only. See [the setup rundown](gcp-admin-setup.md) for actual cloud
+resources, budget gates and deployment status.
 
 ## Run
 
@@ -12,19 +11,16 @@ npm.cmd ci
 npm.cmd run dev:admin
 ```
 
-Open `http://127.0.0.1:5174` and paste the local session token printed in that
-terminal. The launcher starts the API at `127.0.0.1:2570` and the admin app at
-`127.0.0.1:5174`. It does not start or require the game server. Stop with Ctrl+C.
-No Docker or Supabase container is needed.
-The frontend supports Vite hot reload; restart the launcher after API changes.
+Open `http://127.0.0.1:5174/admin/` and sign in using an authorized admin account.
+The root `.env` supplies the scoped Supabase URL and publishable key. Enroll or
+verify your authenticator when prompted. Sessions stay in browser memory.
+The launcher starts the API at port 2570 and admin Vite at 5174. Stop with Ctrl+C.
+No Docker is required. Restart the launcher after API changes.
 
-The token is generated for this development process, retained only in browser
-memory, and cleared on sign-out/reload. Restarting with a newly generated token
-invalidates the previous token. A supplied `ADMIN_LOCAL_TOKEN` persists until you
-change it. This is a local development credential, not an administrator account.
-The API requires explicit local mode, binds only to loopback, restricts Host and
-Origin, rejects mutations, rate-limits requests and refuses production/Cloud Run
-startup. Do not publish or tunnel the development servers.
+For fixture-only development, explicitly set `ADMIN_AUTH_MODE=local` before
+starting and use the printed token. This mode is loopback-only and cannot run
+in production. Hosted authentication defaults to the GCP inventory provider;
+local mode defaults to fixtures.
 
 All ten navigation destinations exist. Overview, server inventory, interactive
 architecture components and integration status have working read-only views.
@@ -35,7 +31,7 @@ when hidden or while editing a filter/environment input.
 
 ## GCP adapter
 
-The default `ADMIN_INVENTORY_PROVIDER=fixture` supplies one clearly labeled local
+In local mode, `ADMIN_INVENTORY_PROVIDER=fixture` supplies one clearly labeled local
 sample VM. It never supplies sample values to GCP test or production. Even a
 fixture VM reported as running has **unknown** process health, admissions,
 players and rooms. Metrics remain unknown until their real producers exist.
@@ -98,17 +94,8 @@ Browser acceptance uses isolated frontend port 5191 and API port 2570; stop
 `dev:admin` first. Screenshots and traces go to `.test-artifacts/admin/`.
 Build artifacts are `apps/admin/dist` and `apps/admin-api/dist/index.js`. The API
 build still requires npm runtime dependencies and the deployment manifest.
-The compiled API retains the same local-only startup guard.
+The combined static build places the admin bundle under `apps/web/dist/admin`.
+Production containers run the API with Supabase authentication and static assets.
 
-Next: verified Supabase admin sessions, MFA and current membership checks;
-restricted schema and audited owner bootstrap; transactional operations/outbox;
-game readiness/admissions and authenticated heartbeats; then a durable GCP
-worker. Configuration publication, account directory, analytics, billing,
-logs/alerts and hosted deployment remain separate workstreams in
-[ADM-01](integrationspec/admin-control-plane.md).
-
-Before provisioning, resolve region/zone, VM size, domains/stable endpoints,
-budget and verified initial owner UUID. Cloud Run must host the admin API and
-worker independently of game VMs, but this local-auth build is intentionally
-not deployable. No cloud resources, IAM grants or database migrations were
-created by this increment.
+Operations, telemetry and public hosting remain release gates. See the
+[setup rundown](gcp-admin-setup.md) and [ADM-01](integrationspec/admin-control-plane.md).

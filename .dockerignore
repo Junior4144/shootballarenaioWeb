@@ -1,0 +1,17 @@
+.git
+.agents
+.codex
+.aws
+**/node_modules
+**/dist
+.env
+.env.*
+**/.env
+**/.env.*
+.npm-cache
+.test-artifacts
+supabase/.temp
+**/*credentials*.json
+gha-creds-*.json
+docs
+*.md

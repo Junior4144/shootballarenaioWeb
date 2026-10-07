@@ -1,0 +1,83 @@
+﻿# GCP, containers and admin setup rundown
+
+Updated 2026-10-06. This records what was actually configured, not a production-readiness claim.
+
+## Current status and budget
+
+The container build pipeline and a cost-gated release workflow are implemented. **No live Cloud Run service or game VM has been provisioned.** There is no public deployment URL yet. The admin panel is usable through Node development with real Supabase authentication.
+
+Your spending requirement is **less than $13/month**. I created a **$12/month project budget** with alerts at 50%, 75%, 100%, and forecast 100%. GCP budgets are alerts, not spending limits; delayed usage reporting and network charges prevent an absolute bill guarantee. To respect the strict ceiling, the release switch remains off and no metered compute workload was started. This does not cap unrelated existing account spending or Supabase charges.
+
+Google documents this distinction in [budgets](https://docs.cloud.google.com/billing/docs/how-to/budgets) and [spend caps](https://docs.cloud.google.com/billing/docs/how-to/budgets-spend-caps). Spend caps do not provide a universal hard cap for this proposed Compute Engine game architecture. Live deployment still needs a bounded hosting design and an accepted usage allowance; the current setup must not be described as live.
+
+## Resources configured
+
+| Item | Actual configuration |
+| --- | --- |
+| GCP operator account | `gbjunior010@gmail.com` |
+| Project | `project-7915787f-37b2-4286-aa7` (number `730016272076`) |
+| Region | `us-central1` |
+| APIs | Compute Engine, Cloud Run, Artifact Registry, IAM Credentials, Security Token Service, Billing Budgets |
+| Budget | `shootball-test-12usd`, project-scoped, $12/month |
+| Artifact Registry | `shootball-test`, Docker repository, currently empty; paid vulnerability scanning disabled |
+| Image retention | Delete images older than 7 days, preserve the 2 most recent versions per image |
+| CI identity | `shootball-github@project-7915787f-37b2-4286-aa7.iam.gserviceaccount.com` |
+| Runtime identity | `shootball-admin@project-7915787f-37b2-4286-aa7.iam.gserviceaccount.com` |
+| GitHub federation | Pool `shootball-github`, provider `github`; no service-account JSON keys |
+| Live compute | None created: no VM, Cloud Run service, disk, reserved IP or load balancer |
+
+GitHub federation is restricted to repository ID `1384258088`, owner ID `94208651`, branch `main`, and this repository's `deploy-test.yml` workflow. CI can write images only to the named repository. It has no deployment or Compute Engine mutation permissions. The runtime identity has no broad project role.
+
+GitHub variables `GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_CI_SERVICE_ACCOUNT`, `GCP_REGION` are configured. `GCP_DEPLOY_ENABLED=false`. A second committed gate, `deploy/gcp/test-policy.json`, also has deployment disabled.
+
+## Container build and release pipeline
+
+[Build workflow](../.github/workflows/containers.yml) runs on pushes and pull requests. It checks types, runs unit and admin browser tests, builds the app, and builds two production images. It starts both images as the non-root `node` user, checks `/healthz`, and verifies that an unauthenticated admin API request receives 401. Browser evidence expires after 3 days.
+
+- `deploy/docker/game-server.Dockerfile`: authoritative game server, port 2567, production runtime dependencies, health check.
+- `deploy/docker/control-plane.Dockerfile`: static player site plus `/admin/` and the admin API, port 8080, real Supabase authorization.
+- `.dockerignore`: excludes local credentials, environment files, development caches and Git metadata.
+
+The [release workflow](../.github/workflows/deploy-test.yml) is manual, main-only, and disabled by the two cost gates. Its prepared path tests the code, uses short-lived GitHub OIDC credentials to publish images, and deploys the control plane by immutable digest through `scripts/gcloud.cmd`. The initial Cloud Run service would be private, minimum zero instances, maximum one, 256 MiB, fractional CPU, request-based billing. **That deployment path has not been exercised.** It still needs scoped deploy/runtime permissions, real public application inputs and a game-hosting decision. Merely flipping the variable is not a complete deployment.
+
+No game VM provisioning workflow is implemented. An always-on multiplayer server needs a separate costed release decision. Do not expect a running game server from the control-plane deployment script.
+
+## Admin account and access
+
+Application admin: **`gbjunior014@gmail.com`**. This is separate from the GCP operator account.
+
+The existing verified Supabase user was granted the `viewer` role for `local` and `gcp-test`. It cannot administer production or perform mutations. An automatic approval review rejected an initial broader owner grant as excessive; the implemented grant is the narrower read-only role appropriate to the current panel.
+
+Applied migration: `supabase/migrations/20261006235615_admin_access.sql`, on project `lkgxpgcmspxekggndzih` only. Membership and membership-change audit records live in an unexposed, RLS-protected schema. The API checks a verified user, active session, current membership/environment, and MFA on each request. Membership revocation does not wait for token expiry. Ordinary accounts cannot enter the protected dashboard.
+
+TOTP enrollment and verification are enabled on the hosted project. On first admin sign-in, scan the displayed QR code with your authenticator and enter its code. Your actual authenticator factor is intentionally enrolled by you; no factor or recovery secret was generated for your account by automation. Browser sessions stay in memory. The current admin login supports email/password, not Google OAuth.
+
+`/admin` serves the sign-in shell; protected data is under `/admin/v1/*` and requires authorization. The shell itself is public, so hiding its URL is not the access control.
+
+## Run it now without Docker
+
+```powershell
+npm.cmd ci
+npm.cmd run dev:admin
+```
+
+Open `http://127.0.0.1:5174/admin/`. Sign in using `gbjunior014@gmail.com`, then enroll/verify the authenticator. The launcher reads the scoped Supabase URL and publishable key from the existing root `.env`; no service-role key is used by the admin runtime. Stop with Ctrl+C.
+
+For an isolated local fixture instead:
+
+```powershell
+$env:ADMIN_AUTH_MODE = 'local'
+npm.cmd run dev:admin
+```
+
+Use the printed local token. Remove that environment override to return to real authentication. Node/npm remain the development path; Docker is production packaging and release validation only.
+
+## What is implemented and what remains
+
+Implemented: read-only overview/inventory/architecture, environment scoping, live Supabase membership and MFA gates, private membership audit, safe static serving, production packaging and CI. GCP inventory uses only the explicit resource registry, currently empty. No fabricated metrics represent live cloud activity.
+
+Not implemented: server start/stop operations, durable worker/outbox, configuration publishing, telemetry ingestion, account directory, billing integration, activity browser and public hosting. These remain work in [the admin requirements](integrationspec/admin-control-plane.md).
+
+Verification: local typecheck, complete build, admin API tests and Chromium admin tests pass. A disposable hosted ordinary-user check confirmed access denial. Hosted MFA config was read back as enabled. Container verification is performed by GitHub Actions because Docker is not installed locally; see the Actions run linked in the completion message.
+
+Existing Supabase advisories include an unrelated public `rls_auto_enable` function exposure and disabled leaked-password protection; these were not silently changed as part of this deployment setup. Production release should resolve those and audit runtime dependencies before exposure.

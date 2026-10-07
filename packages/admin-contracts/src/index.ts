@@ -17,8 +17,8 @@ export type Server = {
 };
 export type ArchitectureNode = { id: string; name: string; responsibility: string; dependencies: string[]; status: string; detail: string };
 export type Dashboard = {
-  environment: Environment; generatedAt: string; mode: 'local-development';
-  identity: { label: string; role: 'local-viewer' }; inventory: Observation<Server[]>;
+  environment: Environment; generatedAt: string; mode: 'local-development' | 'supabase';
+  identity: { label: string; role: string }; inventory: Observation<Server[]>;
   metrics: { id: string; label: string; unit: string; data: Observation<number> }[];
   architecture: ArchitectureNode[];
   capabilities: { id: string; label: string; enabled: false; reason: string }[];

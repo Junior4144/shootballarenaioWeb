@@ -1,0 +1,12 @@
+{
+  "project": "project-7915787f-37b2-4286-aa7",
+  "region": "us-central1",
+  "service": "shootball-control-test",
+  "repository": "shootball-test",
+  "monthlyTargetUsd": 12,
+  "hardCapGuaranteed": false,
+  "deploymentEnabled": false,
+  "reason": "The user requires less than $13/month. Public metered usage is held until its cost policy is accepted; budgets are not hard caps.",
+  "cloudRun": { "minInstances": 0, "maxInstances": 1, "cpu": "0.08", "memory": "256Mi", "concurrency": 1 },
+  "gameVm": { "provisioned": false, "count": 0 }
+}

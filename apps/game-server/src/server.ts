@@ -6,10 +6,14 @@ import { PracticeRoom } from './PracticeRoom';
 import { verifyAccount, type VerifyAccount } from './accountAuth';
 
 export function createServer(rules?: ArenaRules, accountVerifier: VerifyAccount = verifyAccount): Server {
+  const transport = new WebSocketTransport({
+    maxPayload: NETWORK.maxPayload, pingInterval: NETWORK.pingInterval, pingMaxRetries: NETWORK.pingMaxRetries,
+  });
+  transport.getExpressApp().get('/healthz', (_req: unknown, res: import('node:http').ServerResponse) => {
+    res.writeHead(200, { 'Content-Type': 'application/json' }); res.end('{"status":"live"}');
+  });
   const server = new Server({
-    transport: new WebSocketTransport({
-      maxPayload: NETWORK.maxPayload, pingInterval: NETWORK.pingInterval, pingMaxRetries: NETWORK.pingMaxRetries,
-    }),
+    transport,
     greet: false,
     gracefullyShutdown: false,
   });

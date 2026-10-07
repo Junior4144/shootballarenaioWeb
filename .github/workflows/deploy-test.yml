@@ -1,0 +1,94 @@
+name: GCP test release (cost gated)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: gcp-test-release
+  cancel-in-progress: false
+jobs:
+  validate:
+    if: github.ref == 'refs/heads/main' && vars.GCP_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Validate deployment inputs and cost policy
+        env:
+          PUBLIC_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+          GAME_URL: ${{ vars.GAME_SERVER_URL }}
+        run: |
+          node --input-type=module -e "import fs from 'node:fs'; const p=JSON.parse(fs.readFileSync('deploy/gcp/test-policy.json')); if(!p.deploymentEnabled || p.monthlyTargetUsd >= 13) throw Error('Cost gate closed'); if(!process.env.PUBLIC_KEY?.startsWith('sb_publishable_') || !process.env.GAME_URL?.startsWith('wss://')) throw Error('Hosted application inputs missing');"
+      - run: npm ci --ignore-scripts
+      - run: npm run typecheck && npm test
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:admin
+  images:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      control-digest: ${{ steps.control.outputs.digest }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        id: auth
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_CI_SERVICE_ACCOUNT }}
+          token_format: access_token
+      - name: Authenticate Docker without a service-account key
+        env:
+          ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+        run: printf '%s' "$ACCESS_TOKEN" | docker login -u oauth2accesstoken --password-stdin https://us-central1-docker.pkg.dev
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8
+        id: control
+        with:
+          context: .
+          file: deploy/docker/control-plane.Dockerfile
+          push: true
+          tags: us-central1-docker.pkg.dev/project-7915787f-37b2-4286-aa7/shootball-test/control-plane:${{ github.sha }}
+          build-args: |
+            VITE_SUPABASE_PUBLISHABLE_KEY=${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+            VITE_GAME_SERVER_URL=${{ vars.GAME_SERVER_URL }}
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8
+        with:
+          context: .
+          file: deploy/docker/game-server.Dockerfile
+          push: true
+          tags: us-central1-docker.pkg.dev/project-7915787f-37b2-4286-aa7/shootball-test/game-server:${{ github.sha }}
+  control-plane:
+    needs: images
+    runs-on: windows-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_CI_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+      - name: Prepare scoped ephemeral CLI configuration
+        shell: pwsh
+        run: |
+          ./scripts/gcloud.cmd help config configurations create
+          ./scripts/gcloud.cmd config configurations create shootball-arena --no-activate --quiet
+          if ($LASTEXITCODE -ne 0) { throw 'Scoped configuration setup failed' }
+      - name: Deploy immutable private test revision
+        shell: pwsh
+        env:
+          GCP_DEPLOY_ENABLED: ${{ vars.GCP_DEPLOY_ENABLED }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+          IMAGE_DIGEST: ${{ needs.images.outputs.control-digest }}
+        run: ./scripts/deploy-control-test.ps1 -ImageDigest $env:IMAGE_DIGEST

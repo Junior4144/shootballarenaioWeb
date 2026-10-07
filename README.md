@@ -12,10 +12,10 @@ in the [account setup guide](docs/auth-setup.md) and [auth specification](docs/s
 
 ## Run locally
 
-Admin control plane development: `npm run dev:admin` starts the separate local,
-read-only dashboard at `http://127.0.0.1:5174`. Paste the local session token
-printed in the terminal. See the [admin development guide](docs/admin-development.md)
-for the GCP inventory adapter, tests and remaining hosted release gates.
+Admin control plane: `npm run dev:admin` opens real administrator sign-in at
+`http://127.0.0.1:5174/admin/`, with current membership and MFA checks. See the
+[admin development guide](docs/admin-development.md) and
+[GCP, containers and admin setup rundown](docs/gcp-admin-setup.md).
 
 Game tuning lives in [packages/shared/src/config.ts](packages/shared/src/config.ts):
 player/NPC health, weapons, map layout, pickups, points or kills to win, and system
@@ -67,8 +67,7 @@ npm run dev:web
 ```
 
 Development runs directly on Node.js/npm. No Docker, Compose, dev container or
-local Supabase stack is required. Docker remains reserved for future production
-packaging. Accounts and profiles use hosted project `lkgxpgcmspxekggndzih`.
+local Supabase stack is required. Docker is used only for production packaging and CI release validation. Accounts and profiles use hosted project `lkgxpgcmspxekggndzih`.
 
 Optional configuration:
 - Server: `GAME_SERVER_PORT` (default 2567). The local server binds to 127.0.0.1.

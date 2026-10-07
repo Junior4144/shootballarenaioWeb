@@ -65,7 +65,7 @@ test('API rejects anonymous access, wrong origins, invalid environments and ever
     assert.equal(reboundStatus, 403);
     assert.equal((await fetch(base + '/admin/v1/dashboard?environment=wrong', { headers })).status, 400);
     assert.equal((await fetch(base + '/admin/v1/dashboard', { headers })).status, 400);
-    for (const method of ['POST', 'PUT', 'DELETE']) assert.equal((await fetch(base + '/admin/v1/servers/game-test/actions', { method, headers })).status, 405);
+    for (const method of ['POST', 'PUT', 'DELETE']) assert.equal((await fetch(base + '/admin/v1/servers/game-test/actions?environment=local', { method, headers })).status, 405);
     const response = await fetch(base + path, { headers }); assert.equal(response.status, 200);
     assert.equal(response.headers.get('cache-control'), 'no-store');
     const body = await response.json(); assert.equal(body.environment, 'local');
