@@ -7,11 +7,11 @@ Implementation branch: `feat/gcp-admin-pipeline` (pushed, not merged into `main`
 
 ## Current status and budget
 
-The container build pipeline and a cost-gated release workflow are implemented. **No live Cloud Run service or game VM has been provisioned.** There is no public deployment URL yet. The admin panel is usable through Node development with real Supabase authentication.
+The container build pipeline is implemented. **One test VM is now running:** `shootball-game-test` in `us-central1-a`. Its estimated monthly cost is about **$11 before tax**, without Free Tier discounts. See [the instance rundown](gcp-test-instance.md) for the cost breakdown. The application containers are not deployed yet; there is no public game/admin URL and no Cloud Run service.
 
-Your spending requirement is **less than $13/month**. I created a **$12/month project budget** with alerts at 50%, 75%, 100%, and forecast 100%. GCP budgets are alerts, not spending limits; delayed usage reporting and network charges prevent an absolute bill guarantee. To respect the strict ceiling, the release switch remains off and no metered compute workload was started. This does not cap unrelated existing account spending or Supabase charges.
+Your clarified requirement is an **estimated instance cost of $13/month or less**. I created a **$12/month project budget** with alerts at 50%, 75%, 100%, and forecast 100%. GCP budgets are alerts, not spending limits; delayed usage reporting and network charges prevent an absolute bill guarantee. You subsequently authorized instance creation on that estimated-cost basis. The VM is now running; the application release switch remains off. This does not cap unrelated existing account spending or Supabase charges.
 
-Google documents this distinction in [budgets](https://docs.cloud.google.com/billing/docs/how-to/budgets) and [spend caps](https://docs.cloud.google.com/billing/docs/how-to/budgets-spend-caps). Spend caps do not provide a universal hard cap for this proposed Compute Engine game architecture. Live deployment still needs a bounded hosting design and an accepted usage allowance; the current setup must not be described as live.
+Google documents this distinction in [budgets](https://docs.cloud.google.com/billing/docs/how-to/budgets) and [spend caps](https://docs.cloud.google.com/billing/docs/how-to/budgets-spend-caps). Spend caps do not provide a universal hard cap for this proposed Compute Engine game architecture. VM provisioning is complete. Public application deployment remains a separate unfinished step.
 
 ## Resources configured
 
@@ -27,7 +27,7 @@ Google documents this distinction in [budgets](https://docs.cloud.google.com/bil
 | CI identity | `shootball-github@project-7915787f-37b2-4286-aa7.iam.gserviceaccount.com` |
 | Runtime identity | `shootball-admin@project-7915787f-37b2-4286-aa7.iam.gserviceaccount.com` |
 | GitHub federation | Pool `shootball-github`, provider `github`; no service-account JSON keys |
-| Live compute | None created: no VM, Cloud Run service, disk, reserved IP or load balancer |
+| Live compute | One `e2-micro` VM, 20 GiB standard boot disk, ephemeral IPv4; no Cloud Run service, reserved IP, NAT gateway or load balancer |
 
 GitHub federation is restricted to repository ID `1384258088`, owner ID `94208651`, branch `main`, and this repository's `deploy-test.yml` workflow. CI can write images only to the named repository. It has no deployment or Compute Engine mutation permissions. The runtime identity has no broad project role.
 
@@ -43,7 +43,7 @@ GitHub variables `GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_CI_SERVICE_ACCOUNT`, `GC
 
 The [release workflow](../.github/workflows/deploy-test.yml) is manual, main-only, and disabled by the two cost gates. Its prepared path tests the code, uses short-lived GitHub OIDC credentials to publish images, and deploys the control plane by immutable digest through `scripts/gcloud.cmd`. The initial Cloud Run service would be private, minimum zero instances, maximum one, 256 MiB, fractional CPU, request-based billing. **That deployment path has not been exercised.** It still needs scoped deploy/runtime permissions, real public application inputs and a game-hosting decision. Merely flipping the variable is not a complete deployment.
 
-No game VM provisioning workflow is implemented. An always-on multiplayer server needs a separate costed release decision. Do not expect a running game server from the control-plane deployment script.
+The test VM was provisioned through the scoped repository CLI and registered in `deploy/environments.json`. No automated VM application rollout is implemented yet. The control-plane deployment script does not install a game server on this VM.
 
 ## Admin account and access
 
@@ -77,7 +77,7 @@ Use the printed local token. Remove that environment override to return to real 
 
 ## What is implemented and what remains
 
-Implemented: read-only overview/inventory/architecture, environment scoping, live Supabase membership and MFA gates, private membership audit, safe static serving, production packaging and CI. GCP inventory uses only the explicit resource registry, currently empty. No fabricated metrics represent live cloud activity.
+Implemented: read-only overview/inventory/architecture, environment scoping, live Supabase membership and MFA gates, private membership audit, safe static serving, production packaging and CI. GCP inventory uses only the explicit resource registry, now containing the test VM. Runtime credentials with instance-read permission are still required to observe it. No fabricated metrics represent live cloud activity.
 
 Not implemented: server start/stop operations, durable worker/outbox, configuration publishing, telemetry ingestion, account directory, billing integration, activity browser and public hosting. These remain work in [the admin requirements](integrationspec/admin-control-plane.md).
 

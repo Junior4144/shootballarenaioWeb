@@ -6,7 +6,28 @@
   "monthlyTargetUsd": 12,
   "hardCapGuaranteed": false,
   "deploymentEnabled": false,
-  "reason": "The user requires less than $13/month. Public metered usage is held until its cost policy is accepted; budgets are not hard caps.",
-  "cloudRun": { "minInstances": 0, "maxInstances": 1, "cpu": "0.08", "memory": "256Mi", "concurrency": 1 },
-  "gameVm": { "provisioned": false, "count": 0 }
+  "reason": "User authorized one test VM with estimated monthly cost at or below USD13. Application release remains disabled pending runtime deployment setup.",
+  "cloudRun": {
+    "minInstances": 0,
+    "maxInstances": 1,
+    "cpu": "0.08",
+    "memory": "256Mi",
+    "concurrency": 1
+  },
+  "gameVm": {
+    "provisioned": true,
+    "count": 1,
+    "name": "shootball-game-test",
+    "zone": "us-central1-a",
+    "machineType": "e2-micro",
+    "bootDiskType": "pd-standard",
+    "bootDiskGiB": 20,
+    "externalIpv4": "ephemeral",
+    "estimatedMonthlyUsd": 11,
+    "estimateHours": 744,
+    "estimatedOutboundGiB": 1,
+    "taxIncluded": false,
+    "freeTierAssumed": false,
+    "applicationDeployed": false
+  }
 }

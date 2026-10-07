@@ -56,7 +56,7 @@ For live reads, register **existing** VMs in [the manifest](../deploy/environmen
 ```
 
 The example placeholders deliberately fail validation. Supply actual identities;
-the committed registry is empty because no VMs are provisioned. Duplicate target
+the committed registry contains the provisioned `shootball-game-test` VM. Duplicate target
 identities, cross-project references, unknown keys and URL/path injection fail
 startup. The registry is bounded to 20 entries; it is not a scaling entitlement.
 
