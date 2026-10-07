@@ -78,6 +78,6 @@ Implemented: read-only overview/inventory/architecture, environment scoping, liv
 
 Not implemented: server start/stop operations, durable worker/outbox, configuration publishing, telemetry ingestion, account directory, billing integration, activity browser and public hosting. These remain work in [the admin requirements](integrationspec/admin-control-plane.md).
 
-Verification: local typecheck, complete build, admin API tests and Chromium admin tests pass. A disposable hosted ordinary-user check confirmed access denial. Hosted MFA config was read back as enabled. Container verification is performed by GitHub Actions because Docker is not installed locally; see the Actions run linked in the completion message.
+Verification: local typecheck, complete build, admin API tests and Chromium admin tests pass. A disposable hosted account successfully enrolled and verified TOTP, and remained denied admin access even after MFA. The account was then removed. Hosted MFA config was read back as enabled. Container verification is performed by GitHub Actions because Docker is not installed locally; see the Actions run linked in the completion message.
 
 Existing Supabase advisories include an unrelated public `rls_auto_enable` function exposure and disabled leaked-password protection; these were not silently changed as part of this deployment setup. Production release should resolve those and audit runtime dependencies before exposure.

@@ -8,6 +8,7 @@ COPY apps/web/package.json apps/web/package.json
 COPY packages packages
 RUN npm ci --ignore-scripts
 COPY apps/game-server apps/game-server
+COPY apps/web/src apps/web/src
 RUN npm run build --workspace @shootball/game-server
 RUN npm prune --omit=dev --ignore-scripts
 
