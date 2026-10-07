@@ -30,7 +30,7 @@ export async function verifyWebRelease(base, sha, { request = fetch, sleep = del
   assert.equal(config.environment, 'production');
   assert.equal(config.supabaseUrl, 'https://lkgxpgcmspxekggndzih.supabase.co');
   assert.match(config.publishableKey ?? '', /^sb_publishable_/);
-  for (const route of ['dashboard', 'health', 'telemetry', 'accounts', 'activity', 'memberships']) {
+  for (const route of ['dashboard', 'health', 'telemetry', 'traffic', 'accounts', 'activity', 'memberships']) {
     const response = await get('/admin/v1/' + route + '?environment=production');
     assert.equal(response.status, 401, base + ': ' + route + ' must be protected');
     assert.equal(response.headers.get('cache-control'), 'no-store');

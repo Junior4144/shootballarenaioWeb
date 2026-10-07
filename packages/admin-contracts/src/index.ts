@@ -38,3 +38,6 @@ export function parseManifest(input: unknown): Manifest {
 }
 
 export * from './operations';
+
+export * from './health';
+export * from './traffic';

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { once } from 'node:events';
 import { HealthMonitor } from '../src/health';
-import { LINKS, parseGameTelemetry } from '@shootball/admin-contracts';
+import { LINKS, probeHealth, WEB_HEALTH_TARGETS, parseGameTelemetry } from '@shootball/admin-contracts';
 import { createAdminServer } from '../src/server';
 import { FixtureInventory } from '../src/inventory';
 import { CONFIG } from '../../../packages/shared/src/config';
@@ -12,7 +12,7 @@ test('health probes fixed destinations, deduplicates reads and reports failure w
   const monitor=new HealthMonitor((async (url: string) => { urls.push(url); if(fail) throw new Error('private'); return Response.json({status:'live',revision:'release-1'}); }) as typeof fetch,()=>now);
   assert.deepEqual(await monitor.read('local'),[]); assert.equal(urls.length,0);
   const [a,b]=await Promise.all([monitor.read('production'),monitor.read('production')]);
-  assert.deepEqual(a,b); assert.equal(urls.length,3); assert.deepEqual(urls,[LINKS.primary+'/health',LINKS.origin+'/health',LINKS.game+'/healthz']);
+  assert.deepEqual(a,b); assert.equal(urls.length,1); assert.deepEqual(urls,[LINKS.game+'/healthz']);
   assert.ok(a.every(c=>c.status==='healthy'));
   fail=true; now+=61_000;
   const failed=await monitor.read('production'); assert.ok(failed.every(c=>c.status==='unavailable' && c.revision===null)); assert.ok(!JSON.stringify(failed).includes('private'));
@@ -39,4 +39,28 @@ test('new API reads enforce membership before adapters and validate record pagin
     assert.throws(()=>parseGameTelemetry({rooms:[],totals:{}}));
     allowed=false;assert.equal((await fetch(base+'accounts?environment=production',{headers})).status,403);assert.equal(calls,2);
   } finally {server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()));}
+});
+
+test('public website probes never send credentials and distinguish HTTP, invalid JSON and timeout failures', async () => {
+  for (const [response, message] of [[new Response('', {status:503}), 'HTTP 503'], [Response.json({status:'wrong'}), 'valid liveness JSON']] as const) {
+    const check = await probeHealth(WEB_HEALTH_TARGETS[0], (async (_url, init) => {
+      assert.equal(init?.credentials, 'omit'); assert.equal(init?.headers, undefined); assert.equal(init?.redirect, 'error');
+      return response;
+    }) as typeof fetch);
+    assert.equal(check.status, 'unavailable'); assert.ok(check.message.includes(message));
+  }
+  const timeout = await probeHealth(WEB_HEALTH_TARGETS[1], (async () => { throw new DOMException('secret', 'TimeoutError'); }) as typeof fetch);
+  assert.equal(timeout.message, 'Endpoint timed out after 8 seconds.');
+});
+test('public liveness permits browser probes while admin API still rejects foreign origins', async () => {
+  const server = createAdminServer({inventory:new FixtureInventory(), allowedHosts:[], allowedOrigins:[], authorize:async()=>({status:'denied'})});
+  server.listen(0,'127.0.0.1'); await once(server,'listening');
+  const base = 'http://127.0.0.1:'+(server.address() as {port:number}).port;
+  try {
+    const health = await fetch(base+'/health', {headers:{Origin:LINKS.primary}});
+    assert.equal(health.status,200); assert.equal(health.headers.get('access-control-allow-origin'),'*');
+    assert.equal((await health.json()).status,'live');
+    const denied = await fetch(base+'/admin/v1/dashboard?environment=production', {headers:{Origin:'https://foreign.invalid'}});
+    assert.equal(denied.status,403); assert.equal(denied.headers.get('access-control-allow-origin'),null);
+  } finally { server.closeAllConnections(); await new Promise<void>(resolve=>server.close(()=>resolve())); }
 });

@@ -7,11 +7,16 @@ import type { Authorize } from './auth';
 import { staticSite } from './static';
 import type { HealthMonitor } from './health';
 import type { ReadRecords } from './records';
+import { TRAFFIC_RANGES, type TrafficRange, type TrafficSource } from '@shootball/admin-contracts';
+import type { ReadTraffic } from './traffic';
+import type { ReadPosthog } from './posthog';
 export function assertLocalRuntime(env: NodeJS.ProcessEnv) {
   if (env.NODE_ENV === 'production' || env.K_SERVICE || env.ADMIN_AUTH_MODE !== 'local' || !env.ADMIN_LOCAL_TOKEN || env.ADMIN_LOCAL_TOKEN.length < 32) throw new Error('Local auth requires explicit development mode and a strong token; hosted local auth is disabled.');
 }
 export type AdminOptions = {
   health?: HealthMonitor; readRecords?: ReadRecords; telemetryFetch?: typeof fetch;
+  readTraffic?: ReadTraffic;
+  readPosthog?: ReadPosthog;
   token?: string; authorize?: Authorize; inventory: Inventory;
   allowedHosts: string[]; allowedOrigins: string[]; staticRoot?: string;
   publicConfig?: { supabaseUrl: string; publishableKey: string; environment: Environment };
@@ -29,6 +34,12 @@ export function createAdminServer(options: AdminOptions) {
     let url: URL;
     try { url = new URL(req.url ?? '/', 'http://127.0.0.1'); } catch { return send(400, { error: 'Invalid URL' }); }
     if (!hosted && (!['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress ?? '') || !options.allowedHosts.includes(req.headers.host ?? ''))) return send(403, { error: 'Local origin required' });
+    // Only public, non-sensitive liveness is readable cross-origin. Admin APIs
+    // retain their existing origin and membership checks.
+    if (hosted && ['/health', '/healthz'].includes(url.pathname) && req.method === 'GET') {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      return send(200, { status: 'live', mode: 'supabase', revision: process.env.RELEASE_SHA ?? 'development' });
+    }
     if (req.headers.origin) {
       let sameOrigin = false;
       try { const origin = new URL(req.headers.origin); sameOrigin = hosted && origin.protocol === 'https:' && origin.host === req.headers.host; } catch {}
@@ -61,8 +72,24 @@ export function createAdminServer(options: AdminOptions) {
     }
     if (req.method !== 'GET') return send(405, { error: 'Read-only milestone; mutations are disabled' });
     if (url.pathname === '/admin/v1/session') return send(200, { status: 'allowed', identity });
+    if (url.pathname === '/admin/v1/traffic') {
+      const range = url.searchParams.get('range') ?? '24h';
+      const source = url.searchParams.get('source') ?? 'game';
+      if (!['game','website','posthog'].includes(source)) return send(400, { error: 'Invalid traffic source' });
+      if (!Object.hasOwn(TRAFFIC_RANGES, range)) return send(400, { error: 'Invalid traffic range' });
+      if (source === 'posthog') {
+        const scope = url.searchParams.get('scope') ?? 'production';
+        if (scope !== 'production' && scope !== 'development') return send(400, { error: 'Invalid traffic scope' });
+        if (!hosted || !options.readPosthog) return send(503, { error: 'PostHog is not connected in this environment' });
+        try { return send(200, await options.readPosthog(range as TrafficRange, scope)); }
+        catch { return send(503, { error: 'PostHog unavailable; check server CLI credentials and query access' }); }
+      }
+      if (!hosted || !options.readTraffic) return send(503, { error: 'Traffic history is not connected in this environment' });
+      try { return send(200, await options.readTraffic(bearer.slice(7), range as TrafficRange, source as TrafficSource)); }
+      catch { return send(503, { error: 'Traffic history unavailable; retry shortly' }); }
+    }
     if (url.pathname === '/admin/v1/health') {
-      try { return send(200, { checks: await options.health?.read(environment as Environment) ?? [], source: 'Server-side HTTPS liveness probes; cached for 60 seconds' }); }
+      try { return send(200, { checks: await options.health?.read(environment as Environment) ?? [], browserChecks: environment === 'production', source: 'Browser website probes; server-side gameplay probe cached for 60 seconds' }); }
       catch { return send(503, { error: 'Health observations unavailable' }); }
     }
     if (url.pathname === '/admin/v1/telemetry') {

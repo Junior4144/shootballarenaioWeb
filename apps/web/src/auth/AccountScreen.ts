@@ -1,5 +1,6 @@
 import { createClient, type Session, type SupabaseClient } from '@supabase/supabase-js';
 import { clearResumeTokens, type PlayIdentity } from '../network/PracticeConnection';
+import posthog from '../posthog';
 
 const PROJECT = 'https://lkgxpgcmspxekggndzih.supabase.co';
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -64,7 +65,7 @@ export class AccountScreen {
       if (error) throw error;
       if (!this.cancelled && data.url) location.assign(data.url);
     }); };
-    el('guest-play').onclick = () => { if (!this.busy && this.ready && !this.session) this.play({ kind: 'guest' }); };
+    el('guest-play').onclick = () => { if (!this.busy && this.ready && !this.session) { posthog.capture('guest_play_selected'); this.play({ kind: 'guest' }); } };
     el('account-play').onclick = () => { void this.run(async () => {
       const userId = this.session!.user.id;
       await this.token(userId);
@@ -83,6 +84,7 @@ export class AccountScreen {
       const { error } = await this.api().from('profiles').update({ display_name: name }).eq('id', this.session!.user.id).select('display_name').single();
       if (error) throw new Error('Could not save your display name. Please retry.');
       this.profileReady = true; el('account-identity').textContent = `ACCOUNT / ${name}`;
+      posthog.capture('display_name_updated');
       this.show('Display name saved.');
     }); };
     el('retry-profile').onclick = () => { void this.run(() => this.loadProfile()); };
@@ -122,7 +124,13 @@ export class AccountScreen {
     } finally { this.ready = true; this.render(); }
   }
   private async accept(session: Session | null): Promise<void> {
-    const next = session?.user.id ?? 'guest';
+    const previousUserId = this.session?.user.id;
+    const nextUserId = session?.user.id;
+    const next = nextUserId ?? 'guest';
+    if (previousUserId !== nextUserId) {
+      if (previousUserId) posthog.reset();
+      if (session) posthog.identify(session.user.id, session.user.email ? { email: session.user.email } : {});
+    }
     try {
       const previous = this.storage?.getItem('shootball:identity');
       if ((previous && previous !== next) || (!previous && next !== 'guest')) clearResumeTokens(this.storage);

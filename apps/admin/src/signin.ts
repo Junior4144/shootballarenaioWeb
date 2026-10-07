@@ -1,5 +1,6 @@
+import { liveTarget, liveNotice } from './runtime';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import type { Environment } from '@shootball/admin-contracts';
+import { TRAFFIC_RANGES, type Environment } from '@shootball/admin-contracts';
 export type AuthConfig = { mode: 'local' | 'supabase'; supabaseUrl?: string; publishableKey?: string; environment?: Environment };
 let client: SupabaseClient | undefined;
 let config: AuthConfig;
@@ -7,6 +8,7 @@ export async function loadAuth(): Promise<AuthConfig> {
   const response = await fetch('/admin/config', { cache: 'no-store' });
   if (!response.ok) throw new Error('Admin service unavailable');
   config = await response.json();
+  if (liveTarget && (config.mode !== 'supabase' || config.environment !== 'production')) throw new Error('Live admin requires production authentication');
   if (config.mode === 'supabase') {
     if (config.supabaseUrl !== 'https://lkgxpgcmspxekggndzih.supabase.co' || !config.publishableKey?.startsWith('sb_publishable_')) throw new Error('Invalid admin authentication configuration');
     client = createClient(config.supabaseUrl, config.publishableKey, { auth: { persistSession: false, autoRefreshToken: true, detectSessionInUrl: false } });
@@ -16,10 +18,25 @@ export async function loadAuth(): Promise<AuthConfig> {
 export async function accessToken(): Promise<string | null> {
   return client ? (await client.auth.getSession()).data.session?.access_token ?? null : null;
 }
+// Live UI development can precede deployment of the matching HTTP endpoint.
+// Use the same scoped, administrator-authorized RPC as the API, never a service key.
+export async function readLiveTraffic(path: string, token: string): Promise<Response> {
+  if (!liveTarget || !client || config.mode !== 'supabase' || config.environment !== 'production') throw new Error('Live traffic reads require production administrator sign-in');
+  const query = new URLSearchParams(path.split('?')[1]);
+  const range = query.get('range') ?? '24h', source = query.get('source') ?? 'game';
+  if (!Object.hasOwn(TRAFFIC_RANGES, range) || !['game','website'].includes(source)) return Response.json({error:'Invalid traffic request'},{status:400});
+  const response = await fetch(config.supabaseUrl + '/rest/v1/rpc/admin_traffic_history', {
+    method:'POST', credentials:'omit', redirect:'error', cache:'no-store', signal:AbortSignal.timeout(12_000),
+    headers:{apikey:config.publishableKey!,Authorization:'Bearer '+token,'Content-Type':'application/json'},
+    body:JSON.stringify({p_environment:'production',p_range:range,p_source:source}),
+  });
+  if (!response.ok) return Response.json({error:'Traffic history unavailable; verify administrator access and the history migration.'},{status:response.status});
+  return response;
+}
 export async function signOut() { if (client) await client.auth.signOut({ scope: 'local' }); }
 const text = (element: HTMLElement, value: string) => { element.textContent = value; };
 export function renderSignIn(root: HTMLElement, environment: Environment, completed: (token: string) => void, initialError = '') {
-  root.innerHTML = `<main class="login panel"><p class="eyebrow">SHOOTBALL / ADMINISTRATION</p><h1>Admin sign in</h1><p>Sign in with your existing administrator account.</p><form id="admin-login"><label>Email<input name="email" type="email" autocomplete="username" required></label><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button class="primary">Sign in</button></form><div id="mfa"></div><p id="auth-error" role="alert"></p><a href="/">Back to game</a></main>`;
+  root.innerHTML = `<main class="login panel"><p class="eyebrow">SHOOTBALL / ADMINISTRATION</p><h1>Admin sign in</h1>${liveNotice ? `<div class="notice">${liveNotice}</div>` : ''}<p>Sign in with your existing administrator account.</p><form id="admin-login"><label>Email<input name="email" type="email" autocomplete="username" required></label><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button class="primary">Sign in</button></form><div id="mfa"></div><p id="auth-error" role="alert"></p><a href="${liveTarget || '/'}">Back to game</a></main>`;
   const message = root.querySelector<HTMLElement>('#auth-error')!;
   text(message, initialError);
   const form = root.querySelector<HTMLFormElement>('form')!;

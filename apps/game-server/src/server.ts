@@ -5,6 +5,7 @@ import { Practice, type ArenaRules } from '@shootball/shared/practice';
 import { Telemetry, verifyTelemetryAccess } from './telemetry';
 import { PracticeRoom } from './PracticeRoom';
 import { verifyAccount, type VerifyAccount } from './accountAuth';
+import { productionTrafficCollector } from './traffic';
 
 export function createServer(rules?: ArenaRules, accountVerifier: VerifyAccount = verifyAccount, authorizeTelemetry = verifyTelemetryAccess): Server {
   const transport = new WebSocketTransport({
@@ -14,6 +15,8 @@ export function createServer(rules?: ArenaRules, accountVerifier: VerifyAccount 
     res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ status: 'live', revision: process.env.RELEASE_SHA ?? 'development' }));
   });
   const telemetry = new Telemetry();
+  const stopTraffic = productionTrafficCollector(() => telemetry.snapshot());
+  transport.server?.once('close', stopTraffic);
   let windowAt = Date.now(), requests = 0, inFlight = 0;
   transport.getExpressApp().get('/ops/telemetry', async (req: import('node:http').IncomingMessage, res: import('node:http').ServerResponse) => {
     const send = (status: number, body: unknown) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(body)); };

@@ -8,6 +8,8 @@ import { drawArena, createArenaTextures } from './ArenaArtwork';
 import type { ArenaEvent } from '@shootball/shared/content';
 import { ArenaHud, actorName } from './ArenaHud';
 import { CombatAudio } from './CombatAudio';
+import posthog from '../posthog';
+import { posthogLogs } from '../posthogLogs';
 
 export class ArenaScene extends Phaser.Scene {
   private world: Snapshot = emptySnapshot();
@@ -29,6 +31,9 @@ export class ArenaScene extends Phaser.Scene {
   private details!: Phaser.GameObjects.Graphics;
   private pickupLabels = new Map<number, Phaser.GameObjects.Text>();
   private cameraLife = '';
+  private matchConnectedCaptured = false;
+  private radarUsedCaptured = false;
+  private matchResultCaptured = false;
 
   private revealed = false;
   constructor(private identity: PlayIdentity = { kind: 'guest' }, private onReady: () => void = () => {}) { super('arena'); }
@@ -74,6 +79,11 @@ export class ArenaScene extends Phaser.Scene {
         this.eventCursor.clear(); this.effects = [];
         this.connectionState = connection.state;
         this.cameraLife = '';
+        if (connection.state === 'connected' && !this.matchConnectedCaptured) {
+          this.matchConnectedCaptured = true;
+          posthog.capture('match_connected', { player_type: this.identity.kind });
+          posthogLogs.arenaMatchConnected(this.identity.kind);
+        }
       }
       this.world = connection.snapshot ?? emptySnapshot();
       if (connection.snapshot && connection.state === 'connected') {
@@ -95,7 +105,13 @@ export class ArenaScene extends Phaser.Scene {
     scan.addEventListener('click', onScan); mute.addEventListener('click', onMute);
     document.addEventListener('pointerdown', unlock); document.addEventListener('keydown', unlock);
     const onJoin = () => { void this.connection.join(); };
-    const onLeave = () => this.connection.leave();
+    const onLeave = () => {
+      if (this.connection.state === 'connected') {
+        posthog.capture('match_left', { player_type: this.identity.kind });
+        posthogLogs.arenaMatchLeft(this.identity.kind);
+      }
+      this.connection.leave();
+    };
     join.addEventListener('click', onJoin);
     leave.addEventListener('click', onLeave);
     this.input.on('pointerdown', fire);
@@ -125,6 +141,10 @@ export class ArenaScene extends Phaser.Scene {
     this.sendElapsed += delta;
     if (this.sendElapsed >= NETWORK.inputMs && this.connection.state === 'connected' && this.focused) {
       this.sendElapsed %= NETWORK.inputMs;
+      if (this.radarQueued && !this.radarUsedCaptured) {
+        this.radarUsedCaptured = true;
+        posthog.capture('radar_used', { player_type: this.identity.kind });
+      }
       this.connection.send({
       moveX: Number(this.keys.D.isDown) - Number(this.keys.A.isDown),
       moveY: Number(this.keys.S.isDown) - Number(this.keys.W.isDown),
@@ -187,6 +207,18 @@ export class ArenaScene extends Phaser.Scene {
       this.shots.get(shot.id)!.setPosition(shot.x, shot.y);
     }
     const me = this.world.players.find(p => p.id === this.connection?.sessionId);
+    if (me && this.world.match.phase === 'results' && !this.matchResultCaptured) {
+      this.matchResultCaptured = true;
+      const winners = this.world.match.winnerIds;
+      const outcome = !winners.length ? 'empty' : winners.length > 1 ? 'draw' : winners.includes(me.id) ? 'win' : 'loss';
+      const matchDurationSeconds = Math.round(this.world.match.elapsedSeconds);
+      posthog.capture('match_completed', {
+        player_type: this.identity.kind,
+        outcome,
+        match_duration_seconds: matchDurationSeconds,
+      });
+      posthogLogs.arenaMatchCompleted(this.identity.kind, outcome, matchDurationSeconds);
+    }
     if (me) {
       const camera = this.cameras.main;
       const life = `${this.world.generation}:${me.id}:${me.lifeId}`;

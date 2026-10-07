@@ -46,7 +46,7 @@ test('both website routes require stable matching revisions and protect every ad
   for (const base of [PRIMARY_WEB,ORIGIN_WEB]) {
     const f=fixture({revisions:[sha,'old',sha,null,sha,sha,sha]});
     await verifyWebRelease(base,sha,f.options);assert.equal(f.healthCalls,7);
-    for(const route of ['accounts','activity','memberships','telemetry','health','dashboard']) assert(f.urls.includes(base+'/admin/v1/'+route+'?environment=production'));
+    for(const route of ['accounts','activity','memberships','telemetry','traffic','health','dashboard']) assert(f.urls.includes(base+'/admin/v1/'+route+'?environment=production'));
     assert(f.urls.includes(base+'/admin'));assert(f.urls.includes(base+'/admin/'));
   }
 });

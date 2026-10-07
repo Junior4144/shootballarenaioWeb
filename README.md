@@ -12,8 +12,8 @@ in the [account setup guide](docs/auth-setup.md) and [auth specification](docs/s
 
 ## Run locally
 
-Admin control plane: `npm run dev:admin` opens real administrator sign-in at
-`http://127.0.0.1:5174/admin/`, with current membership and MFA checks. See the
+Admin UI with deployed production data: `npm run dev:admin:live` opens real administrator sign-in at
+`http://127.0.0.1:5174/admin/`, using Vercel as the primary API route, with current membership and MFA checks. Use `npm run dev:admin:fixture` for sample data or `npm run dev:admin` to develop the API locally. See the
 [admin development guide](docs/admin-development.md) and
 [GCP, containers and admin setup rundown](docs/gcp-admin-setup.md).
 

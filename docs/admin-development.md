@@ -4,30 +4,79 @@ The control plane supports verified Supabase sessions, current membership and MF
 It remains read-only. See [the setup rundown](gcp-admin-setup.md) for actual cloud
 resources, budget gates and deployment status.
 
-## Run
+## Local UI with deployed data (recommended for admin UI work)
 
 ```powershell
 npm.cmd ci
+npm.cmd run dev:admin:live
+```
+
+Open http://127.0.0.1:5174/admin/ and sign in with your existing administrator
+account. This runs the same admin source as the deployed panel, with hot reload.
+The login screen and dashboard show **Local UI · Production data**. No local
+API, Docker, GCP credentials or environment file is required. Stop with Ctrl+C.
+
+The local Vite proxy forwards only /admin/config and /admin/v1/ to the primary
+https://shootball-arena.vercel.app endpoint. That endpoint proxies to GCP.
+The public authentication configuration comes from the deployed API; the existing
+Supabase password login, current membership checks and optional MFA remain in use.
+Sessions stay in browser memory. There is no service-role key or authorization bypass.
+The proxy binds to loopback, rejects foreign browser origins before rewriting Origin,
+verifies upstream TLS, and does not follow redirects or forward browser cookies.
+See [Vite proxy configuration](https://vite.dev/config/server-options#server-proxy).
+
+To explicitly use the direct GCP endpoint instead:
+
+```powershell
+$env:ADMIN_LIVE_TARGET='gcp'
+npm.cmd run dev:admin:live
+# After stopping, restore the default for later sessions:
+Remove-Item Env:ADMIN_LIVE_TARGET
+```
+
+Only `vercel` (default) and `gcp` are accepted. Direct GCP uses
+https://shootball-control-test-730016272076.us-central1.run.app. Both reach the
+same production architecture. Upstream failures stay visible; there is no silent
+fallback to fixtures or a different host. Restart Vite to change the target.
+
+Traffic history is an explicit exception to HTTP proxying in live UI development:
+it calls the scoped Supabase `admin_traffic_history` RPC using the signed-in admin's
+bearer token and the existing publishable key. The RPC rechecks session, membership,
+and environment on every read. This lets new traffic UI work before the matching
+HTTP route is deployed. Production builds use `/admin/v1/traffic` as usual.
+
+UI-only changes can be developed against the existing deployed API and released
+later through the normal main-branch CI/CD pipeline. Production builds exclude
+the local mode marker and use same-origin API paths as before. No separate admin
+codebase or deployment is required. New endpoints or database features require
+compatible backend changes too; deploy backward-compatible API support first, or
+use the local API workflow below while developing it. Local UI code is new while
+the live API remains at its deployed version. Settings drafts remain browser-only.
+
+## Local UI and local API
+
+```powershell
 npm.cmd run dev:admin
 ```
 
-Open `http://127.0.0.1:5174/admin/` and sign in using an authorized admin account.
-The root `.env` supplies the scoped Supabase URL and publishable key. Enroll or
-verify your authenticator when prompted. Sessions stay in browser memory.
-The launcher starts the API at port 2570 and admin Vite at 5174. Stop with Ctrl+C.
-No Docker is required. Restart the launcher after API changes.
+This starts the API on port 2570 and Vite on port 5174. Root .env supplies the
+scoped Supabase URL and publishable key; live GCP inventory also needs application
+default credentials as described below. Restart after API changes. This mode is
+useful when modifying the backend alongside the UI.
 
-For fixture-only development, explicitly set `ADMIN_AUTH_MODE=local` before
-starting and use the printed token. This mode is loopback-only and cannot run
-in production. Hosted authentication defaults to the GCP inventory provider;
-local mode defaults to fixtures.
+## Fixture development
 
-All ten navigation destinations exist. Overview, server inventory, interactive
-architecture components and integration status have working read-only views.
-The remaining destinations explain their missing integrations. Server controls
-are disabled. The filter searches server rows and architecture components.
-Environment selection persists; credential storage does not. Polling pauses
-when hidden or while editing a filter/environment input.
+```powershell
+npm.cmd run dev:admin:fixture
+```
+
+Use the token printed in the terminal. This explicitly starts a local API with
+sample inventory and local authentication. It requires no hosted services and
+cannot run in production. All modes use port 5174, so run one at a time.
+
+The panel has eleven tabs; current feature coverage and remaining work are tracked
+in [admin implementation](admin-implementation.md). Production data cannot be
+selected from fixture mode. Polling pauses while hidden or editing settings.
 
 ## GCP adapter
 
@@ -97,5 +146,5 @@ build still requires npm runtime dependencies and the deployment manifest.
 The combined static build places the admin bundle under `apps/web/dist/admin`.
 Production containers run the API with Supabase authentication and static assets.
 
-Operations, telemetry and public hosting remain release gates. See the
+For deployment requirements and remaining operations work, see the
 [setup rundown](gcp-admin-setup.md) and [ADM-01](integrationspec/admin-control-plane.md).
