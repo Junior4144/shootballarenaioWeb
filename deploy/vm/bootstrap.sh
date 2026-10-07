@@ -28,4 +28,5 @@ Unit=shootball-release.service
 WantedBy=timers.target
 UNIT
 systemctl daemon-reload
+docker logs --tail 20 shootball-proxy 2>&1 || true
 systemctl enable --now shootball-release.timer

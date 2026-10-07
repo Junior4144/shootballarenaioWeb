@@ -28,7 +28,7 @@
     "estimatedOutboundGiB": 1,
     "taxIncluded": false,
     "freeTierAssumed": false,
-    "applicationDeployed": false,
+    "applicationDeployed": true,
     "hostname": "136.71.64.19.sslip.io"
   },
   "estimatedStackMonthlyUsd": 11.75

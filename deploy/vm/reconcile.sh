@@ -11,7 +11,8 @@ IFS='|' read -r revision digest hostname public_key extra <<< "$release"
 [[ "$hostname" == '136.71.64.19.sslip.io' && "$public_key" =~ ^sb_publishable_[A-Za-z0-9_-]+$ && -z "$extra" ]]
 if [[ -f "$state/current-release" && "$(cat "$state/current-release")" == "$release" ]] && \
    [[ "$(docker inspect -f '{{.State.Running}}' shootball-game 2>/dev/null)" == true ]] && \
-   [[ "$(docker inspect -f '{{.State.Running}}' shootball-proxy 2>/dev/null)" == true ]]; then exit 0; fi
+   [[ "$(docker inspect -f '{{.State.Running}}:{{.State.Restarting}}' shootball-proxy 2>/dev/null)" == true:false ]] && \
+   curl --fail --silent --max-time 5 -H "Host: $hostname" http://127.0.0.1/ >/dev/null; then exit 0; fi
 image="us-central1-docker.pkg.dev/project-7915787f-37b2-4286-aa7/shootball-test/game-server@$digest"
 proxy='caddy@sha256:834468128c7696cec0ceea6172f7d692daf645ae51983ca76e39da54a97c570d'
 docker-credential-gcr configure-docker --registries=us-central1-docker.pkg.dev
@@ -55,11 +56,17 @@ chmod 644 "$state/Caddyfile"
 chown -R 1000:1000 "$state/caddy-data" "$state/caddy-config"
 docker rm -f shootball-proxy >/dev/null 2>&1 || true
 if ! docker run -d --name shootball-proxy --network shootball --restart unless-stopped \
-  --user 1000:1000 --memory=96m --cpus=0.25 --pids-limit=64 --cap-drop=ALL \
+  --user 1000:1000 --memory=96m --cpus=0.25 --pids-limit=64 --cap-drop=ALL --cap-add=NET_BIND_SERVICE \
   --security-opt=no-new-privileges --log-opt max-size=5m --log-opt max-file=2 \
   -p 80:80 -p 443:443 -v "$state/Caddyfile:/etc/caddy/Caddyfile:ro" \
   -v "$state/caddy-data:/data" -v "$state/caddy-config:/config" "$proxy"; then
   echo 'Proxy failed; release not acknowledged' >&2
+  exit 1
+fi
+sleep 5
+if [[ "$(docker inspect -f '{{.State.Running}}:{{.State.Restarting}}' shootball-proxy)" != true:false ]]; then
+  docker logs --tail 20 shootball-proxy
+  echo 'Proxy exited; release not acknowledged' >&2
   exit 1
 fi
 printf '%s' "$release" >"$state/current-release"

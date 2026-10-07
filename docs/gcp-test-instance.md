@@ -1,4 +1,4 @@
-﻿# GCP test instance
+# GCP test instance
 
 Created and verified on 2026-10-06 (America/Chicago), after approval to provision an instance estimated at $13/month or less.
 
@@ -16,11 +16,11 @@ Created and verified on 2026-10-06 (America/Chicago), after approval to provisio
 | OS | Container-Optimized OS, `cos-stable-121-18867-624-2` |
 | Network / subnet | `shootball-test` / `shootball-test-us-central1` |
 | Internal IPv4 | `10.42.0.2` |
-| Ephemeral external IPv4 at creation | `136.71.64.19` (may change after stopping/starting) |
+| Reserved external IPv4 | `136.71.64.19`, hostname `136.71.64.19.sslip.io` |
 | Security | Secure Boot, vTPM, integrity monitoring, OS Login; project SSH keys blocked; interactive serial access disabled |
-| Attached service account | None |
-| Public ingress firewall rules | None in the isolated VPC |
-| Application containers | Not deployed yet |
+| Attached service account | `shootball-game`, repository reader, storage-read-only OAuth scope |
+| Public ingress firewall rules | TCP 80/443 to game identity only; no SSH or raw game port |
+| Application containers | Non-root game server and Caddy HTTPS proxy deployed |
 
 ## Monthly estimate
 
@@ -40,8 +40,8 @@ The existing $12 monthly project budget alerts remain enabled. Taxes, traffic be
 
 ## Current readiness
 
-The VM exists and is running. Its disk type/size and Shielded VM settings were verified through the scoped repository CLI. It is listed in `deploy/environments.json` under `gcp-test`; the inventory reader still needs an identity with permission to read the instance.
+The VM is running the containerized game behind Caddy with a trusted HTTPS certificate. Its public health endpoint and a real browser guest multiplayer connection have been verified. The independent Cloud Run service hosts the frontend and protected admin API. The admin runtime identity can read this registered VM.
 
-The game and admin containers have passed build/startup checks in GitHub Actions but are **not installed on this VM**. No game, web or SSH ports were opened publicly, and there is no public application URL. Container rollout, a scoped runtime identity where needed, access rules and TLS are the remaining application deployment steps. The separate Cloud Run release workflow remains disabled.
+Both `dev` and `main` exist on GitHub. Pushing main automatically builds and releases the game and web/admin images. See [release flow, cost assumptions and verification](gcp-releases.md) and [complete setup rundown](gcp-admin-setup.md). The combined light-traffic estimate, including Cloud Run and registry storage, is approximately $11.75/month before tax.
 
 All provisioning used `scripts/gcloud.cmd`, preserving the required GCP account/project and global CLI configuration.
