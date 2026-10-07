@@ -41,6 +41,9 @@ test('production static /admin serves only public assets and does not bypass API
   const base = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
   try {
     const redirect = await fetch(base + '/admin', { redirect: 'manual' }); assert.equal(redirect.status, 308);
+    const health = await fetch(base + '/health');
+    assert.equal(health.status, 200);
+    assert.equal((await health.json()).status, 'live');
     assert.equal(await (await fetch(base + '/admin/')).text(), '<title>Admin sign in</title>');
     assert.equal((await fetch(base + '/.env')).status, 404);
     assert.equal((await fetch(base + '/%2e%2e%2f.env')).status, 404);

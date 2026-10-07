@@ -8,7 +8,9 @@ const request = path => fetch(new URL(path, web), { signal: AbortSignal.timeout(
 assert.equal((await request('/')).status, 200);
 assert.equal((await request('/admin/')).status, 200);
 assert.equal((await request('/admin/v1/dashboard?environment=gcp-test')).status, 401);
-const health = await (await request('/healthz')).json();
+const healthResponse = await request('/health');
+assert.equal(healthResponse.status, 200);
+const health = await healthResponse.json();
 assert.equal(health.revision, process.env.RELEASE_SHA);
 const client = new Client(game);
 let room;

@@ -1,5 +1,6 @@
 #!/bin/bash
 set -euo pipefail
+trap 'echo "Release agent failed at line $LINENO" >&2' ERR
 state=/var/lib/shootball
 export HOME="$state" DOCKER_CONFIG="$state/docker"
 mkdir -p "$DOCKER_CONFIG" "$state/caddy-data" "$state/caddy-config"
