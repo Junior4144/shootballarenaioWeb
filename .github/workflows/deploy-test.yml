@@ -71,6 +71,9 @@ jobs:
           tags: us-central1-docker.pkg.dev/project-7915787f-37b2-4286-aa7/shootball-test/game-server:${{ github.sha }}
   deploy:
     needs: images
+    environment:
+      name: gcp-test
+      url: ${{ vars.WEB_BASE_URL }}
     runs-on: windows-latest
     timeout-minutes: 15
     permissions:
