@@ -6,7 +6,7 @@ The release flow is `feature branch -> dev -> main`. Pushes and pull requests va
 
 1. Validate the main commit and deployment policy.
 2. Build the web/admin and game images on GitHub, then publish commit-tagged images to the existing Artifact Registry repository using GitHub OIDC.
-3. Pass the immutable game image digest to the single VM's release metadata. Its systemd timer checks every 30 seconds, pulls with the VM's read-only identity, and tests a candidate container before replacing the running process.
+3. Pass the immutable game image digest to the single VM's release metadata. Its systemd timer checks roughly every 30–90 seconds, pulls with the VM's read-only identity, and tests a candidate container before replacing the running process.
 4. Verify the game's publicly trusted HTTPS endpoint reports the requested commit.
 5. Deploy the matching web/admin image digest to the independent Cloud Run service.
 6. Verify the player site, admin sign-in shell, unauthenticated admin rejection, matching release revision and a guest multiplayer connection receiving live state.
@@ -15,7 +15,7 @@ The release workflow serializes deployments and does not cancel an in-progress r
 
 ## Endpoints and identities
 
-- Player site and `/admin`: Cloud Run service `shootball-control-test`, region `us-central1`.
+- [Player site](https://shootball-control-test-730016272076.us-central1.run.app) and [admin sign-in](https://shootball-control-test-730016272076.us-central1.run.app/admin/): Cloud Run service `shootball-control-test`, region `us-central1`.
 - Game WebSocket endpoint: `wss://136.71.64.19.sslip.io`; Caddy provides HTTPS on the existing game VM.
 - Reserved address: `136.71.64.19`, retained across VM restarts. Static IPv4 continues to incur charges when the VM is stopped.
 - CI identity: `shootball-github`, restricted by OIDC to this repository, owner, main branch and release workflow. It writes the one image repository and receives scoped instance metadata/service-update permissions.
@@ -23,6 +23,8 @@ The release workflow serializes deployments and does not cancel an in-progress r
 - Admin identity: `shootball-admin`, reads only the registered game VM. Application admin authorization remains Supabase membership plus MFA; public Cloud Run invocation serves the player site/sign-in shell, not unrestricted admin data.
 
 The VM permits public TCP 80/443 only. SSH and raw game port 2567 are not exposed. Caddy certificate state persists on the existing disk. Application container logs are bounded locally. The temporary hostname relies on the third-party sslip.io DNS service; replace it with an owned domain for production.
+
+The web service reports its revision at `/health`; the VM reports at `/healthz`. Cloud Run reserves some paths ending in `z`, so the public web smoke check deliberately uses `/health` ([Google's documented restriction](https://docs.cloud.google.com/run/docs/known-issues#reserved-url-paths)). The proxy runs as UID 1000 with only `NET_BIND_SERVICE`, which its official executable requires, and no new privileges.
 
 ## Low-traffic cost estimate
 
@@ -42,3 +44,9 @@ Start development with Node/npm as before. Docker is for release validation and 
 Change application code through dev, then main. The VM release agent itself is bootstrapped from the reviewed `deploy/vm` scripts; changes to that agent require updating the VM metadata and restarting its bootstrap process, not merely publishing a new game image. A stopped VM is not automatically started by the release workflow, and deployment will fail its health timeout rather than silently provisioning another VM.
 
 To roll back, revert the application change through dev/main and push main; the pipeline builds and verifies the reverted code. Do not force-push or point the VM at an unreviewed image. The retained previous container is an additional operator recovery option, not an automatic rollback promise.
+
+## Verification evidence
+
+On 2026-10-06 (America/Chicago), [automatic main release 37555512551](https://github.com/Junior4144/shootballarenaioWeb/actions/runs/37555512551) passed validation, image publication, VM rollout, Cloud Run update and the live multiplayer smoke test. This upgraded an already-running game from commit `61df5c0` to `52ed863`, verifying subsequent main pushes as well as initial provisioning. [Container validation](https://github.com/Junior4144/shootballarenaioWeb/actions/runs/37555512628) also passed.
+
+A separate Chromium session opened the real player site, selected Play as Guest, entered the arena and reached `Arena · Connected` with no page errors. The hosted admin sign-in screen loaded with real Supabase configuration. Anonymous admin API requests returned 401. The actual administrator must still sign in and complete their own authenticator enrollment; automation did not enroll a factor on their behalf. Multiplayer capacity has not been load-tested.
