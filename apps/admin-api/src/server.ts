@@ -31,7 +31,7 @@ export function createAdminServer(options: AdminOptions) {
       try { const origin = new URL(req.headers.origin); sameOrigin = hosted && origin.protocol === 'https:' && origin.host === req.headers.host; } catch {}
       if (!sameOrigin && !options.allowedOrigins.includes(req.headers.origin)) return send(403, { error: 'Origin denied' });
     }
-    if (url.pathname === '/healthz' && req.method === 'GET') return send(200, { status: 'live', mode: hosted ? 'supabase' : 'local-development' });
+    if (url.pathname === '/healthz' && req.method === 'GET') return send(200, { status: 'live', mode: hosted ? 'supabase' : 'local-development', revision: process.env.RELEASE_SHA ?? 'development' });
     if (url.pathname === '/admin/config' && req.method === 'GET') return send(200, { mode: hosted ? 'supabase' : 'local', ...options.publicConfig });
     if (!url.pathname.startsWith('/admin/v1/')) {
       if (serve) return serve(req, res, url.pathname);

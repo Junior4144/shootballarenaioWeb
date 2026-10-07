@@ -5,8 +5,8 @@
   "repository": "shootball-test",
   "monthlyTargetUsd": 12,
   "hardCapGuaranteed": false,
-  "deploymentEnabled": false,
-  "reason": "User authorized one test VM with estimated monthly cost at or below USD13. Application release remains disabled pending runtime deployment setup.",
+  "deploymentEnabled": true,
+  "reason": "User authorized main-branch automatic application deployment with an estimated monthly budget below USD13 for light test traffic.",
   "cloudRun": {
     "minInstances": 0,
     "maxInstances": 1,
@@ -22,12 +22,14 @@
     "machineType": "e2-micro",
     "bootDiskType": "pd-standard",
     "bootDiskGiB": 20,
-    "externalIpv4": "ephemeral",
+    "externalIpv4": "reserved-in-use",
     "estimatedMonthlyUsd": 11,
     "estimateHours": 744,
     "estimatedOutboundGiB": 1,
     "taxIncluded": false,
     "freeTierAssumed": false,
-    "applicationDeployed": false
-  }
+    "applicationDeployed": false,
+    "hostname": "136.71.64.19.sslip.io"
+  },
+  "estimatedStackMonthlyUsd": 11.75
 }

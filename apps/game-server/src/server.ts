@@ -10,7 +10,7 @@ export function createServer(rules?: ArenaRules, accountVerifier: VerifyAccount 
     maxPayload: NETWORK.maxPayload, pingInterval: NETWORK.pingInterval, pingMaxRetries: NETWORK.pingMaxRetries,
   });
   transport.getExpressApp().get('/healthz', (_req: unknown, res: import('node:http').ServerResponse) => {
-    res.writeHead(200, { 'Content-Type': 'application/json' }); res.end('{"status":"live"}');
+    res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ status: 'live', revision: process.env.RELEASE_SHA ?? 'development' }));
   });
   const server = new Server({
     transport,

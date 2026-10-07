@@ -1,5 +1,7 @@
-name: GCP test release (cost gated)
+name: Deploy main to GCP
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
@@ -36,6 +38,7 @@ jobs:
       id-token: write
     outputs:
       control-digest: ${{ steps.control.outputs.digest }}
+      game-digest: ${{ steps.game.outputs.digest }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
@@ -60,12 +63,13 @@ jobs:
             VITE_SUPABASE_PUBLISHABLE_KEY=${{ vars.SUPABASE_PUBLISHABLE_KEY }}
             VITE_GAME_SERVER_URL=${{ vars.GAME_SERVER_URL }}
       - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8
+        id: game
         with:
           context: .
           file: deploy/docker/game-server.Dockerfile
           push: true
           tags: us-central1-docker.pkg.dev/project-7915787f-37b2-4286-aa7/shootball-test/game-server:${{ github.sha }}
-  control-plane:
+  deploy:
     needs: images
     runs-on: windows-latest
     timeout-minutes: 15
@@ -79,16 +83,33 @@ jobs:
           workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ vars.GCP_CI_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts
       - name: Prepare scoped ephemeral CLI configuration
         shell: pwsh
         run: |
           ./scripts/gcloud.cmd help config configurations create
           ./scripts/gcloud.cmd config configurations create shootball-arena --no-activate --quiet
           if ($LASTEXITCODE -ne 0) { throw 'Scoped configuration setup failed' }
-      - name: Deploy immutable private test revision
+      - name: Deploy and verify game VM release
+        shell: pwsh
+        env:
+          GCP_DEPLOY_ENABLED: ${{ vars.GCP_DEPLOY_ENABLED }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+          IMAGE_DIGEST: ${{ needs.images.outputs.game-digest }}
+        run: ./scripts/deploy-game-test.ps1 -ImageDigest $env:IMAGE_DIGEST
+      - name: Deploy immutable web and admin revision
         shell: pwsh
         env:
           GCP_DEPLOY_ENABLED: ${{ vars.GCP_DEPLOY_ENABLED }}
           SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
           IMAGE_DIGEST: ${{ needs.images.outputs.control-digest }}
         run: ./scripts/deploy-control-test.ps1 -ImageDigest $env:IMAGE_DIGEST
+      - name: Verify public site, protected admin API and multiplayer connection
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+          GAME_SERVER_URL: ${{ vars.GAME_SERVER_URL }}
+          WEB_BASE_URL: ${{ vars.WEB_BASE_URL }}
+        run: node scripts/smoke-live.mjs
