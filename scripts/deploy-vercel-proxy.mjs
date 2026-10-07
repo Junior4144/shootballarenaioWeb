@@ -14,10 +14,11 @@ const api = async (path, body) => {
   return result;
 };
 const config = await readFile(new URL('../deploy/vercel/vercel.json', import.meta.url), 'utf8');
+const favicon = await readFile(new URL('../deploy/vercel/favicon.ico', import.meta.url));
 const deployment = await api('/v13/deployments', {
   name: 'shootball-arena', project, target: 'production',
   projectSettings: { framework: null, buildCommand: '', installCommand: '', outputDirectory: null },
-  files: [{ file: 'vercel.json', data: config }, { file: 'index.html', data: '<!doctype html><title>Shootball proxy</title>' }],
+  files: [{ file: 'vercel.json', data: config }, { file: 'favicon.ico', data: favicon.toString('base64'), encoding: 'base64' }, { file: 'index.html', data: '<!doctype html><title>Shootball proxy</title>' }],
 });
 console.log('Deploying proxy:', deployment.id);
 const deadline = Date.now() + 180000;

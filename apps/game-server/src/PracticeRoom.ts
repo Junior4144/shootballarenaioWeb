@@ -4,6 +4,8 @@ import { CONFIG, type InputIntent } from '@shootball/shared';
 import { VERSION, NETWORK, isInput, type InputMessage } from '@shootball/protocol';
 import { authenticate, verifyAccount, type Identity, type VerifyAccount } from './accountAuth';
 
+import type { Telemetry } from './telemetry';
+
 interface Control {
   seq: number;
   input?: InputMessage;
@@ -12,6 +14,8 @@ interface Control {
   count: number;
 }
 export class PracticeRoom extends Room {
+  protected telemetry?: Telemetry;
+  private tickTimes: number[] = [];
   maxMessagesPerSecond = NETWORK.roomMaxMessagesPerSecond;
   protected world = new Practice();
   private controls = new Map<string, Control>();
@@ -24,6 +28,16 @@ export class PracticeRoom extends Room {
 
   onCreate(): void {
     this.maxClients = NETWORK.maxPlayers;
+    this.telemetry?.register(this.roomId, () => {
+      const players = [...this.world.players.values()];
+      const humans = players.filter(p => !p.bot && p.connected);
+      const times = [...this.tickTimes].sort((a,b) => a-b);
+      const accounts = humans.filter(p => this.identities.get(p.id)?.kind === 'account').length;
+      return { id: this.roomId, phase: this.world.match.phase, humans: humans.length, accounts, guests: humans.length - accounts,
+        reservedSeats: players.filter(p => !p.bot && !p.connected).length, bots: players.filter(p => p.bot).length,
+        maxPlayers: this.maxClients, elapsedSeconds: this.world.match.elapsedSeconds,
+        tickP95Ms: times.length ? times[Math.ceil(times.length * .95)-1] : 0, admission: this.locked ? 'locked' : 'open' };
+    });
     this.onMessage('refreshAuth', (client, token: unknown) => { void this.refreshAuth(client, token); });
     this.clock.setInterval(() => {
       for (const client of this.clients) {
@@ -56,9 +70,12 @@ export class PracticeRoom extends Room {
             control.input.radar = false;
           } else control.input = undefined;
         }
+        const tickStarted = performance.now();
         this.world.step(inputs, NETWORK.tickMs / 1000);
+        this.tickTimes.push(performance.now() - tickStarted);
+        if (this.tickTimes.length > 300) this.tickTimes.shift();
         this.accumulator -= NETWORK.tickMs;
-        if (this.world.match.phase === 'results' && !this.finished) { this.finished = true; void this.lock(); }
+        if (this.world.match.phase === 'results' && !this.finished) { this.finished = true; if (this.telemetry) this.telemetry.completed++; void this.lock(); }
       }
     }, NETWORK.tickMs);
     this.patchRate = null;
@@ -73,6 +90,7 @@ export class PracticeRoom extends Room {
   }
   onJoin(client: Client, _options: unknown, identity: Identity): void {
     if (this.world.match.phase !== 'playing') throw new ServerError(409, 'Match finished.');
+    if (this.telemetry) this.telemetry.joins++;
     this.identities.set(client.sessionId, identity);
     this.publicIdentities.set(client.sessionId, identity.kind === 'account' ? { kind: 'account', displayName: identity.displayName } : { kind: 'guest' });
     this.world.add(client.sessionId);
@@ -108,6 +126,7 @@ export class PracticeRoom extends Room {
     this.controls.delete(client.sessionId);
     this.publish();
   }
+  onDispose(): void { this.telemetry?.remove(this.roomId); }
   private newControl(id: string): void {
     this.controls.set(id, { seq: -1, receivedAt: 0, windowAt: performance.now(), count: 0 });
   }

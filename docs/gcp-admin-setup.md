@@ -53,3 +53,7 @@ The existing Hobby project `shootball-arena` proxies HTTPS to the same Cloud Run
 Supabase uses the Vercel site URL with exact root and password-recovery redirects; existing Cloud Run/development redirects are preserved. Multiplayer connects directly to the game VM over its existing WSS address. GitHub `WEB_BASE_URL` points to Vercel so main releases verify the public proxy, both admin paths, origin handling and multiplayer.
 
 Proxy configuration changes can be applied with `node scripts/deploy-vercel-proxy.mjs` using an authorized `VERCEL_TOKEN` in the process environment. The script targets only the existing project and uploads only its proxy configuration. Ordinary application releases need no Vercel redeployment: main updates the GCP origin automatically. No additional GCP resources or paid Vercel plan were provisioned.
+
+## October 7 admin implementation update
+
+See [the implemented monitoring and configuration increment](admin-implementation.md) for the expanded dashboard, applied read-only database migration, verification and application release requirements. The four-section description above describes the previously deployed panel. Vercel remains the primary website/admin entry point and Cloud Run remains the direct origin.
