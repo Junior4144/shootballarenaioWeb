@@ -97,7 +97,9 @@ test('GL-F: default-content real clients fight bots and receive shared combat ev
     }, 170);
     await until(() => sb.latest.players.find(p => p.id === a.sessionId)!.botKills > 0, 'human earns bot kill in live default arena', 20000);
     const me = sb.latest.players.find(p => p.id === a.sessionId)!;
-    assert.ok(me.points >= 20); assert.equal(me.kills, 0);
+    assert.ok(me.points >= 20);
+    // In the live PvP arena a shot aimed at a bot can also hit the observing
+    // human. Zero PvP kills is not an invariant of this combat scenario.
     assert.ok(sb.latest.events.some(e => e.kind === 'elimination' && e.actorId === a.sessionId && e.targetBot));
     assert.ok(sb.latest.pickups.some(p => p.dropped));
     clearInterval(interval); interval = undefined;
