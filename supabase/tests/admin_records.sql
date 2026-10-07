@@ -6,6 +6,9 @@ declare
   test_session uuid := gen_random_uuid();
   result jsonb;
   v text;
+  guest_id uuid := gen_random_uuid();
+  account_email text;
+  row_data jsonb;
 begin
   if has_function_privilege('anon','public.admin_records(text,text,text,integer)','execute') then raise exception 'Anonymous execute grant'; end if;
   if has_table_privilege('authenticated','admin_private.memberships','select') then raise exception 'Direct table exposure'; end if;
@@ -19,6 +22,17 @@ begin
     if jsonb_typeof(result->'rows')<>'array' or (result->>'limit')::integer<>50 then raise exception 'Invalid page contract'; end if;
     if result::text like '%encrypted_password%' or result::text like '%refresh_token%' then raise exception 'Credential projection leak'; end if;
   end loop;
+  select email into account_email from auth.users where id=primary_id;
+  result := public.admin_records('production','accounts',account_email);
+  select item into row_data from jsonb_array_elements(result->'rows') item where item->>'id'=primary_id::text;
+  if row_data is null or row_data->>'email' is distinct from account_email or not (row_data ?& array['phone','providers','account_type','updated_at','email_confirmed_at','phone_confirmed_at','banned_until']) then
+    raise exception 'Account details or email search missing';
+  end if;
+  if row_data->>'account_type' <> 'registered' then raise exception 'Wrong account type'; end if;
+  insert into auth.users(id,is_anonymous,created_at,updated_at) values(guest_id,true,now(),now());
+  result := public.admin_records('production','accounts',guest_id::text);
+  if result->'rows'->0->>'account_type' is distinct from 'anonymous' then raise exception 'Anonymous Auth user omitted'; end if;
+  if result->'rows'->0->>'email' is not null then raise exception 'Guest email fabricated'; end if;
   if jsonb_array_length(public.admin_records('production','accounts','no-such-display-name-7c9b')->'rows')<>0 then raise exception 'Search ignored'; end if;
   begin perform public.admin_records('local','accounts'); raise exception 'Wrong environment allowed'; exception when insufficient_privilege then null; end;
   begin perform public.admin_records('production','accounts','',-1); raise exception 'Negative offset allowed'; exception when invalid_parameter_value then null; end;

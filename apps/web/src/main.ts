@@ -1,4 +1,6 @@
 import { MenuBackground } from './MenuBackground';
+import { recordWebsiteVisit } from './traffic';
+void recordWebsiteVisit();
 import Phaser from 'phaser';
 import { GAME } from '@shootball/shared';
 import { ArenaScene } from './game/ArenaScene';

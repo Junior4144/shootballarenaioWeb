@@ -4,6 +4,11 @@ trap 'echo "Release agent failed at line $LINENO" >&2' ERR
 state=/var/lib/shootball
 export HOME="$state" DOCKER_CONFIG="$state/docker"
 mkdir -p "$DOCKER_CONFIG" "$state/caddy-data" "$state/caddy-config"
+mkdir -p "$state/traffic"
+traffic_args=()
+if [[ -s "$state/traffic/collector.env" ]]; then
+  traffic_args=(--env-file "$state/traffic/collector.env" -e TRAFFIC_ACTIVE_RELEASE_FILE=/run/traffic/active-release -v "$state/traffic:/run/traffic:ro")
+fi
 release=$(curl --fail --silent --show-error --max-time 10 -H 'Metadata-Flavor: Google' \
   http://metadata.google.internal/computeMetadata/v1/instance/attributes/shootball-release) || exit 0
 IFS='|' read -r revision digest hostname public_key extra <<< "$release"
@@ -25,7 +30,7 @@ docker run -d --name shootball-candidate --network shootball --restart unless-st
   --read-only --tmpfs /tmp:rw,noexec,nosuid,size=16m --log-opt max-size=5m --log-opt max-file=2 \
   -e NODE_OPTIONS=--max-old-space-size=256 -e RELEASE_SHA="$revision" \
   -e SUPABASE_URL=https://lkgxpgcmspxekggndzih.supabase.co \
-  -e SUPABASE_PUBLISHABLE_KEY="$public_key" "$image"
+  -e SUPABASE_PUBLISHABLE_KEY="$public_key" "${traffic_args[@]}" "$image"
 healthy=false
 for attempt in $(seq 1 40); do
   if docker exec shootball-candidate node -e "fetch('http://127.0.0.1:2567/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"; then healthy=true; break; fi
@@ -70,6 +75,7 @@ if [[ "$(docker inspect -f '{{.State.Running}}:{{.State.Restarting}}' shootball-
   exit 1
 fi
 printf '%s' "$release" >"$state/current-release"
+printf '%s' "$release" >"$state/traffic/active-release"
 echo "ShootBall release applied: $revision"
 # Remove only unused images on this dedicated game host, after retaining rollback container.
 docker image prune -af --filter until=168h

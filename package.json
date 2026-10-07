@@ -21,7 +21,9 @@
     "typecheck": "npm run typecheck --workspace @shootball/web && npm run typecheck --workspace @shootball/game-server && npm run typecheck --workspace @shootball/admin-api && npm run typecheck --workspace @shootball/admin",
     "test": "npm run test --workspace @shootball/web && npm run test --workspace @shootball/game-server && npm run test --workspace @shootball/admin-api",
     "background:generate": "node scripts/generate-background.mjs",
-    "build:site": "npm run build --workspace @shootball/web && npm run build --workspace @shootball/admin && node scripts/build-site.mjs"
+    "build:site": "npm run build --workspace @shootball/web && npm run build --workspace @shootball/admin && node scripts/build-site.mjs",
+    "dev:admin:live": "npm run dev --workspace @shootball/admin -- --mode live",
+    "dev:admin:fixture": "node scripts/dev-admin.mjs --fixture"
   },
   "dependencies": {
     "@supabase/server": "^1.9.1",
