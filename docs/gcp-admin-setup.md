@@ -4,8 +4,8 @@ Updated 2026-10-06 (America/Chicago). The release flow is now `feature -> dev ->
 
 ## Hosted environment
 
-- Player site: https://shootball-control-test-730016272076.us-central1.run.app
-- Admin sign-in: https://shootball-control-test-730016272076.us-central1.run.app/admin/
+- Player site: https://shootball-arena.vercel.app
+- Admin sign-in: https://shootball-arena.vercel.app/admin/
 - Multiplayer: `wss://136.71.64.19.sslip.io` (temporary HTTPS hostname).
 - GCP project: `project-7915787f-37b2-4286-aa7`, operator `gbjunior010@gmail.com`.
 - Supabase: `lkgxpgcmspxekggndzih` only. Its site URL and exact live login/recovery redirects are configured; existing development redirects were preserved.
@@ -45,3 +45,11 @@ The hosted admin panel has one fixed Production environment and four sections: O
 Application deployment status and verification evidence are recorded in [the release document](gcp-releases.md). All GCP operations use `scripts/gcloud.cmd`; account/project targets and the global active CLI configuration are preserved.
 
 Internal GCP resources and the GitHub deployment environment retain their original `test` names to preserve the existing URLs, IAM bindings and cost footprint. They identify the single live production deployment; no second hosted environment exists.
+
+## Vercel production reverse proxy
+
+The existing Hobby project `shootball-arena` proxies HTTPS to the same Cloud Run service; it does not build or host a second game. `deploy/vercel/vercel.json` maps both `/admin` and `/admin/` to the upstream admin HTML, and passes other paths and query strings through. The backend explicitly permits only the production Vercel origin in addition to same-origin HTTPS. Forwarded host headers are not trusted for authorization; Supabase membership checks and no-store responses remain enforced.
+
+Supabase uses the Vercel site URL with exact root and password-recovery redirects; existing Cloud Run/development redirects are preserved. Multiplayer connects directly to the game VM over its existing WSS address. GitHub `WEB_BASE_URL` points to Vercel so main releases verify the public proxy, both admin paths, origin handling and multiplayer.
+
+Proxy configuration changes can be applied with `node scripts/deploy-vercel-proxy.mjs` using an authorized `VERCEL_TOKEN` in the process environment. The script targets only the existing project and uploads only its proxy configuration. Ordinary application releases need no Vercel redeployment: main updates the GCP origin automatically. No additional GCP resources or paid Vercel plan were provisioned.

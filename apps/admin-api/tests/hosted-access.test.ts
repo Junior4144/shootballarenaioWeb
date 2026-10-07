@@ -56,3 +56,25 @@ test('production static /admin serves only public assets and does not bypass API
     await rm(root, { recursive: true });
   }
 });
+
+
+test('production proxy origin is exact and never replaces administrator authorization', async () => {
+  let calls = 0;
+  const origin = 'https://shootball-arena.vercel.app';
+  const server = createAdminServer({ inventory: new FixtureInventory(), allowedHosts: [], allowedOrigins: [origin], authorize: async () => { calls++; return { status: 'denied' }; } });
+  server.listen(0, '127.0.0.1'); await once(server, 'listening');
+  const base = 'http://127.0.0.1:' + (server.address() as { port: number }).port + '/admin/v1/session?environment=production';
+  try {
+    assert.equal((await fetch(base, { headers: { Origin: origin } })).status, 401);
+    const denied = await fetch(base, { headers: { Origin: origin, Authorization: 'Bearer unprivileged' } });
+    assert.equal(denied.status, 403);
+    assert.equal((await denied.json()).error, 'Administrator access required');
+    assert.equal(denied.headers.get('cache-control'), 'no-store');
+    for (const untrusted of ['https://shootball-arena.vercel.app.attacker.example', 'https://preview.vercel.app', 'http://shootball-arena.vercel.app']) {
+      const response = await fetch(base, { headers: { Origin: untrusted, 'X-Forwarded-Host': 'shootball-arena.vercel.app', Authorization: 'Bearer unprivileged' } });
+      assert.equal(response.status, 403);
+      assert.equal((await response.json()).error, 'Origin denied');
+    }
+    assert.equal(calls, 1);
+  } finally { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); }
+});

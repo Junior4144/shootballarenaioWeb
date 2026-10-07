@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "routes": [
+    {
+      "src": "/admin/?",
+      "dest": "https://shootball-control-test-730016272076.us-central1.run.app/admin/index.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "https://shootball-control-test-730016272076.us-central1.run.app/$1"
+    }
+  ]
+}
