@@ -1,6 +1,8 @@
 # ADM-01: Administration, analytics and deployment control
 
-Status: **implementation started; local read-only foundation, not deployed**. Written 2026-10-06.
+Status: **hosted read-only foundation; monitoring/directory/config-draft increment implemented, application release pending**. Original contract written 2026-10-06; status updated 2026-10-07.
+
+Current evidence and remaining scope: [monitoring increment](../admin-implementation.md). The original workstream table below is historical; it is not the current deployment status.
 
 Implementation evidence and limitations: [foundation verification](admin-verification.md)
 and [development guide](../admin-development.md). The contract below remains the

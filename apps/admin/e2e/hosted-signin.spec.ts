@@ -29,6 +29,7 @@ test('approved primary account opens the dashboard after normal sign-in without 
   await page.route(project + '/auth/v1/token**', r => r.fulfill({ json: { access_token: 'fixture', refresh_token: 'refresh', expires_in: 3600, token_type: 'bearer', user: { ...user, email: 'gbjunior014@gmail.com' } } }));
   await page.route(project + '/auth/v1/factors**', r => { mfaRequests++; return r.fulfill({ status: 400 }); });
   await page.route('**/admin/v1/session?**', r => r.fulfill({ json: { status: 'allowed' } }));
+  await page.route('**/admin/v1/telemetry?**', r => r.fulfill({status:503,json:{error:'Fixture telemetry unavailable'}}));
   await page.route('**/admin/v1/dashboard?**', async r => r.fulfill({ json: await dashboard('production', new FixtureInventory()) }));
   await page.goto('/admin/');
   await page.getByLabel('Email', { exact: true }).fill('gbjunior014@gmail.com');
@@ -42,5 +43,5 @@ test('approved primary account opens the dashboard after normal sign-in without 
   await expect(page.getByRole('combobox', { name: 'Environment' })).toHaveCount(0);
   await expect(page.locator('#environment')).toHaveText('Production');
   await expect(page.getByText('Read-only development', {exact:true})).toHaveCount(0);
-  await expect(page.getByRole('navigation').getByRole('button')).toHaveCount(4);
+  await expect(page.getByRole('navigation').getByRole('button')).toHaveCount(11);
 });

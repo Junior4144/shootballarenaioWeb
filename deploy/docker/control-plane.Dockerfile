@@ -1,10 +1,18 @@
 FROM node:24-bookworm-slim AS build
 WORKDIR /app
 COPY package*.json ./
+# Keep dependency installation cached when only application source changes.
+COPY apps/game-server/package.json apps/game-server/package.json
+COPY apps/admin/package.json apps/admin/package.json
+COPY apps/admin-api/package.json apps/admin-api/package.json
+COPY apps/web/package.json apps/web/package.json
+COPY packages/admin-contracts/package.json packages/admin-contracts/package.json
+COPY packages/protocol/package.json packages/protocol/package.json
+COPY packages/shared/package.json packages/shared/package.json
+RUN npm ci --ignore-scripts
 COPY apps apps
 COPY packages packages
 COPY scripts/build-site.mjs scripts/build-site.mjs
-RUN npm ci --ignore-scripts
 ARG VITE_SUPABASE_URL=https://lkgxpgcmspxekggndzih.supabase.co
 ARG VITE_SUPABASE_PUBLISHABLE_KEY
 ARG VITE_GAME_SERVER_URL

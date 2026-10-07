@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_PROJECT, type Environment } from '@shootball/admin-contracts';
-export type Access = { status: 'allowed'; userId: string; roles: string[]; environment: Environment } | { status: 'denied' } | { status: 'mfa-required' };
+export type Access = { status: 'allowed'; userId: string; label?: string; roles: string[]; environment: Environment } | { status: 'denied' } | { status: 'mfa-required' };
 export type Authorize = (token: string, environment: Environment) => Promise<Access>;
 export class AuthUnavailable extends Error {}
 export function supabaseAuthorizer(url: string, publishableKey: string): Authorize {
@@ -20,6 +20,6 @@ export function supabaseAuthorizer(url: string, publishableKey: string): Authori
     if (error) throw new AuthUnavailable();
     if (data?.status === 'mfa-required') return { status: 'mfa-required' };
     if (data?.status !== 'allowed' || data.userId !== user.user.id || data.environment !== environment || !Array.isArray(data.roles) || !data.roles.every((r: unknown) => typeof r === 'string')) return { status: 'denied' };
-    return data as Access;
+    return { ...data, label: user.user.email ?? user.user.id } as Access;
   };
 }

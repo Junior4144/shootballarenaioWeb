@@ -36,3 +36,5 @@ export function parseManifest(input: unknown): Manifest {
   }
   return input as Manifest;
 }
+
+export * from './operations';

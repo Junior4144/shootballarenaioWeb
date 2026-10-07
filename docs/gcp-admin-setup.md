@@ -20,7 +20,7 @@ The existing $12 project budget alerts at 50%, 75%, 100% actual and 100% forecas
 
 ## GitHub Actions and permissions
 
-[Container validation](../.github/workflows/containers.yml) runs on pushes and pull requests. [Deploy main to GCP](../.github/workflows/deploy-test.yml) runs automatically on main, with a manual rerun option. The `gcp-test` GitHub environment accepts main only. `GCP_DEPLOY_ENABLED` and the committed deployment policy are enabled.
+[Container validation](../.github/workflows/containers.yml) runs on pull requests or manual dispatch. [Deploy main to GCP](../.github/workflows/deploy-test.yml) calls the same workflow on main, then deploys the exact images that passed container smoke tests. See [CI/CD execution and verification](ci-cd.md). The `gcp-test` GitHub environment accepts main only. `GCP_DEPLOY_ENABLED` and the committed deployment policy are enabled.
 
 The release validates types, unit tests and admin browser behavior, builds both images, publishes them to Artifact Registry `shootball-test`, rolls out an immutable game digest, waits for trusted HTTPS and the matching revision, then updates the web/admin service and checks a real guest multiplayer session. Deployments serialize. A failed candidate preserves the existing game; successful promotion ends in-memory matches. This test setup is not a zero-downtime production cluster.
 
@@ -53,3 +53,7 @@ The existing Hobby project `shootball-arena` proxies HTTPS to the same Cloud Run
 Supabase uses the Vercel site URL with exact root and password-recovery redirects; existing Cloud Run/development redirects are preserved. Multiplayer connects directly to the game VM over its existing WSS address. GitHub `WEB_BASE_URL` points to Vercel so main releases verify the public proxy, both admin paths, origin handling and multiplayer.
 
 Proxy configuration changes can be applied with `node scripts/deploy-vercel-proxy.mjs` using an authorized `VERCEL_TOKEN` in the process environment. The script targets only the existing project and uploads only its proxy configuration. Ordinary application releases need no Vercel redeployment: main updates the GCP origin automatically. No additional GCP resources or paid Vercel plan were provisioned.
+
+## October 7 admin implementation update
+
+See [the implemented monitoring and configuration increment](admin-implementation.md) for the expanded dashboard, applied read-only database migration, verification and application release requirements. The four-section description above describes the previously deployed panel. Vercel remains the primary website/admin entry point and Cloud Run remains the direct origin.

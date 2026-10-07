@@ -1,76 +1,143 @@
 name: Validate and build containers
 on:
-  push:
   pull_request:
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      publish-images:
+        description: Publish tested images for the main release caller
+        type: boolean
+        default: false
+    outputs:
+      control-digest:
+        value: ${{ jobs.digests.outputs.control }}
+      game-digest:
+        value: ${{ jobs.digests.outputs.game }}
 permissions:
   contents: read
 concurrency:
-  group: containers-${{ github.ref }}
-  cancel-in-progress: true
+  # Distinct from the caller's release lock; never cancel a main release.
+  group: containers-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 jobs:
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '24'
           cache: npm
+      - name: Validate release scope, inputs and cost policy
+        if: inputs.publish-images
+        env:
+          GCP_DEPLOY_ENABLED: ${{ vars.GCP_DEPLOY_ENABLED }}
+          PUBLIC_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+          GAME_URL: ${{ vars.GAME_SERVER_URL }}
+          WEB_BASE_URL: ${{ vars.WEB_BASE_URL }}
+        run: node scripts/check-release-inputs.mjs
       - run: npm ci --ignore-scripts
-      - run: npm run typecheck
       - run: npm test
+      - name: Check release verification scripts
+        run: node --test scripts/tests/*.test.mjs
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:admin
-      - run: npm run build
+      # npm test already includes the admin API tests.
+      - run: npm run test:e2e --workspace @shootball/admin
+      # Dockerfile builds below type-check and build every application.
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           name: admin-browser-evidence
           path: .test-artifacts/admin
           retention-days: 3
+          overwrite: true
   containers:
     needs: validate
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
         image: [game-server, control-plane]
+    env:
+      IMAGE: ${{ matrix.image }}
+      IMAGE_REF: us-central1-docker.pkg.dev/project-7915787f-37b2-4286-aa7/shootball-test/${{ matrix.image }}:${{ github.sha }}
+      SHA: ${{ github.sha }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
       - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
       - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
           file: deploy/docker/${{ matrix.image }}.Dockerfile
           load: true
-          tags: shootball/${{ matrix.image }}:${{ github.sha }}
+          tags: ${{ env.IMAGE_REF }}
           build-args: |
-            VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_ci_fixture
+            VITE_SUPABASE_PUBLISHABLE_KEY=${{ inputs.publish-images && vars.SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_ci_fixture' }}
+            VITE_GAME_SERVER_URL=${{ inputs.publish-images && vars.GAME_SERVER_URL || 'ws://127.0.0.1:2567' }}
           cache-from: type=gha,scope=${{ matrix.image }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image }}
-      - name: Verify non-root startup, health and protected admin API
+      - name: Verify the built image before publication
+        run: bash scripts/smoke-container.sh
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        if: inputs.publish-images
+        id: auth
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_CI_SERVICE_ACCOUNT }}
+          token_format: access_token
+      - name: Publish the tested image without rebuilding
+        if: inputs.publish-images
         env:
-          IMAGE: ${{ matrix.image }}
-          SHA: ${{ github.sha }}
+          ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
         run: |
-          test "$(docker image inspect --format '{{.Config.User}}' shootball/$IMAGE:$SHA)" = node
-          docker run -d --name smoke -p 127.0.0.1:18080:8080 -p 127.0.0.1:12567:2567 \
-            -e SUPABASE_URL=https://lkgxpgcmspxekggndzih.supabase.co \
-            -e SUPABASE_PUBLISHABLE_KEY=sb_publishable_ci_fixture shootball/$IMAGE:$SHA
-          if [ "$IMAGE" = control-plane ]; then PORT=18080; else PORT=12567; fi
-          for i in $(seq 1 30); do
-            if curl -fsS http://127.0.0.1:$PORT/healthz; then break; fi
-            sleep 1
-          done
-          curl -fsS http://127.0.0.1:$PORT/healthz
-          if [ "$IMAGE" = control-plane ]; then
-            curl -fsS http://127.0.0.1:$PORT/admin/ | grep -q 'Control room'
-            test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:$PORT/admin/v1/dashboard?environment=gcp-test)" = 401
-          fi
-          docker stop --time 15 smoke
+          printf '%s' "$ACCESS_TOKEN" | docker login -u oauth2accesstoken --password-stdin https://us-central1-docker.pkg.dev
+          docker push "$IMAGE_REF"
+          docker image inspect "$IMAGE_REF" > image-inspect.json
+          node scripts/release-digests.mjs record "$IMAGE" "$SHA" image-inspect.json release-digests
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: inputs.publish-images
+        with:
+          name: release-digest-${{ matrix.image }}
+          path: release-digests/${{ matrix.image }}.json
+          if-no-files-found: error
+          retention-days: 3
+          overwrite: true
       - name: Container failure logs
         if: failure()
         run: docker logs smoke || true
+      - name: Remove test container
+        if: always()
+        run: docker rm -f smoke || true
+  digests:
+    if: inputs.publish-images
+    needs: containers
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      control: ${{ steps.verified.outputs.control }}
+      game: ${{ steps.verified.outputs.game }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: release-digest-*
+          path: release-digests
+          merge-multiple: true
+      - name: Verify both images belong to this release
+        id: verified
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+        run: node scripts/release-digests.mjs collect release-digests
