@@ -2,6 +2,9 @@
 
 Updated 2026-10-06. This records what was actually configured, not a production-readiness claim.
 
+Implementation branch: `feat/gcp-admin-pipeline` (pushed, not merged into `main`).
+[Successful GitHub Actions run](https://github.com/Junior4144/shootballarenaioWeb/actions/runs/37551725220) verifies implementation commit `3c923ab`: validation and both container jobs passed.
+
 ## Current status and budget
 
 The container build pipeline and a cost-gated release workflow are implemented. **No live Cloud Run service or game VM has been provisioned.** There is no public deployment URL yet. The admin panel is usable through Node development with real Supabase authentication.
@@ -78,6 +81,6 @@ Implemented: read-only overview/inventory/architecture, environment scoping, liv
 
 Not implemented: server start/stop operations, durable worker/outbox, configuration publishing, telemetry ingestion, account directory, billing integration, activity browser and public hosting. These remain work in [the admin requirements](integrationspec/admin-control-plane.md).
 
-Verification: local typecheck, complete build, admin API tests and Chromium admin tests pass. A disposable hosted account successfully enrolled and verified TOTP, and remained denied admin access even after MFA. The account was then removed. Hosted MFA config was read back as enabled. Container verification is performed by GitHub Actions because Docker is not installed locally; see the Actions run linked in the completion message.
+Verification: local typecheck, complete build, admin API tests and Chromium admin tests pass. A disposable hosted account successfully enrolled and verified TOTP, and remained denied admin access even after MFA. The account was then removed. Hosted MFA config was read back as enabled. GitHub Actions built both production images and verified non-root startup, health endpoints, the admin shell and anonymous API denial. Docker is not installed locally. `npm audit --omit=dev` reported zero runtime dependency vulnerabilities at verification time.
 
 Existing Supabase advisories include an unrelated public `rls_auto_enable` function exposure and disabled leaked-password protection; these were not silently changed as part of this deployment setup. Production release should resolve those and audit runtime dependencies before exposure.
