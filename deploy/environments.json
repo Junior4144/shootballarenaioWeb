@@ -5,7 +5,7 @@
   "resources": [
     {
       "id": "game-test",
-      "environment": "gcp-test",
+      "environment": "production",
       "project": "project-7915787f-37b2-4286-aa7",
       "zone": "us-central1-a",
       "instance": "shootball-game-test"

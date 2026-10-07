@@ -18,8 +18,7 @@ const manifest = parseManifest(JSON.parse(await readFile(manifestPath, 'utf8')))
 const inventory = provider === 'gcp' ? new GcpInventory(manifest, googleComputeGet()) : new FixtureInventory();
 const url = process.env.SUPABASE_URL ?? '';
 const key = process.env.SUPABASE_PUBLISHABLE_KEY ?? '';
-const defaultEnvironment = process.env.ADMIN_ENVIRONMENT ?? 'gcp-test';
-if (!['local', 'gcp-test', 'production'].includes(defaultEnvironment)) throw new Error('Invalid ADMIN_ENVIRONMENT');
+const defaultEnvironment = hosted ? 'production' : 'local';
 const server = createAdminServer({
   token: hosted ? undefined : process.env.ADMIN_LOCAL_TOKEN,
   authorize: hosted ? supabaseAuthorizer(url, key) : undefined,

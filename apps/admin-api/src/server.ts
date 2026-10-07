@@ -32,7 +32,7 @@ export function createAdminServer(options: AdminOptions) {
       if (!sameOrigin && !options.allowedOrigins.includes(req.headers.origin)) return send(403, { error: 'Origin denied' });
     }
     if (['/health', '/healthz'].includes(url.pathname) && req.method === 'GET') return send(200, { status: 'live', mode: hosted ? 'supabase' : 'local-development', revision: process.env.RELEASE_SHA ?? 'development' });
-    if (url.pathname === '/admin/config' && req.method === 'GET') return send(200, { mode: hosted ? 'supabase' : 'local', ...options.publicConfig });
+    if (url.pathname === '/admin/config' && req.method === 'GET') return send(200, { ...options.publicConfig, mode: hosted ? 'supabase' : 'local', environment: hosted ? 'production' : 'local' });
     if (!url.pathname.startsWith('/admin/v1/')) {
       if (serve) return serve(req, res, url.pathname);
       return send(404, { error: 'Not found' });
@@ -43,6 +43,7 @@ export function createAdminServer(options: AdminOptions) {
     if (!bearer?.startsWith('Bearer ') || bearer.length > 8192) return send(401, { error: 'Sign in required' });
     const environment = url.searchParams.get('environment');
     if (!environments.includes(environment as Environment)) return send(400, { error: 'Explicit valid environment required' });
+    if (hosted && environment !== 'production') return send(400, { error: 'Only the production environment is available' });
     let identity = { label: 'Local development session', role: 'local-viewer' };
     if (options.authorize) {
       try {

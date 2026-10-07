@@ -25,7 +25,8 @@ assert.equal(observedRevision, process.env.RELEASE_SHA, 'Public web revision did
 assert.equal(matches, 3, 'Public web revision did not stabilize');
 assert.equal((await request('/')).status, 200);
 assert.equal((await request('/admin/')).status, 200);
-assert.equal((await request('/admin/v1/dashboard?environment=gcp-test')).status, 401);
+assert.equal((await (await request('/admin/config')).json()).environment, 'production');
+assert.equal((await request('/admin/v1/dashboard?environment=production')).status, 401);
 const healthResponse = await request('/health');
 assert.equal(healthResponse.status, 200);
 const health = await healthResponse.json();

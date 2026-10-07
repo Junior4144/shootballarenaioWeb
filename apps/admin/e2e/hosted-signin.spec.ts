@@ -4,7 +4,7 @@ import { FixtureInventory } from '../../admin-api/src/inventory';
 const project = 'https://lkgxpgcmspxekggndzih.supabase.co';
 const user = { id: '00000000-0000-4000-8000-000000000001', email: 'admin@example.test', aud: 'authenticated', app_metadata: {}, user_metadata: {}, created_at: new Date().toISOString() };
 test('hosted /admin denies ordinary users and guides approved admins into MFA', async ({ page }) => {
-  await page.route('**/admin/config', r => r.fulfill({ json: { mode: 'supabase', supabaseUrl: project, publishableKey: 'sb_publishable_fixture', environment: 'gcp-test' } }));
+  await page.route('**/admin/config', r => r.fulfill({ json: { mode: 'supabase', supabaseUrl: project, publishableKey: 'sb_publishable_fixture', environment: 'production' } }));
   await page.route(project + '/auth/v1/token**', r => r.fulfill({ json: { access_token: 'fixture', refresh_token: 'refresh', expires_in: 3600, token_type: 'bearer', user } }));
   await page.route(project + '/auth/v1/logout**', r => r.fulfill({ status: 204 }));
   let member = false;
@@ -17,21 +17,30 @@ test('hosted /admin denies ordinary users and guides approved admins into MFA', 
   member = true;
   await page.getByLabel('Password', { exact: true }).fill('fixture-password'); await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page.getByLabel('Six-digit code')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Humans online' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Registered servers' })).toHaveCount(0);
 });
 
 test('approved primary account opens the dashboard after normal sign-in without an authenticator', async ({ page }) => {
   let mfaRequests = 0;
-  await page.route('**/admin/config', r => r.fulfill({ json: { mode: 'supabase', supabaseUrl: project, publishableKey: 'sb_publishable_fixture', environment: 'gcp-test' } }));
+  await page.addInitScript(() => localStorage.setItem('admin-environment', 'local'));
+  const environments: string[] = [];
+  page.on('request', request => { if (request.url().includes('/admin/v1/')) environments.push(new URL(request.url()).searchParams.get('environment') ?? ''); });
+  await page.route('**/admin/config', r => r.fulfill({ json: { mode: 'supabase', supabaseUrl: project, publishableKey: 'sb_publishable_fixture', environment: 'production' } }));
   await page.route(project + '/auth/v1/token**', r => r.fulfill({ json: { access_token: 'fixture', refresh_token: 'refresh', expires_in: 3600, token_type: 'bearer', user: { ...user, email: 'gbjunior014@gmail.com' } } }));
   await page.route(project + '/auth/v1/factors**', r => { mfaRequests++; return r.fulfill({ status: 400 }); });
   await page.route('**/admin/v1/session?**', r => r.fulfill({ json: { status: 'allowed' } }));
-  await page.route('**/admin/v1/dashboard?**', async r => r.fulfill({ json: await dashboard('gcp-test', new FixtureInventory()) }));
+  await page.route('**/admin/v1/dashboard?**', async r => r.fulfill({ json: await dashboard('production', new FixtureInventory()) }));
   await page.goto('/admin/');
   await page.getByLabel('Email', { exact: true }).fill('gbjunior014@gmail.com');
   await page.getByLabel('Password', { exact: true }).fill('fixture-password');
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Humans online' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Registered servers' })).toBeVisible();
   await expect(page.getByLabel('Six-digit code')).toHaveCount(0);
   expect(mfaRequests).toBe(0);
+  expect(environments.length).toBeGreaterThan(0);
+  expect(environments.every(environment => environment === 'production')).toBe(true);
+  await expect(page.getByRole('combobox', { name: 'Environment' })).toHaveCount(0);
+  await expect(page.locator('#environment')).toHaveText('Production');
+  await expect(page.getByText('Read-only development', {exact:true})).toHaveCount(0);
+  await expect(page.getByRole('navigation').getByRole('button')).toHaveCount(4);
 });

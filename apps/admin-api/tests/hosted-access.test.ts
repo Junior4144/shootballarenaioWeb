@@ -15,18 +15,20 @@ test('hosted API checks current membership and MFA on every read, fails closed o
   const base = `http://127.0.0.1:${(server.address() as { port: number }).port}/admin/v1/`;
   const headers = { Authorization: 'Bearer fixture-user-token' };
   try {
-    assert.equal((await fetch(base + 'dashboard?environment=gcp-test')).status, 401);
-    assert.equal((await fetch(base + 'dashboard?environment=gcp-test', { headers })).status, 403);
+    assert.equal((await fetch(base + 'dashboard?environment=local', { headers })).status, 400);
+    assert.equal((await fetch(base + 'dashboard?environment=gcp-test', { headers })).status, 400);
+    assert.equal((await fetch(base + 'dashboard?environment=production')).status, 401);
+    assert.equal((await fetch(base + 'dashboard?environment=production', { headers })).status, 403);
     access = { status: 'mfa-required' };
-    assert.equal((await fetch(base + 'dashboard?environment=gcp-test', { headers })).status, 403);
-    assert.deepEqual(await (await fetch(base + 'session?environment=gcp-test', { headers })).json(), { status: 'mfa-required', error: 'Complete administrator MFA' });
-    access = { status: 'allowed', userId: 'verified-user', roles: ['viewer'], environment: 'gcp-test' };
-    const allowed = await (await fetch(base + 'dashboard?environment=gcp-test', { headers })).json();
+    assert.equal((await fetch(base + 'dashboard?environment=production', { headers })).status, 403);
+    assert.deepEqual(await (await fetch(base + 'session?environment=production', { headers })).json(), { status: 'mfa-required', error: 'Complete administrator MFA' });
+    access = { status: 'allowed', userId: 'verified-user', roles: ['viewer'], environment: 'production' };
+    const allowed = await (await fetch(base + 'dashboard?environment=production', { headers })).json();
     assert.equal(allowed.mode, 'supabase'); assert.equal(allowed.identity.role, 'viewer');
     access = { status: 'denied' }; // Same bearer token, membership revoked.
-    assert.equal((await fetch(base + 'dashboard?environment=gcp-test', { headers })).status, 403);
+    assert.equal((await fetch(base + 'dashboard?environment=production', { headers })).status, 403);
     unavailable = true;
-    const failed = await fetch(base + 'dashboard?environment=gcp-test', { headers });
+    const failed = await fetch(base + 'dashboard?environment=production', { headers });
     assert.equal(failed.status, 503); assert.ok(!(await failed.text()).includes('private database'));
     assert.equal(calls, 6);
   } finally { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); }
@@ -47,7 +49,7 @@ test('production static /admin serves only public assets and does not bypass API
     assert.equal(await (await fetch(base + '/admin/')).text(), '<title>Admin sign in</title>');
     assert.equal((await fetch(base + '/.env')).status, 404);
     assert.equal((await fetch(base + '/%2e%2e%2f.env')).status, 404);
-    assert.equal((await fetch(base + '/admin/v1/dashboard?environment=gcp-test')).status, 401);
+    assert.equal((await fetch(base + '/admin/v1/dashboard?environment=production')).status, 401);
   } finally {
     server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve()));
     // Exact test-owned directory returned by mkdtemp, never an input path.

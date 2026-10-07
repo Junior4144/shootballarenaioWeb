@@ -30,7 +30,7 @@ The `shootball-game` identity reads only the image repository and has storage-re
 
 ## Admin account
 
-**`gbjunior014@gmail.com`** is the application admin, separate from the GCP operator account. Its existing verified Supabase user has the **viewer** role for `local` and `gcp-test`. The current panel is read-only; production access and mutations are not granted.
+**`gbjunior014@gmail.com`** is the application admin, separate from the GCP operator account. Its existing verified Supabase user has the **viewer** role for the live `production` environment (and the separate local development fixture). The current panel remains read-only.
 
 Sign in at `/admin/` with email/password. The verified `gbjunior014@gmail.com` account does not require an authenticator, as requested. The exemption checks its immutable user ID and current verified email in the database; it does not trust browser metadata. Other admin memberships retain their existing MFA policy. Admin Google OAuth is not implemented.
 
@@ -40,6 +40,8 @@ The sign-in shell is public. Protected `/admin/v1/*` data requires a verified us
 
 Run `npm.cmd ci` and `npm.cmd run dev:admin` for the admin app at `http://127.0.0.1:5174/admin/`. The launcher reads the existing scoped root `.env`. Use the existing Node/npm game development commands for gameplay. Docker remains production packaging and release validation only.
 
-Implemented admin features: read-only overview, registered VM inventory, architecture view, environment selection, hosted membership/MFA gates and membership-change audit. Remaining requirements include server start/stop, durable operations worker, configuration publishing, telemetry ingestion, account directory, billing integration and activity browser. See [admin requirements](integrationspec/admin-control-plane.md).
+The hosted admin panel has one fixed Production environment and four sections: Overview, Servers, Architecture and Access. It shows registered VM counts/power state, actual deployment addresses and verified admin access. Local fixtures are available only through the explicit Node/npm development mode; they are not selectable from the live panel. Old environment preferences are ignored. Unimplemented analytics/settings/activity pages and inactive server-control buttons are not shown. Remaining requirements include server start/stop, durable operations worker, configuration publishing, telemetry ingestion, account directory, billing integration and activity browser. See [admin requirements](integrationspec/admin-control-plane.md).
 
 Application deployment status and verification evidence are recorded in [the release document](gcp-releases.md). All GCP operations use `scripts/gcloud.cmd`; account/project targets and the global active CLI configuration are preserved.
+
+Internal GCP resources and the GitHub deployment environment retain their original `test` names to preserve the existing URLs, IAM bindings and cost footprint. They identify the single live production deployment; no second hosted environment exists.
