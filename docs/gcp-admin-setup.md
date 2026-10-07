@@ -20,7 +20,7 @@ The existing $12 project budget alerts at 50%, 75%, 100% actual and 100% forecas
 
 ## GitHub Actions and permissions
 
-[Container validation](../.github/workflows/containers.yml) runs on pushes and pull requests. [Deploy main to GCP](../.github/workflows/deploy-test.yml) runs automatically on main, with a manual rerun option. The `gcp-test` GitHub environment accepts main only. `GCP_DEPLOY_ENABLED` and the committed deployment policy are enabled.
+[Container validation](../.github/workflows/containers.yml) runs on pull requests or manual dispatch. [Deploy main to GCP](../.github/workflows/deploy-test.yml) calls the same workflow on main, then deploys the exact images that passed container smoke tests. See [CI/CD execution and verification](ci-cd.md). The `gcp-test` GitHub environment accepts main only. `GCP_DEPLOY_ENABLED` and the committed deployment policy are enabled.
 
 The release validates types, unit tests and admin browser behavior, builds both images, publishes them to Artifact Registry `shootball-test`, rolls out an immutable game digest, waits for trusted HTTPS and the matching revision, then updates the web/admin service and checks a real guest multiplayer session. Deployments serialize. A failed candidate preserves the existing game; successful promotion ends in-memory matches. This test setup is not a zero-downtime production cluster.
 

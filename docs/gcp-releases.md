@@ -1,21 +1,22 @@
 ﻿# GCP releases: dev to main
 
-The release flow is `feature branch -> dev -> main`. Pushes and pull requests validate types, application tests, admin browser behavior and production Docker containers. **Only pushes to `main` deploy to GCP.** A `dev` push never changes the running game. To release, merge the tested `dev` commit into `main` and push `main`; there is no manual deploy button required. A manual rerun on main is also available.
+The release flow is `feature branch -> dev -> main`. Pull requests validate application tests, admin browser behavior and production Docker containers; image builds include type checks. Main calls the same validation workflow once before deployment. Feature/dev pushes without a PR do not run duplicate validation; use a PR or manual dispatch. See [CI/CD execution](ci-cd.md). **Only pushes to `main` deploy to GCP.** A `dev` push never changes the running game. To release, merge the tested `dev` commit into `main` and push `main`; there is no manual deploy button required. A manual rerun on main is also available.
 
 ## Deployment sequence
 
 1. Validate the main commit and deployment policy.
-2. Build the web/admin and game images on GitHub, then publish commit-tagged images to the existing Artifact Registry repository using GitHub OIDC.
+2. Build and smoke-test the web/admin and game images once on GitHub, then publish those exact images to the existing Artifact Registry repository using GitHub OIDC. Validate commit-scoped digest manifests before deployment.
 3. Pass the immutable game image digest to the single VM's release metadata. Its systemd timer checks roughly every 30–90 seconds, pulls with the VM's read-only identity, and tests a candidate container before replacing the running process.
 4. Verify the game's publicly trusted HTTPS endpoint reports the requested commit.
 5. Deploy the matching web/admin image digest to the independent Cloud Run service.
-6. Verify the player site, admin sign-in shell, unauthenticated admin rejection, matching release revision and a guest multiplayer connection receiving live state.
+6. Verify both the primary Vercel site and direct GCP origin, admin sign-in shells, unauthenticated admin rejection, matching release revisions and a guest multiplayer connection receiving live state.
 
 The release workflow serializes deployments and does not cancel an in-progress rollout. A failed candidate leaves the existing game running. The previous game container/image is retained for manual rollback. **Promoting a game release ends current in-memory matches**, so this single-VM test environment is not a zero-downtime production cluster. Cloud Run failure after a game update can leave the prior frontend revision live; inspect the failed run before retrying or rolling back.
 
 ## Endpoints and identities
 
-- [Player site](https://shootball-control-test-730016272076.us-central1.run.app) and [admin sign-in](https://shootball-control-test-730016272076.us-central1.run.app/admin/): Cloud Run service `shootball-control-test`, region `us-central1`.
+- [Primary player site](https://shootball-arena.vercel.app) and [admin sign-in](https://shootball-arena.vercel.app/admin/): Vercel reverse proxy.
+- [Direct GCP origin](https://shootball-control-test-730016272076.us-central1.run.app): Cloud Run service `shootball-control-test`, region `us-central1`.
 - Game WebSocket endpoint: `wss://136.71.64.19.sslip.io`; Caddy provides HTTPS on the existing game VM.
 - Reserved address: `136.71.64.19`, retained across VM restarts. Static IPv4 continues to incur charges when the VM is stopped.
 - CI identity: `shootball-github`, restricted by OIDC to this repository, owner, main branch and release workflow. It writes the one image repository and receives scoped instance metadata/service-update permissions.

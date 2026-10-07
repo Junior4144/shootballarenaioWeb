@@ -1,40 +1,13 @@
-import assert from 'node:assert/strict';
-import { setTimeout as delay } from 'node:timers/promises';
 import { Client } from '@colyseus/sdk';
 import { ROOM_NAME, VERSION } from '@shootball/protocol';
+import assert from 'node:assert/strict';
+import { PRIMARY_WEB, ORIGIN_WEB, verifyWebRelease, verifyGameRelease } from './release-checks.mjs';
 const web = process.env.WEB_BASE_URL;
 const game = process.env.GAME_SERVER_URL;
-assert(web?.startsWith('https://') && game?.startsWith('wss://'), 'HTTPS endpoints required');
-assert.match(process.env.RELEASE_SHA ?? '', /^[a-f0-9]{40}$/, 'Release commit required');
-const request = path => fetch(new URL(path, web), { signal: AbortSignal.timeout(30000) });
-// Cloud Run readiness can precede propagation of public URL traffic routing.
-let observedRevision;
-let matches = 0;
-const rolloutDeadline = Date.now() + 300000;
-while (Date.now() < rolloutDeadline) {
-  try {
-    const response = await fetch(new URL('/health', web), { signal: AbortSignal.timeout(5000) });
-    if (response.ok) observedRevision = (await response.json()).revision;
-    matches = response.ok && observedRevision === process.env.RELEASE_SHA ? matches + 1 : 0;
-    if (matches >= 3) break;
-  } catch { matches = 0; }
-  console.log('Waiting for the public web revision to converge...');
-  await delay(5000);
-}
-assert.equal(observedRevision, process.env.RELEASE_SHA, 'Public web revision did not converge');
-assert.equal(matches, 3, 'Public web revision did not stabilize');
-assert.equal((await request('/')).status, 200);
-assert.equal((await request('/admin')).status, 200);
-assert.equal((await request('/admin/')).status, 200);
-const proxySession = await fetch(new URL('/admin/v1/session?environment=production', web), { headers: { Origin: new URL(web).origin }, signal: AbortSignal.timeout(30000) });
-assert.equal(proxySession.status, 401, 'Public hostname must reach authentication without an origin rejection');
-assert.equal(proxySession.headers.get('cache-control'), 'no-store');
-assert.equal((await (await request('/admin/config')).json()).environment, 'production');
-assert.equal((await request('/admin/v1/dashboard?environment=production')).status, 401);
-const healthResponse = await request('/health');
-assert.equal(healthResponse.status, 200);
-const health = await healthResponse.json();
-assert.equal(health.revision, process.env.RELEASE_SHA);
+const sha = process.env.RELEASE_SHA;
+assert.equal(web, PRIMARY_WEB, 'Vercel must remain the primary website');
+await Promise.all([verifyWebRelease(web, sha), verifyWebRelease(ORIGIN_WEB, sha), verifyGameRelease(game, sha)]);
+console.log('Vercel primary, direct GCP origin and game release verified');
 const client = new Client(game);
 let room;
 const deadline = setTimeout(() => { console.error('Multiplayer smoke timed out'); process.exit(1); }, 45000);

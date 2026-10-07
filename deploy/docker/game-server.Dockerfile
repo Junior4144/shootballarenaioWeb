@@ -5,8 +5,11 @@ COPY apps/game-server/package.json apps/game-server/package.json
 COPY apps/admin/package.json apps/admin/package.json
 COPY apps/admin-api/package.json apps/admin-api/package.json
 COPY apps/web/package.json apps/web/package.json
-COPY packages packages
+COPY packages/admin-contracts/package.json packages/admin-contracts/package.json
+COPY packages/protocol/package.json packages/protocol/package.json
+COPY packages/shared/package.json packages/shared/package.json
 RUN npm ci --ignore-scripts
+COPY packages packages
 COPY apps/game-server apps/game-server
 COPY apps/web/src apps/web/src
 RUN npm run build --workspace @shootball/game-server
