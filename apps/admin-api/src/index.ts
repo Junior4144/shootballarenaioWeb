@@ -7,6 +7,7 @@ import { supabaseAuthorizer } from './auth';
 import { HealthMonitor } from './health';
 import { recordReader } from './records';
 import { trafficReader } from './traffic';
+import { posthogReader } from './posthog';
 const authMode = process.env.ADMIN_AUTH_MODE;
 if (authMode !== 'local' && authMode !== 'supabase') throw new Error('ADMIN_AUTH_MODE must be local or supabase');
 if (authMode === 'local') assertLocalRuntime(process.env);
@@ -27,6 +28,7 @@ const server = createAdminServer({
   authorize: hosted ? supabaseAuthorizer(url, key) : undefined,
   health: new HealthMonitor(), readRecords: hosted ? recordReader(url, key) : undefined, telemetryFetch: hosted ? fetch : undefined,
   readTraffic: hosted ? trafficReader(url, key) : undefined,
+  readPosthog: hosted ? posthogReader() : undefined,
   inventory, staticRoot: process.env.STATIC_ROOT,
   publicConfig: hosted ? { supabaseUrl: url, publishableKey: key, environment: defaultEnvironment as 'local' | 'gcp-test' | 'production' } : undefined,
   allowedHosts: [`127.0.0.1:${port}`],

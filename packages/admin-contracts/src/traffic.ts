@@ -1,17 +1,23 @@
 export const TRAFFIC_RANGES = { '1h': { seconds: 3600, bucket: 60 }, '24h': { seconds: 86400, bucket: 900 }, '7d': { seconds: 604800, bucket: 3600 }, '30d': { seconds: 2592000, bucket: 21600 } } as const;
 export type TrafficRange = keyof typeof TRAFFIC_RANGES;
-export type TrafficSource = 'game' | 'website';
+export type TrafficSource = 'game' | 'website' | 'posthog';
+export type TrafficScope = 'production' | 'development';
 export type TrafficPoint = {
   at: string; samples: number; players: number | null; guests: number | null;
   accounts: number | null; rooms: number | null; peak: number | null;
   joins: number | null; completed: number | null;
-  views?: number | null; sessions?: number | null;
+  views?: number | null; sessions?: number | null; visitors?: number | null;
 };
 export type TrafficHistory = {
   range: TrafficRange; generatedAt: string; bucketSeconds: number;
   current: TrafficPoint[]; previous: TrafficPoint[]; latestSampleAt: string | null;
   retentionDays: number;
   source: TrafficSource;
+  analytics?: {
+    provider: 'PostHog'; scope: TrafficScope; url: string; stale: boolean;
+    current: { views: number; visitors: number; sessions: number };
+    previous: { views: number; visitors: number; sessions: number };
+  };
 };
 export function trafficSummary(points: TrafficPoint[], bucketSeconds: number) {
   const samples = points.reduce((sum, p) => sum + p.samples, 0);

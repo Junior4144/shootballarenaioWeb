@@ -82,6 +82,8 @@ jobs:
           load: true
           tags: ${{ env.IMAGE_REF }}
           build-args: |
+            VITE_POSTHOG_KEY=${{ vars.VITE_POSTHOG_KEY }}
+            VITE_POSTHOG_HOST=${{ vars.VITE_POSTHOG_HOST }}
             VITE_SUPABASE_PUBLISHABLE_KEY=${{ inputs.publish-images && vars.SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_ci_fixture' }}
             VITE_GAME_SERVER_URL=${{ inputs.publish-images && vars.GAME_SERVER_URL || 'ws://127.0.0.1:2567' }}
           cache-from: type=gha,scope=${{ matrix.image }}

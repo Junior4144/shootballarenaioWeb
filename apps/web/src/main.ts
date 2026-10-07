@@ -1,3 +1,4 @@
+import './posthog';
 import { MenuBackground } from './MenuBackground';
 import { recordWebsiteVisit } from './traffic';
 void recordWebsiteVisit();

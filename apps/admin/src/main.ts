@@ -77,9 +77,9 @@ async function readSection(path: string) {
   const session = authConfig.mode === 'supabase' ? await accessToken() : token;
   if (!session) throw new Error('Sign in again to view this section.');
   const separator = path.includes('?') ? '&' : '?';
-  const response = liveTarget && path.split('?')[0] === 'traffic'
+  const response = liveTarget && path.split('?')[0] === 'traffic' && new URLSearchParams(path.split('?')[1]).get('source') !== 'posthog'
     ? await readLiveTraffic(path, session)
-    : await fetch('/admin/v1/' + path + separator + 'environment=' + environment, { headers: { Authorization: 'Bearer ' + session }, cache: 'no-store', signal: AbortSignal.timeout(12_000) });
+    : await fetch('/admin/v1/' + path + separator + 'environment=' + environment, { headers: { Authorization: 'Bearer ' + session }, cache: 'no-store', signal: AbortSignal.timeout(path.includes('source=posthog') ? 30_000 : 12_000) });
   if (version !== requestVersion) throw new Error('Observation superseded by a newer session.');
   if (response.status === 401 || response.status === 403) {
     token = ''; data = null; clearSettings(); clearOperations(); error = 'Administrator access expired or was revoked. Sign in again.';

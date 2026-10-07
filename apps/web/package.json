@@ -16,7 +16,8 @@
     "@shootball/protocol": "^0.0.0",
     "@shootball/shared": "0.0.0",
     "phaser": "^3.90.0",
-    "@supabase/supabase-js": "2.117.2"
+    "@supabase/supabase-js": "2.117.2",
+    "posthog-js": "^1.438.2"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

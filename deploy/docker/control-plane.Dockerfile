@@ -10,12 +10,17 @@ COPY packages/admin-contracts/package.json packages/admin-contracts/package.json
 COPY packages/protocol/package.json packages/protocol/package.json
 COPY packages/shared/package.json packages/shared/package.json
 RUN npm ci --ignore-scripts
+# The admin analytics reader uses the PostHog CLI. Install only its native binary.
+RUN node node_modules/@posthog/cli/install.js
 COPY apps apps
 COPY packages packages
 COPY scripts/build-site.mjs scripts/build-site.mjs
 ARG VITE_SUPABASE_URL=https://lkgxpgcmspxekggndzih.supabase.co
 ARG VITE_SUPABASE_PUBLISHABLE_KEY
 ARG VITE_GAME_SERVER_URL
+ARG VITE_POSTHOG_KEY
+ARG VITE_POSTHOG_HOST
+ENV VITE_POSTHOG_KEY=$VITE_POSTHOG_KEY VITE_POSTHOG_HOST=$VITE_POSTHOG_HOST
 ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY VITE_GAME_SERVER_URL=$VITE_GAME_SERVER_URL
 RUN npm run build:site && npm run build --workspace @shootball/admin-api
 RUN npm prune --omit=dev --ignore-scripts

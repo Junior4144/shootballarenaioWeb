@@ -9,12 +9,14 @@ import type { HealthMonitor } from './health';
 import type { ReadRecords } from './records';
 import { TRAFFIC_RANGES, type TrafficRange, type TrafficSource } from '@shootball/admin-contracts';
 import type { ReadTraffic } from './traffic';
+import type { ReadPosthog } from './posthog';
 export function assertLocalRuntime(env: NodeJS.ProcessEnv) {
   if (env.NODE_ENV === 'production' || env.K_SERVICE || env.ADMIN_AUTH_MODE !== 'local' || !env.ADMIN_LOCAL_TOKEN || env.ADMIN_LOCAL_TOKEN.length < 32) throw new Error('Local auth requires explicit development mode and a strong token; hosted local auth is disabled.');
 }
 export type AdminOptions = {
   health?: HealthMonitor; readRecords?: ReadRecords; telemetryFetch?: typeof fetch;
   readTraffic?: ReadTraffic;
+  readPosthog?: ReadPosthog;
   token?: string; authorize?: Authorize; inventory: Inventory;
   allowedHosts: string[]; allowedOrigins: string[]; staticRoot?: string;
   publicConfig?: { supabaseUrl: string; publishableKey: string; environment: Environment };
@@ -73,8 +75,15 @@ export function createAdminServer(options: AdminOptions) {
     if (url.pathname === '/admin/v1/traffic') {
       const range = url.searchParams.get('range') ?? '24h';
       const source = url.searchParams.get('source') ?? 'game';
-      if (!['game','website'].includes(source)) return send(400, { error: 'Invalid traffic source' });
+      if (!['game','website','posthog'].includes(source)) return send(400, { error: 'Invalid traffic source' });
       if (!Object.hasOwn(TRAFFIC_RANGES, range)) return send(400, { error: 'Invalid traffic range' });
+      if (source === 'posthog') {
+        const scope = url.searchParams.get('scope') ?? 'production';
+        if (scope !== 'production' && scope !== 'development') return send(400, { error: 'Invalid traffic scope' });
+        if (!hosted || !options.readPosthog) return send(503, { error: 'PostHog is not connected in this environment' });
+        try { return send(200, await options.readPosthog(range as TrafficRange, scope)); }
+        catch { return send(503, { error: 'PostHog unavailable; check server CLI credentials and query access' }); }
+      }
       if (!hosted || !options.readTraffic) return send(503, { error: 'Traffic history is not connected in this environment' });
       try { return send(200, await options.readTraffic(bearer.slice(7), range as TrafficRange, source as TrafficSource)); }
       catch { return send(503, { error: 'Traffic history unavailable; retry shortly' }); }

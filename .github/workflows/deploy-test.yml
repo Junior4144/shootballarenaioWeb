@@ -56,6 +56,7 @@ jobs:
       - name: Deploy immutable web and admin revision
         shell: pwsh
         env:
+          POSTHOG_API_KEY_SECRET_VERSION: ${{ vars.POSTHOG_API_KEY_SECRET_VERSION }}
           GCP_DEPLOY_ENABLED: ${{ vars.GCP_DEPLOY_ENABLED }}
           SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
           IMAGE_DIGEST: ${{ needs.validate.outputs.control-digest }}
