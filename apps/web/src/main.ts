@@ -11,6 +11,7 @@ import { attachHoverAudio } from './auth/hoverAudio';
 import type { PlayIdentity } from './network/PracticeConnection';
 
 const helpWidget = document.querySelector<HTMLDetailsElement>('#help-widget')!;
+if (matchMedia('(max-width: 700px), (max-height: 500px) and (max-width: 1100px), (pointer: coarse)').matches) helpWidget.open = false;
 document.getElementById('help-close')!.addEventListener('click', () => {
   helpWidget.open = false;
   helpWidget.querySelector('summary')!.focus();

@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { Client } from '@colyseus/sdk';
 import { ROOM_NAME, VERSION, type Snapshot } from '@shootball/protocol';
 
-for (const viewport of [{ width: 2560, height: 1440 }, { width: 1920, height: 1080 }, { width: 1366, height: 768 }, { width: 800, height: 600 }, { width: 390, height: 844 }]) {
+for (const viewport of [{ width: 2560, height: 1440 }, { width: 1920, height: 1080 }, { width: 1366, height: 768 }, { width: 800, height: 600 }, { width: 390, height: 844 }, { width: 320, height: 568 }, { width: 844, height: 390 }]) {
   test(`live HUD fits ${viewport.width}x${viewport.height}`, async ({ page }, testInfo) => {
     const errors: string[] = [];
     page.on('pageerror', error => errors.push(error.message));
@@ -43,6 +43,13 @@ for (const viewport of [{ width: 2560, height: 1440 }, { width: 1920, height: 10
     expect(geometry.health.x).toBeGreaterThanOrEqual(geometry.arena.x);
     expect(geometry.mute.right).toBeLessThanOrEqual(geometry.arena.right + 1);
     const beforeHelp = await page.locator('.arena-wrap').boundingBox();
+    const mobile = viewport.width <= 700 || viewport.height <= 500;
+    if (mobile) {
+      await expect(page.locator('.help-content')).toBeHidden();
+      await page.locator('#help-widget summary').click();
+      expect(geometry.field.height).toBeGreaterThan(viewport.height * .5);
+      await expect(page.locator('.touch-controls')).toBeVisible();
+    }
     await expect(page.locator('#help-widget')).toHaveAttribute('open', '');
     await expect(page.locator('.help-content')).toBeVisible();
     expect(await page.locator('.arena-wrap').boundingBox()).toEqual(beforeHelp);
@@ -62,7 +69,8 @@ for (const viewport of [{ width: 2560, height: 1440 }, { width: 1920, height: 10
     } else {
       expect(helpBox!.y).toBeGreaterThanOrEqual(geometry.arena.bottom);
       const content = await page.locator('.help-content').boundingBox();
-      expect(content!.y).toBeGreaterThanOrEqual(geometry.arena.bottom);
+      if (mobile) expect(content!.y).toBeGreaterThanOrEqual(geometry.header.bottom);
+      else expect(content!.y).toBeGreaterThanOrEqual(geometry.arena.bottom);
     }
     await page.screenshot({ path: testInfo.outputPath('help.png'), fullPage: true });
     await page.getByRole('button', { name: 'Close controls and abilities' }).click();
@@ -71,6 +79,7 @@ for (const viewport of [{ width: 2560, height: 1440 }, { width: 1920, height: 10
     await page.locator('#help-widget summary').click();
     await expect(page.locator('.help-content')).toBeVisible();
     expect(await page.locator('.arena-wrap').boundingBox()).toEqual(beforeHelp);
+    if (mobile) await page.getByRole('button', { name: 'Close controls and abilities' }).click();
     await page.locator('#mute').click();
     await expect(page.locator('#mute')).toHaveAttribute('aria-pressed', 'true');
     await page.screenshot({ path: testInfo.outputPath('arena.png'), fullPage: true });

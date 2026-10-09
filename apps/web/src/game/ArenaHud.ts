@@ -54,6 +54,9 @@ export class ArenaHud {
     const scan = element('scan') as HTMLButtonElement;
     scan.disabled = !me || me.health <= 0 || me.radarCooldown > 0 || state.match.phase !== 'playing';
     scan.textContent = me && me.radarCooldown > 0 ? `Q / Radar ${Math.ceil(me.radarCooldown)}s` : 'Q / Radar ready';
+    const touchRadar = element('touch-radar') as HTMLButtonElement;
+    touchRadar.disabled = scan.disabled;
+    touchRadar.textContent = me && me.radarCooldown > 0 ? `Radar ${Math.ceil(me.radarCooldown)}s` : 'Radar';
     const nearest = me?.radar.remaining ? [...me.radar.markers].sort((a, b) => Math.hypot(a.x - me.x, a.y - me.y) - Math.hypot(b.x - me.x, b.y - me.y))[0] : undefined;
     element('objective').textContent = state.match.phase === 'results' ? 'Match complete. Return to the main menu to play again.' : nearest
       ? `Last scan: ${nearest.kind.toUpperCase()} / ${Math.round(Math.hypot(nearest.x - me!.x, nearest.y - me!.y))} units. Markers expire in ${Math.ceil(me!.radar.remaining)}s.`
