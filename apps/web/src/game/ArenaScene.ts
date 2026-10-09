@@ -8,6 +8,7 @@ import { drawArena, createArenaTextures } from './ArenaArtwork';
 import type { ArenaEvent } from '@shootball/shared/content';
 import { ArenaHud, actorName } from './ArenaHud';
 import { CombatAudio } from './CombatAudio';
+import { TouchControls } from './TouchControls';
 import posthog from '../posthog';
 import { posthogLogs } from '../posthogLogs';
 
@@ -24,6 +25,7 @@ export class ArenaScene extends Phaser.Scene {
   private shots = new Map<number, Phaser.GameObjects.Image>();
   private fireQueued = false;
   private radarQueued = false;
+  private touch!: TouchControls;
   private hud = new ArenaHud();
   private audio = new CombatAudio();
   private eventCursor = new EventCursor();
@@ -55,10 +57,11 @@ export class ArenaScene extends Phaser.Scene {
     this.health = this.add.graphics().setDepth(4);
     this.details = this.add.graphics().setDepth(6);
     this.keys = this.input.keyboard!.addKeys('W,A,S,D,Q,SHIFT') as typeof this.keys;
+    this.touch = new TouchControls();
     const fire = (pointer: Phaser.Input.Pointer) => {
       if (pointer.leftButtonDown() && pointer.x >= 0 && pointer.x <= this.scale.width && pointer.y >= 0 && pointer.y <= this.scale.height) this.fireQueued = true;
     };
-    const clearInput = () => { this.fireQueued = false; this.radarQueued = false; this.input.keyboard!.resetKeys(); };
+    const clearInput = () => { this.fireQueued = false; this.radarQueued = false; this.input.keyboard!.resetKeys(); this.touch.reset(); };
     const neutral = () => {
       clearInput();
       this.focused = false;
@@ -127,7 +130,7 @@ export class ArenaScene extends Phaser.Scene {
       leave.removeEventListener('click', onLeave);
       scan.removeEventListener('click', onScan); mute.removeEventListener('click', onMute);
       document.removeEventListener('pointerdown', unlock); document.removeEventListener('keydown', unlock);
-      this.audio.destroy(); this.connection.leave();
+      this.touch.destroy(); this.audio.destroy(); this.connection.leave();
     });
     this.syncVisuals();
     void this.connection.join();
@@ -138,6 +141,10 @@ export class ArenaScene extends Phaser.Scene {
     const pointer = this.input.activePointer;
     // Convert logical canvas coordinates through the scrolling world camera.
     const aim = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+    const me = this.world.players.find(player => player.id === this.connection.sessionId);
+    if (this.touch.aiming && me) {
+      aim.set(me.x + this.touch.aim.x * 500, me.y + this.touch.aim.y * 500);
+    }
     this.sendElapsed += delta;
     if (this.sendElapsed >= NETWORK.inputMs && this.connection.state === 'connected' && this.focused) {
       this.sendElapsed %= NETWORK.inputMs;
@@ -146,10 +153,10 @@ export class ArenaScene extends Phaser.Scene {
         posthog.capture('radar_used', { player_type: this.identity.kind });
       }
       this.connection.send({
-      moveX: Number(this.keys.D.isDown) - Number(this.keys.A.isDown),
-      moveY: Number(this.keys.S.isDown) - Number(this.keys.W.isDown),
+      moveX: Phaser.Math.Clamp(Number(this.keys.D.isDown) - Number(this.keys.A.isDown) + this.touch.move.x, -1, 1),
+      moveY: Phaser.Math.Clamp(Number(this.keys.S.isDown) - Number(this.keys.W.isDown) + this.touch.move.y, -1, 1),
       aim: { x: Phaser.Math.Clamp(aim.x, ARENA.left, ARENA.right), y: Phaser.Math.Clamp(aim.y, ARENA.top, ARENA.bottom) },
-      fire: this.fireQueued, radar: this.radarQueued, sprint: this.keys.SHIFT.isDown,
+      fire: this.fireQueued || this.touch.aiming, radar: this.radarQueued, sprint: this.keys.SHIFT.isDown || this.touch.sprint,
       });
       this.fireQueued = false; this.radarQueued = false;
     }

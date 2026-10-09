@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#0b1720" />
     <title>ShootBall Arena - PvP</title>
     <style>html,body{margin:0;background:#0b1720;color:#b4d5e7}[hidden]{display:none!important}</style>
@@ -81,6 +81,7 @@
             <button id="help-close" type="button" aria-label="Close controls and abilities" title="Close guide">×</button>
             <div class="help-content">
               <h2 class="help-title">CONTROLS &amp; ABILITIES</h2>
+              <p class="touch-instructions">Left pad: move. Drag the right pad to aim and fire. Sprint toggles faster movement; Radar reveals nearby rivals.</p>
               <dl class="control-list">
                 <div><dt><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></dt><dd>Move</dd></div>
                 <div><dt><kbd>Shift</kbd></dt><dd>Hold while moving to sprint</dd></div>
@@ -98,6 +99,11 @@
         </div>
         <div class="arena-stage"><div class="arena-wrap">
           <div id="game" aria-label="ShootBall Arena. WASD to move, hold Shift to sprint, mouse to aim, left click to fire, Q to scan."></div>
+          <div class="touch-controls" aria-label="Touch controls">
+            <div id="touch-move" class="touch-pad" role="group" aria-label="Drag to move"><span class="touch-stick"></span><span class="touch-label">MOVE</span></div>
+            <div class="touch-actions"><button id="touch-sprint" type="button" aria-pressed="false">Sprint</button><button id="touch-radar" type="button">Radar</button></div>
+            <div id="touch-aim" class="touch-pad" role="group" aria-label="Drag to aim and fire"><span class="touch-stick"></span><span class="touch-label">AIM / FIRE</span></div>
+          </div>
           <section class="scores gameplay-leaderboard" aria-label="Live scoreboard"><h2>Leaderboard</h2><p id="active-count">0/8 players</p><table><thead><tr><th scope="col">Player</th><th scope="col">Points</th></tr></thead><tbody id="scoreboard"></tbody></table></section>
           <div class="status-strip" aria-label="Player status">
             <div class="vitals"><svg class="heart" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 2h5v2h4V2h5v7h-2v2h-2v2H9v2H7v-2H5v-2H3V9H1z" fill="currentColor"/></svg><span id="health-value">&mdash;</span><div id="health-meter" role="progressbar" aria-label="Health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="health-fill"></div></div></div>

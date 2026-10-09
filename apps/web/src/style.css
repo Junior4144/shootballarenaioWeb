@@ -237,3 +237,75 @@ aside .connection { border-top: 2px solid #294754; color: #a9c8d9; }
   .gameplay-leaderboard th, .gameplay-leaderboard td { padding: 2px; }
   .gameplay-leaderboard th { font-size: 10px; }
 }
+
+/* Phone layouts reserve the viewport for play; menus remain scrollable. */
+.touch-controls, .touch-instructions { display: none; }
+#game { touch-action: none; }
+#account-screen, #lobby-screen { overscroll-behavior: contain; }
+.entry-panel label input { font-size: 16px; }
+@media (max-width: 700px), (max-height: 500px) and (max-width: 1100px), (pointer: coarse) {
+  body { min-width: 0; }
+  #account-screen, #lobby-screen { padding: max(16px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
+  .entry-panel { padding: 16px; }
+  .entry-panel button, .lobby-panels button { min-height: 44px; }
+  main { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+  .game-header { height: 52px; margin: 4px; width: calc(100% - 8px); padding: 0 6px; gap: 6px; grid-template-columns: 28px minmax(0, 1fr) auto; }
+  .game-brand { border: 0; }
+  .game-brand span { display: none; }
+  .game-brand svg { width: 24px; height: 24px; }
+  .header-match { font-size: 10px; }
+  .header-match #match-target { font-size: 9px; }
+  .header-match .mode { gap: 5px; }
+  .header-actions { gap: 4px; }
+  .header-settings { padding-left: 0; }
+  #account-toggle { max-width: 90px; height: 44px; padding: 6px; font-size: 10px; gap: 4px; }
+  #account-toggle svg { width: 14px; height: 14px; }
+  #settings-toggle { width: 44px; height: 44px; }
+  #settings-toggle svg { width: 22px; height: 22px; }
+  .header-menu { max-width: calc(100vw - 24px); right: -48px; max-height: calc(100dvh - 90px); overflow-y: auto; }
+  .header-settings .header-menu { right: 0; }
+  .header-menu button { min-height: 44px; }
+  .play-layout { position: relative; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) 48px; gap: 4px; padding: 0 4px 4px; }
+  .arena-stage { grid-row: 1; }
+  aside { grid-row: 2; display: flex; flex-direction: row; align-items: center; padding: 0 4px 0 116px; gap: 8px; border: 0; background: transparent; box-shadow: none; overflow: hidden; }
+  aside .feed-panel, aside .round-panel, aside .connection { display: none; }
+  .match-actions { display: flex; margin: 0 0 0 auto; padding: 0; gap: 4px; align-self: center; }
+  .match-actions button { width: auto; min-height: 44px; padding: 6px; font-size: 10px; }
+  .help-rail { position: absolute; bottom: 4px; left: 4px; width: 110px; height: 44px; }
+  .help-widget summary { height: 44px; display: flex; align-items: center; padding: 6px; font-size: 10px; }
+  #help-close { top: -40px; right: 4px; width: 36px; height: 36px; z-index: 1; }
+  .help-content { top: auto; bottom: 44px; width: min(300px, calc(100vw - 16px)); max-height: calc(100dvh - 180px); height: auto; border-top: 2px solid var(--pixel-border); padding-top: 40px; }
+  .touch-instructions { display: block; line-height: 1.6; }
+  .touch-controls { position: absolute; left: 10px; right: 10px; bottom: 58px; display: flex; align-items: end; justify-content: space-between; gap: 8px; pointer-events: none; z-index: 2; }
+  .touch-pad { position: relative; width: clamp(84px, 24vw, 112px); aspect-ratio: 1; flex: none; border-radius: 50%; border: 2px solid #83d6cba8; background: #0b172080; touch-action: none; user-select: none; -webkit-user-select: none; pointer-events: auto; }
+  .touch-stick { position: absolute; width: 38%; height: 38%; left: 31%; top: 31%; border-radius: 50%; background: #69d8c67a; border: 2px solid #b4f3e4a6; transform: translate(var(--stick-x, 0px), var(--stick-y, 0px)); pointer-events: none; }
+  .touch-label { position: absolute; bottom: 9px; width: 100%; text-align: center; font-size: 9px; color: #e0fff4; pointer-events: none; }
+  .touch-actions { display: grid; gap: 6px; pointer-events: auto; }
+  .touch-actions button { min-width: 64px; min-height: 44px; padding: 6px; font-size: 11px; touch-action: manipulation; }
+  #touch-sprint[aria-pressed="true"] { background: #39706a; border-color: #cdffe9; }
+  .arena-wrap:has(#results:not([hidden])) .touch-controls { display: none; }
+  .gameplay-leaderboard { top: 6px; right: 6px; width: min(190px, 48%); max-height: 30%; overflow: auto; padding: 5px; pointer-events: auto; overscroll-behavior: contain; }
+  .gameplay-leaderboard h2 { font-size: 10px; padding: 4px; margin-bottom: 4px; }
+  .gameplay-leaderboard #active-count { font-size: 10px; margin-bottom: 3px; }
+  .gameplay-leaderboard table { font-size: 10px; }
+  .gameplay-leaderboard th { font-size: 9px; }
+  .gameplay-leaderboard th, .gameplay-leaderboard td { padding: 3px 1px; }
+  .status-strip { font-size: 11px; gap: 8px; }
+  .heart { width: 16px; height: 16px; }
+  #mute { width: 44px; height: 44px; padding: 8px; flex: none; }
+  #stamina { bottom: 178px; width: 30%; }
+  #player-status { bottom: 158px; max-width: 95%; white-space: normal; text-align: center; }
+  #results { inset: 6px; }
+  #results-menu { min-height: 44px; }
+}
+@media (max-height: 500px) and (max-width: 1100px) {
+  .game-header { height: 44px; margin-top: 0; margin-bottom: 2px; }
+  .play-layout { grid-template-rows: minmax(0, 1fr) 44px; }
+  .touch-pad { width: 84px; }
+  .touch-actions { display: flex; }
+  .touch-controls { bottom: 52px; }
+  .gameplay-leaderboard { max-height: 45%; }
+  .help-content { max-height: calc(100dvh - 108px); }
+  #stamina { bottom: 110px; }
+  #player-status { bottom: 90px; }
+}
