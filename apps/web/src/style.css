@@ -241,6 +241,29 @@ aside .connection { border-top: 2px solid #294754; color: #a9c8d9; }
 /* Phone layouts reserve the viewport for play; menus remain scrollable. */
 .touch-controls, .touch-instructions { display: none; }
 #game { touch-action: none; }
+/* Zoom is a page gesture: protect the entire document while the arena is open,
+   including header, bottom padding and safe areas outside the canvas. */
+html:has(#arena-app:not([hidden])),
+body:has(#arena-app:not([hidden])),
+#arena-app, #arena-app .header-menu, #arena-app .help-content,
+#arena-app .gameplay-leaderboard { touch-action: pan-y; }
+.play-viewport { overscroll-behavior: contain; }
+.touch-controls { touch-action: none; }
+/* A player can arrive from a zoomed menu. Allow recovery everywhere until they
+   zoom back out, rather than trapping an already enlarged visual viewport. */
+html.gameplay-zoomed, html.gameplay-zoomed body,
+html.gameplay-zoomed #arena-app, html.gameplay-zoomed #arena-app * { touch-action: auto !important; }
+/* Game input handlers prevent native touch defaults. Bypass them during zoom
+   recovery so the browser can receive both fingers without firing/moving. */
+html.gameplay-zoomed #game canvas,
+html.gameplay-zoomed .touch-controls,
+html.gameplay-zoomed .touch-controls * { pointer-events: none !important; }
+html.gameplay-zoomed body::after {
+  content: 'Pinch inward to zoom out and resume controls';
+  position: fixed; inset: 0; z-index: 100; touch-action: auto;
+  display: grid; place-items: center; padding: 24px; text-align: center;
+  background: #08131b99; color: #e0fff4; font-size: 16px;
+}
 #account-screen, #lobby-screen { overscroll-behavior: contain; }
 .entry-panel label input { font-size: 16px; }
 @media (max-width: 700px), (max-height: 500px) and (max-width: 1100px), (pointer: coarse) {

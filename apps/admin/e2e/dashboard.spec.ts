@@ -40,7 +40,7 @@ test('bad token and API outage expose no privileged data or fabricated zeroes', 
 
 test('settings drafts validate imports, preview maps and survive navigation without changing gameplay',async({page})=>{
   await login(page);
-  await expect(page.getByRole('link',{name:'Open website — Vercel (primary)'})).toHaveAttribute('href','https://shootball-arena.vercel.app');
+  await expect(page.getByRole('link',{name:'Open website — Orb-skirmish (primary)'})).toHaveAttribute('href','https://www.orb-skirmish.com');
   await expect(page.getByRole('link',{name:'Open GCP origin (direct)'})).toHaveAttribute('href','https://shootball-control-test-730016272076.us-central1.run.app');
   await page.getByRole('navigation').getByRole('button',{name:'Game settings'}).click();
   await expect(page.getByRole('img',{name:'Draft map walls, spawns and pickups'})).toBeVisible();
@@ -59,11 +59,11 @@ test('settings drafts validate imports, preview maps and survive navigation with
   await expect(page.getByRole('button',{name:'Download validated draft'})).toBeEnabled();
 });
 test('health checks show separate primary and origin status; directories paginate and escape content',async({page})=>{
-  await page.route('**/admin/v1/health?**',r=>r.fulfill({json:{source:'Fixture observations',checks:[{id:'primary',name:'Vercel primary website',url:'https://shootball-arena.vercel.app/health',status:'unavailable',checkedAt:new Date().toISOString(),latencyMs:20,revision:null,message:'Check failed'},{id:'origin',name:'GCP direct origin',url:'https://shootball-control-test-730016272076.us-central1.run.app/health',status:'healthy',checkedAt:new Date().toISOString(),latencyMs:10,revision:'test',message:'Liveness passed'}]}}));
+  await page.route('**/admin/v1/health?**',r=>r.fulfill({json:{source:'Fixture observations',checks:[{id:'primary',name:'Orb-skirmish primary website',url:'https://www.orb-skirmish.com/health',status:'unavailable',checkedAt:new Date().toISOString(),latencyMs:20,revision:null,message:'Check failed'},{id:'origin',name:'GCP direct origin',url:'https://shootball-control-test-730016272076.us-central1.run.app/health',status:'healthy',checkedAt:new Date().toISOString(),latencyMs:10,revision:'test',message:'Liveness passed'}]}}));
   const offsets:string[]=[];
   await page.route('**/admin/v1/accounts?**',r=>{const offset=new URL(r.request().url()).searchParams.get('offset')!;offsets.push(offset);return r.fulfill({json:{source:'Fixture accounts',rows:[{id:'test-user',display_name:'<script>bad</script>',email:'player@example.com',phone:'+15555550100',account_type:'registered',providers:['email'],created_at:'2026-10-07',last_sign_in_at:null,email_confirmed:true}],offset:Number(offset),limit:50,hasMore:offset==='0'}});});
   await login(page);await page.getByRole('navigation').getByRole('button',{name:'Health & alerts'}).click();
-  await expect(page.getByRole('heading',{name:'Vercel primary website'})).toBeVisible();await expect(page.getByText('1 endpoint check(s) failed.')).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Orb-skirmish primary website'})).toBeVisible();await expect(page.getByText('1 endpoint check(s) failed.')).toBeVisible();
   await page.getByRole('navigation').getByRole('button',{name:'Accounts & guests'}).click();
   await expect(page.getByRole('cell',{name:'<script>bad</script>'})).toBeVisible();
   await expect(page.getByRole('cell',{name:'player@example.com'})).toBeVisible();
@@ -113,7 +113,7 @@ test('polling retains account rows, draft search, focus and scroll; failures ret
 test('website health probes run from browser after API response without bearer credentials', async ({page}) => {
   const probes:string[]=[];
   await page.route('**/admin/v1/health?**', route=>route.fulfill({json:{browserChecks:true,source:'Browser websites and server gameplay',checks:[]}}));
-  for (const host of ['https://shootball-arena.vercel.app','https://shootball-control-test-730016272076.us-central1.run.app']) {
+  for (const host of ['https://www.orb-skirmish.com','https://shootball-control-test-730016272076.us-central1.run.app']) {
     await page.route(host+'/health', async route=>{
       probes.push(route.request().url());
       expect(route.request().headers().authorization).toBeUndefined();

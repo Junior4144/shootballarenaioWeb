@@ -60,7 +60,7 @@ Before production release:
    the consent audience/testing users and `openid`, email and profile scopes.
 2. In [Supabase URL configuration](https://supabase.com/dashboard/project/lkgxpgcmspxekggndzih/auth/url-configuration),
    set Site URL to the actual production HTTPS origin. Add exact production
-   `https://YOUR_HOST/` and `https://YOUR_HOST/?recovery=1` redirects. Retain only
+   `https://www.orb-skirmish.com/` and `https://www.orb-skirmish.com/?recovery=1` redirects. Retain only
    development URLs you use. Do not guess a hostname or use a broad production
    wildcard. Add the production origin to the Google Web client.
 3. In [Supabase providers](https://supabase.com/dashboard/project/lkgxpgcmspxekggndzih/auth/providers),

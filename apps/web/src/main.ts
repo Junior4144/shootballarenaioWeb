@@ -1,4 +1,5 @@
 import './posthog';
+import './vercel-analytics';
 import { MenuBackground } from './MenuBackground';
 import { recordWebsiteVisit } from './traffic';
 void recordWebsiteVisit();
@@ -27,6 +28,17 @@ const detachHoverAudio = attachHoverAudio(document.body);
 if (import.meta.hot) import.meta.hot.dispose(detachHoverAudio);
 const arena = document.getElementById('arena-app')!;
 const lobby = document.getElementById('lobby-screen')!;
+const syncViewportZoom = () => {
+  const recovering = !arena.hidden && (window.visualViewport?.scale ?? 1) > 1.01;
+  document.documentElement.classList.toggle('gameplay-zoomed', recovering);
+  // Phaser also listens on window; CSS hit testing alone cannot suspend it.
+  if (game?.input) game.input.enabled = !recovering;
+};
+window.visualViewport?.addEventListener('resize', syncViewportZoom);
+if (import.meta.hot) import.meta.hot.dispose(() => {
+  window.visualViewport?.removeEventListener('resize', syncViewportZoom);
+  document.documentElement.classList.remove('gameplay-zoomed');
+});
 let lobbyIdentity: PlayIdentity | undefined;
 const header = attachGameplayHeader();
 if (import.meta.hot) import.meta.hot.dispose(header.destroy);
@@ -40,6 +52,7 @@ function stop(): void {
   if (game) { game.scene.stop('arena'); game.scene.remove('arena'); game.destroy(true); }
   game = undefined; scene = undefined;
   arena.hidden = true; screen.hidden = false;
+  syncViewportZoom();
 }
 function play(identity: PlayIdentity): void {
   if (game) return;
@@ -47,6 +60,7 @@ function play(identity: PlayIdentity): void {
   document.getElementById('game-loading')!.hidden = false;
   document.getElementById('game-loading-message')!.textContent = 'Entering the arena...';
   lobby.hidden = true; screen.hidden = true; arena.hidden = false;
+  syncViewportZoom();
   document.getElementById('playing-identity')!.textContent = identity.kind === 'guest' ? 'GUEST / Temporary' : document.getElementById('account-identity')!.textContent;
   const label = identity.kind === 'guest' ? 'GUEST' : (document.getElementById('display-name') as HTMLInputElement).value;
   document.getElementById('account-toggle-name')!.textContent = label;
@@ -54,7 +68,10 @@ function play(identity: PlayIdentity): void {
   document.getElementById('return-accounts')!.textContent = identity.kind === 'guest' ? 'Log in' : 'Manage account';
   document.getElementById('gameplay-signup')!.hidden = identity.kind !== 'guest';
   const nextScene = new ArenaScene(identity, () => {
-    if (scene === nextScene) document.getElementById('game-loading')!.hidden = true;
+    if (scene === nextScene) {
+      document.getElementById('game-loading')!.hidden = true;
+      syncViewportZoom();
+    }
   });
   scene = nextScene;
   game = new Phaser.Game({

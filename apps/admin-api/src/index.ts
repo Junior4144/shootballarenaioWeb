@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { parseManifest } from '@shootball/admin-contracts';
+import { parseManifest, PRODUCTION_WEB_ORIGINS } from '@shootball/admin-contracts';
 import { FixtureInventory, GcpInventory, googleComputeGet } from './inventory';
 import { assertLocalRuntime, createAdminServer } from './server';
 import { supabaseAuthorizer } from './auth';
@@ -32,7 +32,7 @@ const server = createAdminServer({
   inventory, staticRoot: process.env.STATIC_ROOT,
   publicConfig: hosted ? { supabaseUrl: url, publishableKey: key, environment: defaultEnvironment as 'local' | 'gcp-test' | 'production' } : undefined,
   allowedHosts: [`127.0.0.1:${port}`],
-  allowedOrigins: process.env.NODE_ENV === 'production' ? ['https://shootball-arena.vercel.app'] : ['http://127.0.0.1:5174', 'http://127.0.0.1:5191', 'http://127.0.0.1:5173'],
+  allowedOrigins: process.env.NODE_ENV === 'production' ? [...PRODUCTION_WEB_ORIGINS] : ['http://127.0.0.1:5174', 'http://127.0.0.1:5191', 'http://127.0.0.1:5173'],
 });
 server.requestTimeout = 15_000; server.headersTimeout = 10_000;
 const host = process.env.NODE_ENV === 'production' || process.env.K_SERVICE ? '0.0.0.0' : '127.0.0.1';

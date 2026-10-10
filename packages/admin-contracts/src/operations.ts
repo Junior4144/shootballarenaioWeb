@@ -1,8 +1,10 @@
 export const LINKS = {
-  primary: 'https://shootball-arena.vercel.app',
+  primary: 'https://www.orb-skirmish.com',
   origin: 'https://shootball-control-test-730016272076.us-central1.run.app',
   game: 'https://136.71.64.19.sslip.io',
 } as const;
+// Exact trusted proxy origins; the previous deployment URL remains usable.
+export const PRODUCTION_WEB_ORIGINS = [LINKS.primary, 'https://orb-skirmish.com', 'https://shootball-arena.vercel.app'] as const;
 export type HealthCheck = { id: string; name: string; url: string; status: 'healthy' | 'unavailable'; checkedAt: string; latencyMs: number; revision: string | null; message: string };
 export type RoomTelemetry = { id: string; phase: string; humans: number; guests: number; accounts: number; reservedSeats: number; bots: number; maxPlayers: number; elapsedSeconds: number; tickP95Ms: number; admission: 'open' | 'locked' };
 export type GameTelemetry = { observedAt: string; bootId: string; revision: string; protocol: number; uptimeSeconds: number; memoryRssBytes: number; rooms: RoomTelemetry[]; totals: { humans: number; guests: number; accounts: number; reservedSeats: number; bots: number; rooms: number }; joinsSinceBoot: number; roomsCompletedSinceBoot: number };

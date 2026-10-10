@@ -5,9 +5,9 @@ import { PRIMARY_WEB, ORIGIN_WEB, verifyWebRelease, verifyGameRelease } from './
 const web = process.env.WEB_BASE_URL;
 const game = process.env.GAME_SERVER_URL;
 const sha = process.env.RELEASE_SHA;
-assert.equal(web, PRIMARY_WEB, 'Vercel must remain the primary website');
+assert.equal(web, PRIMARY_WEB, 'Orb-skirmish must be the primary website');
 await Promise.all([verifyWebRelease(web, sha), verifyWebRelease(ORIGIN_WEB, sha), verifyGameRelease(game, sha)]);
-console.log('Vercel primary, direct GCP origin and game release verified');
+console.log('Orb-skirmish primary, direct GCP origin and game release verified');
 const client = new Client(game);
 let room;
 const deadline = setTimeout(() => { console.error('Multiplayer smoke timed out'); process.exit(1); }, 45000);

@@ -23,7 +23,7 @@ test('local live UI uses production login and labels production data', async ({ 
   await page.goto('http://127.0.0.1:5192/admin/');
   await expect(page.getByText('Local UI · Production data', { exact: true })).toBeVisible();
   await expect(page.getByLabel('Email', { exact: true })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Back to game' })).toHaveAttribute('href', 'https://shootball-arena.vercel.app');
+  await expect(page.getByRole('link', { name: 'Back to game' })).toHaveAttribute('href', 'https://www.orb-skirmish.com');
   await page.getByLabel('Email', { exact: true }).fill('admin@example.test');
   await page.getByLabel('Password', { exact: true }).fill('fixture-password');
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();

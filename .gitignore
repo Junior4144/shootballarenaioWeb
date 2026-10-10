@@ -7,3 +7,6 @@ dist/
 *.tsbuildinfo
 .test-artifacts/
 supabase/.temp/
+
+.vercel
+.env*

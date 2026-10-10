@@ -15,6 +15,21 @@
 
 # Development and production
 
+## Vercel scope
+
+- Account: `junior4144`; team: `jrxsoftware` (`team_wcBcg21IdtA6TZyO0dRea5Di`).
+- Only use project `shootball-arena` (`prj_zml6Wx0SyKQ2315FK7OOmhhGWDmW`).
+- Canonical domain: `https://www.orb-skirmish.com/`.
+- Use `npm.cmd run vercel -- <command>` from this repository. The wrapper pins
+  the team, project and `deploy/vercel` working directory per process.
+- Vercel hosts the proxy to GCP. Do not deploy the repository root or change
+  the global Vercel team. Application releases use the existing GitHub Actions
+  workflow; Vercel proxy releases use `npm.cmd run vercel -- deploy --prod`.
+- Scope IDs are recorded in `deploy/vercel-project.json`; `.vercel` links and
+  authentication credentials must remain untracked.
+
+## Runtime
+
 - Run development directly with Node.js/npm. Do not require Docker, Compose,
   dev containers, or a local Supabase container stack for development.
 - Use the scoped hosted Supabase project when backend integration is needed.

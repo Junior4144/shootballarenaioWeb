@@ -24,6 +24,7 @@ export class ArenaScene extends Phaser.Scene {
   private health!: Phaser.GameObjects.Graphics;
   private shots = new Map<number, Phaser.GameObjects.Image>();
   private fireQueued = false;
+  private fireHeld = false;
   private radarQueued = false;
   private touch!: TouchControls;
   private hud = new ArenaHud();
@@ -59,9 +60,15 @@ export class ArenaScene extends Phaser.Scene {
     this.keys = this.input.keyboard!.addKeys('W,A,S,D,Q,SHIFT') as typeof this.keys;
     this.touch = new TouchControls();
     const fire = (pointer: Phaser.Input.Pointer) => {
-      if (pointer.leftButtonDown() && pointer.x >= 0 && pointer.x <= this.scale.width && pointer.y >= 0 && pointer.y <= this.scale.height) this.fireQueued = true;
+      if (pointer.leftButtonDown() && pointer.x >= 0 && pointer.x <= this.scale.width && pointer.y >= 0 && pointer.y <= this.scale.height) {
+        this.fireQueued = true;
+        // Touch auto-fire belongs to the aim pad; mouse hold uses the same cadence.
+        this.fireHeld = !pointer.wasTouch;
+      }
     };
-    const clearInput = () => { this.fireQueued = false; this.radarQueued = false; this.input.keyboard!.resetKeys(); this.touch.reset(); };
+    const releaseFire = (event: PointerEvent) => { if (event.pointerType !== 'touch' && (event.buttons & 1) === 0) this.fireHeld = false; };
+    const cancelFire = () => { this.fireHeld = false; this.fireQueued = false; };
+    const clearInput = () => { cancelFire(); this.radarQueued = false; this.input.keyboard!.resetKeys(); this.touch.reset(); };
     const neutral = () => {
       clearInput();
       this.focused = false;
@@ -118,11 +125,17 @@ export class ArenaScene extends Phaser.Scene {
     join.addEventListener('click', onJoin);
     leave.addEventListener('click', onLeave);
     this.input.on('pointerdown', fire);
+    window.addEventListener('pointerup', releaseFire);
+    window.addEventListener('pointercancel', cancelFire);
+    window.addEventListener('resize', clearInput);
     this.game.events.on(Phaser.Core.Events.BLUR, neutral);
     this.game.events.on(Phaser.Core.Events.FOCUS, focus);
     document.addEventListener('visibilitychange', visibility);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.input.off('pointerdown', fire);
+      window.removeEventListener('pointerup', releaseFire);
+      window.removeEventListener('pointercancel', cancelFire);
+      window.removeEventListener('resize', clearInput);
       this.game.events.off(Phaser.Core.Events.BLUR, neutral);
       this.game.events.off(Phaser.Core.Events.FOCUS, focus);
       document.removeEventListener('visibilitychange', visibility);
@@ -156,7 +169,7 @@ export class ArenaScene extends Phaser.Scene {
       moveX: Phaser.Math.Clamp(Number(this.keys.D.isDown) - Number(this.keys.A.isDown) + this.touch.move.x, -1, 1),
       moveY: Phaser.Math.Clamp(Number(this.keys.S.isDown) - Number(this.keys.W.isDown) + this.touch.move.y, -1, 1),
       aim: { x: Phaser.Math.Clamp(aim.x, ARENA.left, ARENA.right), y: Phaser.Math.Clamp(aim.y, ARENA.top, ARENA.bottom) },
-      fire: this.fireQueued || this.touch.aiming, radar: this.radarQueued, sprint: this.keys.SHIFT.isDown || this.touch.sprint,
+      fire: this.fireQueued || this.fireHeld || this.touch.aiming, radar: this.radarQueued, sprint: this.keys.SHIFT.isDown || this.touch.sprint,
       });
       this.fireQueued = false; this.radarQueued = false;
     }

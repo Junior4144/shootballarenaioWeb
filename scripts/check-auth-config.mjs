@@ -5,7 +5,7 @@ assert.equal(process.env.SUPABASE_URL, url);
 const headers = { apikey: process.env.SUPABASE_PUBLISHABLE_KEY };
 const settings = await fetch(`${url}/auth/v1/settings`, { headers }).then(r => r.json());
 console.log(JSON.stringify({ google: settings.external?.google, email: settings.external?.email, anonymous: settings.external?.anonymous_users, emailAutoconfirm: settings.mailer_autoconfirm }));
-for (const target of ['http://127.0.0.1:5173/', 'http://127.0.0.1:5173/?recovery=1', 'http://127.0.0.1:4173/', 'http://127.0.0.1:4173/?recovery=1', 'http://localhost:5173/']) {
+for (const target of ['https://www.orb-skirmish.com/', 'https://www.orb-skirmish.com/?recovery=1', 'https://orb-skirmish.com/', 'http://127.0.0.1:5173/', 'http://127.0.0.1:5173/?recovery=1', 'http://127.0.0.1:4173/', 'http://127.0.0.1:4173/?recovery=1', 'http://localhost:5173/']) {
   const request = new URL(`${url}/auth/v1/authorize`);
   request.search = new URLSearchParams({ provider: 'google', redirect_to: target, code_challenge: 'a'.repeat(43), code_challenge_method: 's256' }).toString();
   const response = await fetch(request, { headers, redirect: 'manual' });
@@ -23,7 +23,7 @@ if (process.env.SUPABASE_SECRET_KEY) {
   const { data, error } = await admin.auth.admin.createUser({ email, email_confirm: true });
   assert.ifError(error);
   try {
-    for (const redirectTo of ['http://127.0.0.1:5173/', 'http://127.0.0.1:5173/?recovery=1', 'http://127.0.0.1:4173/', 'http://127.0.0.1:4173/?recovery=1', 'http://localhost:5173/']) {
+    for (const redirectTo of ['https://www.orb-skirmish.com/', 'https://www.orb-skirmish.com/?recovery=1', 'https://orb-skirmish.com/', 'http://127.0.0.1:5173/', 'http://127.0.0.1:5173/?recovery=1', 'http://127.0.0.1:4173/', 'http://127.0.0.1:4173/?recovery=1', 'http://localhost:5173/']) {
       const link = await admin.auth.admin.generateLink({ type: 'recovery', email, options: { redirectTo } });
       assert.ifError(link.error);
       console.log(JSON.stringify({ requested: redirectTo, selectedRedirect: link.data.properties.redirect_to, allowed: link.data.properties.redirect_to === redirectTo }));
