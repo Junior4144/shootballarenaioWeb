@@ -1,4 +1,5 @@
 import './posthog';
+import './vercel-analytics';
 import { MenuBackground } from './MenuBackground';
 import { recordWebsiteVisit } from './traffic';
 void recordWebsiteVisit();
