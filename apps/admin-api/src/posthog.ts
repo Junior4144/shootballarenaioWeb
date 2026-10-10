@@ -31,7 +31,7 @@ export function posthogQuery(range: TrafficRange, scope: TrafficScope, end: numb
   const { seconds, bucket } = TRAFFIC_RANGES[range];
   const start = end - seconds * 2;
   const hosts = scope === 'production'
-    ? "['shootball-arena.vercel.app', 'shootball-control-test-730016272076.us-central1.run.app']"
+    ? "['www.orb-skirmish.com', 'orb-skirmish.com', 'shootball-arena.vercel.app', 'shootball-control-test-730016272076.us-central1.run.app']"
     : "['localhost', '127.0.0.1']";
   const base = `FROM events WHERE event = '$pageview' AND timestamp >= toDateTime(${start}) AND timestamp < toDateTime(${end}) AND splitByChar(':' , toString(properties.$host))[1] IN ${hosts}`;
   // Only server-generated numbers and fixed literals enter the query.

@@ -1,6 +1,6 @@
 import { LINKS, type HealthCheck } from './operations';
 export const WEB_HEALTH_TARGETS = [
-  { id: 'primary', name: 'Vercel primary website', url: LINKS.primary + '/health' },
+  { id: 'primary', name: 'Orb-skirmish primary website', url: LINKS.primary + '/health' },
   { id: 'origin', name: 'GCP direct origin', url: LINKS.origin + '/health' },
 ];
 export const GAME_HEALTH_TARGET = { id: 'game', name: 'Gameplay process', url: LINKS.game + '/healthz' };

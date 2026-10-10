@@ -1,5 +1,5 @@
 const PROJECT = 'https://lkgxpgcmspxekggndzih.supabase.co';
-const HOSTS = ['shootball-arena.vercel.app','shootball-control-test-730016272076.us-central1.run.app'];
+const HOSTS = ['www.orb-skirmish.com','orb-skirmish.com','shootball-arena.vercel.app','shootball-control-test-730016272076.us-central1.run.app'];
 export function websiteVisit(storage: Pick<Storage,'getItem'|'setItem'>, now=Date.now(), uuid=()=>crypto.randomUUID()) {
   let session: {id:string;at:number} | null = null;
   try { session=JSON.parse(storage.getItem('shootball-traffic-session') ?? 'null'); } catch {}

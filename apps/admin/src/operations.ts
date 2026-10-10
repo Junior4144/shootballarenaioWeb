@@ -11,7 +11,7 @@ export function cancelOperations() { generation++; pending = false; }
 export function clearOperations() { cancelOperations(); clearTraffic(); recordsView=''; offset=0; search=''; }
 const table = (headers: string[], rows: unknown[][]) => '<div class="table-wrap"><table><thead><tr>'+headers.map(h=>'<th scope="col">'+escape(h)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(row=>'<tr>'+row.map(c=>'<td>'+escape(c)+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
 const format = (v: unknown) => v && typeof v==='object' ? JSON.stringify(v) : v;
-export function serviceLinks() { return '<p><a href="'+LINKS.primary+'" target="_blank" rel="noopener">Open website — Vercel (primary)</a></p><p><a href="'+LINKS.origin+'" target="_blank" rel="noopener">Open GCP origin (direct)</a></p>'; }
+export function serviceLinks() { return '<p><a href="'+LINKS.primary+'" target="_blank" rel="noopener">Open website — Orb-skirmish (primary)</a></p><p><a href="'+LINKS.origin+'" target="_blank" rel="noopener">Open GCP origin (direct)</a></p>'; }
 export async function renderOperations(host: HTMLElement, view: string, get: Get) {
   const current = ++generation;
   pending = true;

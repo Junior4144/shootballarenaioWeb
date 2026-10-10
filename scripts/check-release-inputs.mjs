@@ -12,7 +12,7 @@ export function validateReleaseInputs(env, policy) {
   assert(Number.isFinite(policy.monthlyTargetUsd) && policy.monthlyTargetUsd > 0 && policy.monthlyTargetUsd < 13, 'Cost gate closed');
   assert.match(env.PUBLIC_KEY ?? '', /^sb_publishable_[A-Za-z0-9_-]+$/, 'Publishable key required');
   assert.equal(env.GAME_URL, 'wss://136.71.64.19.sslip.io', 'Unexpected game endpoint');
-  assert.equal(env.WEB_BASE_URL, 'https://shootball-arena.vercel.app', 'Vercel must remain the primary website');
+  assert.equal(env.WEB_BASE_URL, 'https://www.orb-skirmish.com', 'Orb-skirmish must be the primary website');
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   validateReleaseInputs(process.env, JSON.parse(readFileSync(new URL('../deploy/gcp/test-policy.json', import.meta.url), 'utf8')));

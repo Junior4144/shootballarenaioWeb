@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import { createAdminServer } from '../src/server';
 import { FixtureInventory } from '../src/inventory';
 import type { Access } from '../src/auth';
+import { PRODUCTION_WEB_ORIGINS } from '@shootball/admin-contracts';
 
 test('hosted API checks current membership and MFA on every read, fails closed on outage', async () => {
   let access: Access = { status: 'denied' }; let calls = 0; let unavailable = false;
@@ -60,17 +61,21 @@ test('production static /admin serves only public assets and does not bypass API
 
 test('production proxy origin is exact and never replaces administrator authorization', async () => {
   let calls = 0;
-  const origin = 'https://shootball-arena.vercel.app';
-  const server = createAdminServer({ inventory: new FixtureInventory(), allowedHosts: [], allowedOrigins: [origin], authorize: async () => { calls++; return { status: 'denied' }; } });
+  const origin = PRODUCTION_WEB_ORIGINS[0];
+  const server = createAdminServer({ inventory: new FixtureInventory(), allowedHosts: [], allowedOrigins: [...PRODUCTION_WEB_ORIGINS], authorize: async () => { calls++; return { status: 'denied' }; } });
   server.listen(0, '127.0.0.1'); await once(server, 'listening');
   const base = 'http://127.0.0.1:' + (server.address() as { port: number }).port + '/admin/v1/session?environment=production';
   try {
-    assert.equal((await fetch(base, { headers: { Origin: origin } })).status, 401);
+    for (const trusted of PRODUCTION_WEB_ORIGINS) {
+      assert.equal((await fetch(base, { headers: { Origin: trusted } })).status, 401);
+      const config = await fetch(new URL('/admin/config', base), { headers: { Origin: trusted } });
+      assert.equal(config.status, 200);
+    }
     const denied = await fetch(base, { headers: { Origin: origin, Authorization: 'Bearer unprivileged' } });
     assert.equal(denied.status, 403);
     assert.equal((await denied.json()).error, 'Administrator access required');
     assert.equal(denied.headers.get('cache-control'), 'no-store');
-    for (const untrusted of ['https://shootball-arena.vercel.app.attacker.example', 'https://preview.vercel.app', 'http://shootball-arena.vercel.app']) {
+    for (const untrusted of ['https://www.orb-skirmish.com.attacker.example', 'http://www.orb-skirmish.com', 'https://untrusted.orb-skirmish.com', 'https://shootball-arena.vercel.app.attacker.example', 'https://preview.vercel.app', 'http://shootball-arena.vercel.app']) {
       const response = await fetch(base, { headers: { Origin: untrusted, 'X-Forwarded-Host': 'shootball-arena.vercel.app', Authorization: 'Bearer unprivileged' } });
       assert.equal(response.status, 403);
       assert.equal((await response.json()).error, 'Origin denied');

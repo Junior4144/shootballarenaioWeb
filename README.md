@@ -1,8 +1,10 @@
-﻿# OrbRumble
+﻿# Orb-skirmish
 
 **Grab orbs. Blast rivals. Rule the arena.**
 
-Page title: OrbRumble – Free Online Multiplayer Arena Shooter.
+Website: https://www.orb-skirmish.com/
+
+Page title: Orb-skirmish – Free Online Arena Shooter.
 
 A playable points-based PvP arena game built with TypeScript, Vite, Phaser
 and an authoritative Node.js/Colyseus server. Up to eight guests or registered

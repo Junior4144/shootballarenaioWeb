@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { setTimeout as delay } from 'node:timers/promises';
-export const PRIMARY_WEB = 'https://shootball-arena.vercel.app';
+export const PRIMARY_WEB = 'https://www.orb-skirmish.com';
 export const ORIGIN_WEB = 'https://shootball-control-test-730016272076.us-central1.run.app';
 export const GAME_URL = 'wss://136.71.64.19.sslip.io';
 export async function verifyWebRelease(base, sha, { request = fetch, sleep = delay, now = Date.now, timeoutMs = 300000 } = {}) {

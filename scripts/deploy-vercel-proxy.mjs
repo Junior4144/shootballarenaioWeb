@@ -25,7 +25,7 @@ const deadline = Date.now() + 180000;
 while (Date.now() < deadline) {
   const result = await api('/v13/deployments/' + deployment.id);
   if (result.readyState === 'ERROR' || result.readyState === 'CANCELED') throw new Error('Proxy deployment ' + result.readyState);
-  if (result.readyState === 'READY' && result.aliasAssigned) { console.log('Proxy ready: https://shootball-arena.vercel.app'); process.exit(0); }
+  if (result.readyState === 'READY' && result.aliasAssigned) { console.log('Proxy ready: https://www.orb-skirmish.com'); process.exit(0); }
   await delay(3000);
 }
 throw new Error('Proxy deployment did not finish within three minutes');

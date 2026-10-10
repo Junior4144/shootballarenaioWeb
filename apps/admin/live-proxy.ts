@@ -1,7 +1,7 @@
 import type { IncomingMessage } from 'node:http';
 import type { Plugin, ProxyOptions } from 'vite';
 export const liveTargets = {
-  vercel: 'https://shootball-arena.vercel.app',
+  vercel: 'https://www.orb-skirmish.com',
   gcp: 'https://shootball-control-test-730016272076.us-central1.run.app',
 } as const;
 export function liveTarget(name = 'vercel'): string {
