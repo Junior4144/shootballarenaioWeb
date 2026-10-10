@@ -4,28 +4,31 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#0b1720" />
-    <title>Orb-skirmish – Free Online Arena Shooter</title>
+    <title>Orb-skirmish | Free Top-Down Multiplayer Browser Shooter</title>
     <meta name="application-name" content="Orb-skirmish" />
-    <meta name="description" content="Grab orbs. Blast rivals. Rule the arena. Play Orb-skirmish, a free online multiplayer arena shooter for up to 8 players. Jump in as a guest. No download needed." />
+    <meta name="description" content="Play Orb-skirmish, a free top-down multiplayer browser shooter for up to 8 players. Collect orbs, blast rivals, and reach 1,000 points. No download or account needed." />
     <link rel="canonical" href="https://www.orb-skirmish.com/" />
     <meta property="og:url" content="https://www.orb-skirmish.com/" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Orb-skirmish" />
-    <meta property="og:title" content="Orb-skirmish – Free Online Arena Shooter" />
-    <meta property="og:description" content="Grab orbs. Blast rivals. Rule the arena. Play Orb-skirmish, a free online multiplayer arena shooter for up to 8 players. Jump in as a guest. No download needed." />
+    <meta property="og:title" content="Orb-skirmish | Free Top-Down Multiplayer Browser Shooter" />
+    <meta property="og:description" content="Play Orb-skirmish, a free top-down multiplayer browser shooter for up to 8 players. Collect orbs, blast rivals, and reach 1,000 points. No download or account needed." />
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="Orb-skirmish – Free Online Arena Shooter" />
-    <meta name="twitter:description" content="Grab orbs. Blast rivals. Rule the arena. Play Orb-skirmish, a free online multiplayer arena shooter for up to 8 players. Jump in as a guest. No download needed." />
+    <meta name="twitter:title" content="Orb-skirmish | Free Top-Down Multiplayer Browser Shooter" />
+    <meta name="twitter:description" content="Play Orb-skirmish, a free top-down multiplayer browser shooter for up to 8 players. Collect orbs, blast rivals, and reach 1,000 points. No download or account needed." />
     <style>html,body{margin:0;background:#0b1720;color:#b4d5e7}[hidden]{display:none!important}</style>
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
     <div id="menu-background" aria-hidden="true"><img src="/background/poster.webp" alt="" fetchpriority="high" width="960" height="540" /></div>
     <section id="account-screen" aria-label="Account access">
-      <div class="entry-panel pixel-panel">
+      <div class="entry-layout">
+      <div class="entry-panel pixel-panel" id="play-options">
         <div class="entry-emblem" aria-hidden="true"><svg viewBox="0 0 32 32"><path fill="#69d8c6" d="M8 4h16v4h4v16h-4v4H8v-4H4V8h4z"/><path fill="#b4f3e4" d="M8 8h8v4H8z"/><path fill="#ccdce0" d="M16 12h16v8H16z"/><path fill="#526979" d="M28 14h4v4h-4z"/></svg></div>
         <h1 class="pixel-title">ORB-SKIRMISH</h1>
         <p class="entry-tagline">Grab orbs. Blast rivals. Rule the arena.</p>
+        <p class="entry-description">Play a free top-down multiplayer arena shooter in your browser. No download or account required.</p>
+        <a class="entry-guide-link" href="#how-to-play">How to play &amp; controls</a>
         <p id="auth-loading" role="status">Restoring your session…</p>
         <div id="signed-out" hidden>
           <div id="auth-tabs" class="auth-segments" role="tablist" aria-label="Account access">
@@ -55,10 +58,29 @@
         <p id="auth-message" role="status" aria-live="polite"></p>
         <button id="auth-cancel" type="button" hidden>Cancel</button>
       </div>
+      <section class="game-overview pixel-panel" id="how-to-play" aria-labelledby="game-overview-title">
+        <h2 id="game-overview-title">Your first skirmish</h2>
+        <p>Join a free-for-all arena with up to 8 players. Collect orbs, defeat rivals, and be the first to reach <strong>1,000 points</strong>. There is no time limit.</p>
+        <h3>Jump straight in</h3>
+        <p>Choose <strong>Play as Guest</strong>, then <strong>Play</strong> in the lobby to find an open arena automatically. Guests do not need an account. An account keeps your public display name; match stats are not saved.</p>
+        <h3>Keyboard &amp; mouse</h3>
+        <dl class="public-controls">
+          <div><dt>W A S D</dt><dd>Move around the arena</dd></div>
+          <div><dt>Mouse</dt><dd>Aim; hold left click to fire</dd></div>
+          <div><dt>Shift</dt><dd>Hold to sprint; release to recover stamina</dd></div>
+          <div><dt>Q</dt><dd>Pulse your radar to reveal nearby rivals</dd></div>
+        </dl>
+        <h3>Touch controls</h3>
+        <p>Drag the left pad to move and the right pad to aim and fire. Tap <strong>Sprint</strong> to toggle faster movement or <strong>Radar</strong> to scan nearby rivals.</p>
+        <h3>Stay in the fight</h3>
+        <p>Walk over upgrades to collect them. The gold ring protects you after spawning; firing ends that shield. Sprinting uses stamina, so leave time to recover.</p>
+        <a href="#play-options">Back to play options</a>
+      </section>
+      </div>
     </section>
     <section id="lobby-screen" aria-label="Main menu" hidden>
       <div class="lobby-shell">
-        <header class="lobby-heading"><div class="entry-emblem" aria-hidden="true"><svg viewBox="0 0 32 32"><path fill="#69d8c6" d="M8 4h16v4h4v16h-4v4H8v-4H4V8h4z"/><path fill="#b4f3e4" d="M8 8h8v4H8z"/><path fill="#ccdce0" d="M16 12h16v8H16z"/></svg></div><h1>ORB-SKIRMISH</h1><p>Choose your next match.</p></header>
+        <header class="lobby-heading"><div class="entry-emblem" aria-hidden="true"><svg viewBox="0 0 32 32"><path fill="#69d8c6" d="M8 4h16v4h4v16h-4v4H8v-4H4V8h4z"/><path fill="#b4f3e4" d="M8 8h8v4H8z"/><path fill="#ccdce0" d="M16 12h16v8H16z"/></svg></div><h2>ORB-SKIRMISH</h2><p>Choose your next match.</p></header>
         <div class="lobby-panels">
           <section class="pixel-panel lobby-account" aria-label="Player identity"><h2 class="pixel-title">YOUR PLAYER</h2><p id="lobby-identity">GUEST / Temporary</p><p id="lobby-identity-note" class="note">Play freely as a guest, or create an account for a saved display name.</p><button id="lobby-account" type="button">Log in</button><button id="lobby-signup" type="button">Create account</button></section>
           <section class="pixel-panel lobby-match" aria-label="Quick play"><h2 class="pixel-title">FREE-FOR-ALL</h2><p class="lobby-target">FIRST TO <strong>1,000</strong> POINTS</p><p class="note">Up to 8 players per arena. Collect orbs, defeat rivals, and climb the leaderboard. No time limit.</p><button id="lobby-play" type="button">Play</button><p class="note">Find an open arena automatically. Full arenas create another match.</p><p id="lobby-message" role="status"></p></section>

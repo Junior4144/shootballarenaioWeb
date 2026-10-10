@@ -190,7 +190,7 @@ aside .connection { border-top: 2px solid #294754; color: #a9c8d9; }
 #lobby-screen { height: 100dvh; overflow: auto; display: grid; place-items: center; padding: 32px 20px; background: #0b1720; }
 .lobby-shell { width: min(100%, 840px); }
 .lobby-heading { text-align: center; margin-bottom: 28px; }
-.lobby-heading h1 { color: #72e1ca; font-size: clamp(24px, 4vw, 36px); letter-spacing: .06em; margin: 16px 0 8px; }
+.lobby-heading h2 { color: #72e1ca; font-size: clamp(24px, 4vw, 36px); letter-spacing: .06em; margin: 16px 0 8px; }
 .lobby-heading p { color: #9abcca; font-size: 13px; }
 .lobby-panels { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 18px; }
 .lobby-panels > section { padding: 20px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
@@ -206,6 +206,21 @@ aside .connection { border-top: 2px solid #294754; color: #a9c8d9; }
 @media (max-width: 580px) { #lobby-screen { padding: 20px 12px; } .lobby-panels { grid-template-columns: 1fr; gap: 12px; } .lobby-panels > section { padding: 14px; gap: 12px; } .lobby-heading { margin-bottom: 16px; } .lobby-target strong { font-size: 36px; } }
 
 /* One persistent decorative layer beneath every menu. No layout or input ownership. */
+.entry-layout { width: min(100%, 1040px); display: grid; grid-template-columns: minmax(0, 440px) minmax(0, 1fr); gap: 24px; align-items: start; }
+.entry-description { font-size: 13px; line-height: 1.7; text-align: center; }
+.entry-guide-link { display: block; text-align: center; margin: 0 0 16px; }
+.entry-layout a { color: #72e1ca; font-size: 13px; line-height: 1.7; text-underline-offset: 4px; }
+.entry-layout a:focus-visible { outline: 2px solid #69e2ce; outline-offset: 4px; }
+.game-overview { padding: 24px; min-width: 0; font-size: 13px; line-height: 1.7; scroll-margin-top: 16px; }
+.game-overview h2 { color: #72e1ca; font-size: 22px; line-height: 1.3; margin: 0 0 16px; }
+.game-overview h3 { color: #d5fff0; font-size: 15px; margin: 24px 0 8px; }
+.game-overview p { margin: 0 0 12px; }
+.public-controls { margin: 0; }
+.public-controls > div { display: grid; grid-template-columns: 7ch minmax(0, 1fr); gap: 12px; padding: 8px 0; border-bottom: 1px solid #355662; }
+.public-controls dt { color: #d5fff0; font-weight: bold; }
+.public-controls dd { margin: 0; }
+@media (max-width: 800px) { .entry-layout { max-width: 440px; grid-template-columns: minmax(0, 1fr); gap: 20px; } .game-overview { padding: 18px; } }
+
 #menu-background { position: fixed; inset: 0; overflow: hidden; pointer-events: none; background: #0b1720; }
 #menu-background img, #menu-background video { position: absolute; width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
 #menu-background video { opacity: 0; }
