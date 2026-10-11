@@ -1,3 +1,4 @@
+import { observeSnapshots } from '@shootball/protocol';
 import { matchMaker } from '@colyseus/core';
 import type { Practice } from '@shootball/shared/practice';
 import test from 'node:test';
@@ -15,7 +16,7 @@ async function until(check: () => boolean, label: string, timeout = 3000) {
 }
 function observe(room: Room) {
   let latest: Snapshot | undefined; const history = new Map<number, Snapshot>();
-  room.onMessage<Snapshot>('snapshot', s => { latest = s; history.set(s.tick, s); if (history.size > 200) history.delete(history.keys().next().value!); });
+  observeSnapshots(room, s => { latest = s; history.set(s.tick, s); if (history.size > 200) history.delete(history.keys().next().value!); });
   return { get latest() { return latest!; }, history };
 }
 

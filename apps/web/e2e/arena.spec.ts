@@ -1,6 +1,16 @@
+import { observeSnapshots } from '@shootball/protocol';
 import { test, expect } from '@playwright/test';
 import { Client } from '@colyseus/sdk';
 import { ROOM_NAME, VERSION, type Snapshot } from '@shootball/protocol';
+
+// Consented exit prevents earlier cases from reserving seats in later matches.
+test.afterEach(async ({ page }) => {
+  const menu = page.locator('#game-main-menu');
+  if (await menu.isVisible()) {
+    await menu.click();
+    await expect(menu).toBeHidden();
+  }
+});
 
 for (const viewport of [{ width: 2560, height: 1440 }, { width: 1920, height: 1080 }, { width: 1366, height: 768 }, { width: 800, height: 600 }, { width: 390, height: 844 }, { width: 320, height: 568 }, { width: 844, height: 390 }]) {
   test(`live HUD fits ${viewport.width}x${viewport.height}`, async ({ page }, testInfo) => {
@@ -90,7 +100,7 @@ for (const viewport of [{ width: 2560, height: 1440 }, { width: 1920, height: 10
 test('browser inputs reach authority; HUD and leave/rejoin reflect server state', async ({ page }, testInfo) => {
   const observer = await new Client('ws://127.0.0.1:2569').joinOrCreate(ROOM_NAME, { version: VERSION });
   let snapshot: Snapshot | undefined;
-  observer.onMessage<Snapshot>('snapshot', value => { snapshot = value; });
+  observeSnapshots(observer, value => { snapshot = value; });
   try {
     await page.goto('/');
     await page.getByRole('button', { name: 'Play as Guest', exact: true }).click(); await page.locator('#lobby-play').click();

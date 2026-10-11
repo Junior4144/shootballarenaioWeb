@@ -1,3 +1,4 @@
+import { observeSnapshots } from '@shootball/protocol';
 ﻿import test from 'node:test';
 import assert from 'node:assert/strict';
 import type { AddressInfo } from 'node:net';
@@ -18,7 +19,7 @@ async function until(check: () => boolean, message: string, timeout = 2500): Pro
 function observe(room: Room) {
   const history = new Map<number, Snapshot>();
   let latest: Snapshot | undefined;
-  room.onMessage<Snapshot>('snapshot', state => { latest = state; history.set(state.tick, state); });
+  observeSnapshots(room, state => { latest = state; history.set(state.tick, state); });
   return { get latest() { return latest; }, history };
 }
 

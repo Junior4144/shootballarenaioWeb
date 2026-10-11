@@ -1,3 +1,4 @@
+import { observeSnapshots } from '@shootball/protocol';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import type { AddressInfo } from 'node:net';
@@ -39,8 +40,8 @@ test('account joins, safe snapshots, refresh, reconnect revalidation, identity s
     await assert.rejects(join('invalid'));
     const guest = await client.joinOrCreate(ROOM_NAME, { version: VERSION, mode: 'guest' }); rooms.push(guest); guest.reconnection.enabled = false;
     let snapshot: Snapshot | undefined;
-    guest.onMessage<Snapshot>('snapshot', value => { snapshot = value; });
-    const account = await join('first'); account.onMessage('snapshot', () => {}); account.onMessage('authError', () => {});
+    observeSnapshots(guest, value => { snapshot = value; });
+    const account = await join('first'); observeSnapshots(account, () => {}); account.onMessage('authError', () => {});
     await until(() => snapshot?.identities?.[account.sessionId]?.kind === 'account');
     assert.deepEqual(snapshot!.identities![account.sessionId], { kind: 'account', displayName: 'Pixel Ace' });
     assert.equal(JSON.stringify(snapshot).includes('private-account-id'), false);
@@ -51,14 +52,14 @@ test('account joins, safe snapshots, refresh, reconnect revalidation, identity s
     account.connection.close(); await until(() => snapshot?.players.find(p => p.id === id)?.connected === false);
     const before = calls;
     const resumed = await client.reconnect(token); rooms.push(resumed); resumed.reconnection.enabled = false;
-    resumed.onMessage('snapshot', () => {}); resumed.onMessage('authError', () => {});
+    observeSnapshots(resumed, () => {}); resumed.onMessage('authError', () => {});
     assert.equal(resumed.sessionId, id); assert.ok(calls > before, 'reconnection reverified by server');
     let left = false; resumed.onLeave(() => { left = true; });
     resumed.send('refreshAuth', 'other'); await until(() => left);
-    const expiring = await join('short'); expiring.onMessage('snapshot', () => {}); expiring.onMessage('authError', () => {});
+    const expiring = await join('short'); observeSnapshots(expiring, () => {}); expiring.onMessage('authError', () => {});
     let expired = false; expiring.onLeave(() => { expired = true; }); await until(() => expired);
     await assert.rejects(client.reconnect(expiring.reconnectionToken));
-    const dropped = await join('drop'); dropped.onMessage('snapshot', () => {});
+    const dropped = await join('drop'); observeSnapshots(dropped, () => {});
     const droppedToken = dropped.reconnectionToken;
     dropped.connection.close(); await wait(1100);
     await assert.rejects(client.reconnect(droppedToken), 'disconnected accounts cannot resume after token expiry');

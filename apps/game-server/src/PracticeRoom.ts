@@ -1,7 +1,7 @@
 import { Room, ServerError, type Client } from '@colyseus/core';
 import { Practice } from '@shootball/shared/practice';
 import { CONFIG, type InputIntent } from '@shootball/shared';
-import { VERSION, NETWORK, isInput, type InputMessage } from '@shootball/protocol';
+import { VERSION, NETWORK, isInput, ArenaState, updateArenaState, type InputMessage } from '@shootball/protocol';
 import { authenticate, verifyAccount, type Identity, type VerifyAccount } from './accountAuth';
 
 import type { Telemetry } from './telemetry';
@@ -13,7 +13,8 @@ interface Control {
   windowAt: number;
   count: number;
 }
-export class PracticeRoom extends Room {
+export class PracticeRoom extends Room<{ state: ArenaState }> {
+  state = new ArenaState();
   protected telemetry?: Telemetry;
   private tickTimes: number[] = [];
   maxMessagesPerSecond = NETWORK.roomMaxMessagesPerSecond;
@@ -78,8 +79,11 @@ export class PracticeRoom extends Room {
         if (this.world.match.phase === 'results' && !this.finished) { this.finished = true; if (this.telemetry) this.telemetry.completed++; void this.lock(); }
       }
     }, NETWORK.tickMs);
+    // Preserve the simulation-clock cadence used by the previous snapshots.
+    // Drive Schema patches explicitly to avoid a separate drifting OS timer.
     this.patchRate = null;
-    this.clock.setInterval(() => this.publish(), NETWORK.snapshotMs);
+    this.clock.setInterval(() => this.broadcastPatch(), NETWORK.snapshotMs);
+    this.publish();
   }
   async onAuth(_client: Client, options: unknown): Promise<Identity> {
     if (!options || typeof options !== 'object' || !('version' in options) || options.version !== VERSION) {
@@ -161,12 +165,13 @@ export class PracticeRoom extends Room {
     } catch { if (this.identities.get(client.sessionId) === previous) this.rejectAccount(client); }
     finally { this.refreshing.delete(client.sessionId); }
   }
+  onBeforePatch(): void { this.publish(); }
   private publish(): void {
     const snapshot = this.world.snapshot();
     // Explicit projection: UUIDs, email addresses and tokens never enter gameplay snapshots.
     const referenced = new Set([...snapshot.players.map(p => p.id), ...snapshot.match.standings.map(p => p.id), ...snapshot.events.flatMap(e => [e.actorId, e.targetId])]);
     for (const id of this.publicIdentities.keys()) if (!referenced.has(id)) this.publicIdentities.delete(id);
     const identities = Object.fromEntries(this.publicIdentities);
-    this.broadcast('snapshot', { ...snapshot, identities });
+    updateArenaState(this.state, { ...snapshot, identities });
   }
 }
