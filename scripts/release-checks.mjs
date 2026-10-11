@@ -19,6 +19,13 @@ export async function verifyWebRelease(base, sha, { request = fetch, sleep = del
     await sleep(5000);
   }
   assert.equal(matches, 3, base + ': release revision did not stabilize');
+  if (base === PRIMARY_WEB) {
+    const response = await get('/release.json', { cache: 'no-store' });
+    assert.equal(response.status, 200, 'Static frontend release manifest required');
+    const release = await response.json();
+    assert.equal(release.revision, sha, 'Static frontend must match the backend release');
+    assert.equal(release.hosting, 'vercel-static');
+  }
   for (const path of ['/', '/admin', '/admin/']) assert.equal((await get(path)).status, 200, base + path);
   const session = await get('/admin/v1/session?environment=production', { headers: { Origin: new URL(base).origin } });
   assert.equal(session.status, 401, base + ': origin must reach authentication');

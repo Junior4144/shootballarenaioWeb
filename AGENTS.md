@@ -22,9 +22,12 @@
 - Canonical domain: `https://www.orb-skirmish.com/`.
 - Use `npm.cmd run vercel -- <command>` from this repository. The wrapper pins
   the team, project and `deploy/vercel` working directory per process.
-- Vercel hosts the proxy to GCP. Do not deploy the repository root or change
-  the global Vercel team. Application releases use the existing GitHub Actions
-  workflow; Vercel proxy releases use `npm.cmd run vercel -- deploy --prod`.
+- Vercel hosts the public static frontend and proxies admin/health routes to
+  GCP. Do not deploy the repository root or change the global Vercel team.
+  Application releases use the existing GitHub Actions workflow, which extracts
+  the tested frontend from the control-plane image and publishes it to Vercel.
+  Prepare `deploy/vercel/public` with `scripts/prepare-vercel-static.mjs` and a
+  matching `RELEASE_SHA` before `npm.cmd run vercel -- deploy --prod`.
 - Scope IDs are recorded in `deploy/vercel-project.json`; `.vercel` links and
   authentication credentials must remain untracked.
 

@@ -40,6 +40,12 @@ jobs:
         with:
           node-version: '24'
       - run: npm ci --ignore-scripts
+      - name: Require static deployment credentials before changing production
+        shell: pwsh
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if (-not $env:VERCEL_TOKEN) { throw 'Set the gcp-test VERCEL_TOKEN secret for static frontend releases' }
       - name: Prepare scoped ephemeral CLI configuration
         shell: pwsh
         run: |
@@ -61,6 +67,19 @@ jobs:
           SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
           IMAGE_DIGEST: ${{ needs.validate.outputs.control-digest }}
         run: ./scripts/deploy-control-test.ps1 -ImageDigest $env:IMAGE_DIGEST
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: tested-static-frontend
+          path: .test-artifacts/static-site
+      - name: Publish the tested frontend to the scoped Vercel project
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          node scripts/prepare-vercel-static.mjs .test-artifacts/static-site
+          if ($LASTEXITCODE -ne 0) { throw 'Static frontend preparation failed' }
+          npm.cmd run vercel -- deploy --prod --yes
+          if ($LASTEXITCODE -ne 0) { throw 'Static frontend deployment failed' }
       - name: Verify public site, protected admin API and multiplayer connection
         env:
           RELEASE_SHA: ${{ github.sha }}
