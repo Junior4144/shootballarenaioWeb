@@ -55,7 +55,10 @@ const env = { ...process.env, VERCEL_ORG_ID: scope.orgId, VERCEL_PROJECT_ID: sco
 // With IDs in the environment, `link` skips writing .vercel/project.json.
 // This command already pins the project with --project and the team with --scope.
 if (command === 'link') { delete env.VERCEL_ORG_ID; delete env.VERCEL_PROJECT_ID; }
-const child = spawn(process.execPath, [fileURLToPath(new URL('node_modules/vercel/dist/index.js', root)), ...args], {
+const invocation = command === 'deploy' && env.VERCEL_TOKEN
+  ? [fileURLToPath(new URL('scripts/deploy-vercel-static-api.mjs', root)), ...options]
+  : [fileURLToPath(new URL('node_modules/vercel/dist/index.js', root)), ...args];
+const child = spawn(process.execPath, invocation, {
   cwd, stdio: 'inherit', windowsHide: true,
   env,
 });

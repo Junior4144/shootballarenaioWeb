@@ -34,6 +34,9 @@ Vercel project/team. The workflow fails before changing runtime services when
 the secret is missing. A local CLI OAuth login is not a durable CI credential.
 Create a deployment token in Vercel account settings and save it directly in
 GitHub environment secrets; never commit it. Renew it before its expiry.
+When `VERCEL_TOKEN` is supplied, the wrapper uses Vercel's deployment API:
+project-scoped tokens cannot read the user-account endpoint required by the CLI.
+Interactive local deployments continue to use the existing CLI login.
 
 For a manual release, build the frontend with production public inputs first.
 Set `RELEASE_SHA` to the full commit matching those artifacts, then prepare and
