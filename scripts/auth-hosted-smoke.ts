@@ -1,3 +1,4 @@
+import { observeSnapshots } from '@shootball/protocol';
 /** Opt-in integration test: creates only uniquely named disposable users, then deletes them. */
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
@@ -50,7 +51,7 @@ try {
   try {
     const snapshot = await new Promise<Snapshot>((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error('Snapshot timeout')), 4000);
-      room.onMessage<Snapshot>('snapshot', value => { clearTimeout(timer); resolve(value); });
+      observeSnapshots(room, value => { clearTimeout(timer); resolve(value); });
     });
     assert.deepEqual(snapshot.identities?.[room.sessionId], { kind: 'account', displayName: 'Pixel Updated' });
     const wire = JSON.stringify(snapshot);

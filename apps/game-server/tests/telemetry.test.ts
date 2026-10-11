@@ -1,3 +1,4 @@
+import { observeSnapshots } from '@shootball/protocol';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Client } from '@colyseus/sdk';
@@ -12,7 +13,7 @@ test('telemetry requires current admin access and counts real guest rooms withou
   try {
     assert.equal((await fetch(url)).status,401); assert.equal((await fetch(url,{headers})).status,403);
     allowed=true; const empty=await (await fetch(url,{headers})).json();assert.equal(empty.totals.humans,0);
-    room=await new Client('ws://127.0.0.1:'+port).joinOrCreate(ROOM_NAME,{version:VERSION,mode:'guest'});room.onMessage('snapshot',()=>{});room.reconnection.enabled=false;
+    room=await new Client('ws://127.0.0.1:'+port).joinOrCreate(ROOM_NAME,{version:VERSION,mode:'guest'});observeSnapshots(room,()=>{});room.reconnection.enabled=false;
     const response=await fetch(url,{headers});const data=await response.json();assert.equal(response.headers.get('cache-control'),'no-store');
     assert.equal(data.totals.humans,1);assert.equal(data.totals.guests,1);assert.equal(data.totals.accounts,0);assert.equal(data.totals.bots,7);assert.equal(data.rooms.length,1);assert.equal(data.joinsSinceBoot,1);
     assert.equal(data.rooms[0].id,room.roomId);assert.ok(!JSON.stringify(data).includes(room.sessionId));assert.ok(!JSON.stringify(data).includes('test-admin'));
@@ -21,7 +22,7 @@ test('telemetry requires current admin access and counts real guest rooms withou
     let disconnected;
     for(let attempt=0;attempt<20;attempt++) { await new Promise(resolve=>setTimeout(resolve,20));disconnected=await (await fetch(url,{headers})).json();if(disconnected.totals.reservedSeats===1)break; }
     assert.equal(disconnected.totals.humans,0);assert.equal(disconnected.totals.reservedSeats,1);
-    room=await new Client('ws://127.0.0.1:'+port).reconnect(reconnectToken);room.onMessage('snapshot',()=>{});room.reconnection.enabled=false;
+    room=await new Client('ws://127.0.0.1:'+port).reconnect(reconnectToken);observeSnapshots(room,()=>{});room.reconnection.enabled=false;
     const reconnected=await (await fetch(url,{headers})).json();assert.equal(reconnected.totals.humans,1);assert.equal(reconnected.totals.reservedSeats,0);assert.equal(reconnected.joinsSinceBoot,1);
     await room.leave();room=undefined;
     let disposed;

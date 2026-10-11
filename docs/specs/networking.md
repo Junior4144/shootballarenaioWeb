@@ -1,7 +1,7 @@
 # Networking
 
-Colyseus WebSockets; protocol v8; room arena. Default ws://127.0.0.1:2567,
-configurable through public VITE_GAME_SERVER_URL. Join with version 8 and mode
+Colyseus WebSockets; protocol v9; room arena. Default ws://127.0.0.1:2567,
+configurable through public VITE_GAME_SERVER_URL. Join with version 9 and mode
 guest/account. Account joins include an accessToken validated by the server;
 client-supplied user IDs are never trusted. No connection precedes a Play choice.
 
@@ -10,7 +10,7 @@ fire/radar/sprint are booleans, aim is finite and inside the arena bounds, seque
 is a nonnegative safe integer increasing per connection. Never accept client
 positions, health, hits, scores, equipment, bot decisions or pickup claims.
 
-Full snapshots include simulation time/tick/generation, players (including bot
+Schema state includes simulation time/tick/generation, players (including bot
 flag, HP/life/protection/respawn, points/kills/botKills/deaths, weapon/ammo/speed,
 radar cooldown/captured markers), owned damaging projectiles, pickups, bounded
 sequenced events and match state/results. Optional identities map session IDs to
@@ -19,11 +19,27 @@ are broadcast. Legacy targets array remains empty.
 Static cover is a shared versioned map. Radar is guidance, not fog-of-war security;
 full arena positions are already replicated.
 
-30 Hz intent, 60 Hz simulation, 20 Hz snapshots. Preserve bounded 100 ms interpolation,
+30 Hz intent, 60 Hz simulation, 20 Hz Schema patches. Preserve bounded 100 ms interpolation,
 shortest-angle rotation, no extrapolation, focus/connection clearing and 250 ms
 input expiry. Discrete gameplay/events share the delayed shot timeline. Life
 changes hold then snap; snapshot generation changes clear interpolation history.
 Events are deduplicated and historical feedback is skipped on connection recovery.
+
+Protocol v9 replaces full MessagePack snapshot broadcasts with Colyseus Schema.
+Join/reconnect receives full state; subsequent patches contain changed properties.
+The server reconciles public simulation snapshots into stable Schema entities in
+onBeforePatch. The client converts each complete state update to independent plain
+objects before buffering it, preserving previous interpolation frames. Bounded
+event history and public identities remain part of state. No precision reduction
+or change to simulation/input/update cadence is included.
+
+Release matching server and frontend builds together; v8 clients fail the protocol
+check and must refresh. Smoke clients use observeSnapshots instead of the removed
+snapshot message. Measure locally with
+`node --import tsx scripts/measure-bandwidth.mjs --local 60`, or replace --local
+with the game endpoint. The report compares received payload bytes against the old
+MessagePack format encoded from exactly the same states; it excludes initial
+handshake/full state, assets, outbound traffic, and transport overhead.
 
 Auto-reconnect/refresh/Leave-Join preserve the tab's reserved identity and combat
 state for ten seconds (account seats also end at access-token expiry). Page

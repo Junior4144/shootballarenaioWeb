@@ -1,3 +1,4 @@
+import { observeSnapshots } from '@shootball/protocol';
 import { test, expect } from '@playwright/test';
 import { Client } from '@colyseus/sdk';
 import { ROOM_NAME, VERSION, type Snapshot } from '@shootball/protocol';
@@ -9,7 +10,7 @@ test('mouse hold and touch aim share firing cadence and stop on release or cance
   const observer = await new Client('ws://127.0.0.1:2569').joinOrCreate(ROOM_NAME, { version: VERSION });
   let snapshot: Snapshot | undefined;
   const shots = new Map<number, { actorId: string; time: number }>();
-  observer.onMessage<Snapshot>('snapshot', value => {
+  observeSnapshots(observer, value => {
     snapshot = value;
     for (const event of value.events) if (event.kind === 'shot') shots.set(event.id, event);
   });
@@ -123,7 +124,7 @@ test('whole gameplay screen blocks accidental zoom and permits recovery from a z
 test('two thumbs move and fire; release, cancellation and rotation clear inputs', async ({ page }, testInfo) => {
   const observer = await new Client('ws://127.0.0.1:2569').joinOrCreate(ROOM_NAME, { version: VERSION });
   let snapshot: Snapshot | undefined;
-  observer.onMessage<Snapshot>('snapshot', value => { snapshot = value; });
+  observeSnapshots(observer, value => { snapshot = value; });
   try {
     await page.goto('/');
     await page.locator('#guest-play').tap(); await page.locator('#lobby-play').tap();
@@ -199,3 +200,12 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }
     await page.screenshot({ path: testInfo.outputPath('mobile.png') });
   });
 }
+
+// Consented exit prevents earlier cases from reserving seats in later matches.
+test.afterEach(async ({ page }) => {
+  const menu = page.locator('#game-main-menu');
+  if (await menu.isVisible()) {
+    await menu.click();
+    await expect(menu).toBeHidden();
+  }
+});

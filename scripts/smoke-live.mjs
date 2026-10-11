@@ -1,3 +1,4 @@
+import { observeSnapshots } from '@shootball/protocol';
 import { Client } from '@colyseus/sdk';
 import { ROOM_NAME, VERSION } from '@shootball/protocol';
 import assert from 'node:assert/strict';
@@ -15,7 +16,7 @@ try {
   room = await client.joinOrCreate(ROOM_NAME, { mode: 'guest', version: VERSION });
   room.reconnection.enabled = false;
   await new Promise((resolve, reject) => {
-    room.onMessage('snapshot', snapshot => {
+    observeSnapshots(room, snapshot => {
       if (Number.isFinite(snapshot.tick) && snapshot.players.some(player => player.id === room.sessionId)) resolve();
     });
     room.onError((code, message) => reject(new Error(`Room ${code}: ${message}`)));

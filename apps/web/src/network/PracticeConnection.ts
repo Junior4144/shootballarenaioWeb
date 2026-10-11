@@ -1,5 +1,5 @@
 import { Client, type Room } from '@colyseus/sdk';
-import { NETWORK, ROOM_NAME, VERSION, type Snapshot } from '@shootball/protocol';
+import { NETWORK, ROOM_NAME, VERSION, observeSnapshots, type Snapshot } from '@shootball/protocol';
 import type { InputIntent } from '@shootball/shared';
 
 export type ConnectionState = 'connecting' | 'connected' | 'reconnecting' | 'disconnected' | 'error';
@@ -68,7 +68,7 @@ export class PracticeConnection {
         this.endIdentity();
         this.setState('error', 'Account session ended. Return to accounts and log in again.');
       });
-      room.onMessage<Snapshot>('snapshot', snapshot => {
+      observeSnapshots(room, snapshot => {
         if (this.room !== room) return;
         this.snapshot = snapshot;
         this.changed();

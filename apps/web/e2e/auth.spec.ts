@@ -1,6 +1,16 @@
+import { observeSnapshots } from '@shootball/protocol';
 import { test, expect, type Page } from '@playwright/test';
 import { Client } from '@colyseus/sdk';
 import { ROOM_NAME, VERSION, type Snapshot } from '@shootball/protocol';
+
+// Consented exit prevents earlier cases from reserving seats in later matches.
+test.afterEach(async ({ page }) => {
+  const menu = page.locator('#game-main-menu');
+  if (await menu.isVisible()) {
+    await menu.click();
+    await expect(menu).toBeHidden();
+  }
+});
 
 const project = 'https://lkgxpgcmspxekggndzih.supabase.co';
 const uid = '10000000-0000-4000-8000-000000000001';
@@ -125,7 +135,7 @@ test('guest reload waits for choice then resumes the same temporary identity', a
   const observer = await new Client('ws://127.0.0.1:2569').joinOrCreate(ROOM_NAME, { version: VERSION, mode: 'guest' });
   observer.reconnection.enabled = false;
   let snapshot: Snapshot | undefined;
-  observer.onMessage<Snapshot>('snapshot', value => { snapshot = value; });
+  observeSnapshots(observer, value => { snapshot = value; });
   try {
     await page.goto('/'); await page.locator('#guest-play').click(); await page.locator('#lobby-play').click();
     await expect(page.locator('#connection-status')).toContainText('Connected');
@@ -251,7 +261,7 @@ for (const viewport of [{ width: 2560, height: 1440 }, { width: 1920, height: 10
     });
     expect(geometry.width).toBeLessThanOrEqual(viewport.width);
     expect(geometry.height).toBeLessThanOrEqual(viewport.height);
-    expect(geometry.header.height).toBe(112);
+    expect(geometry.header.height).toBe(viewport.width <= 700 ? 52 : 112);
     expect(geometry.brand.right).toBeLessThanOrEqual(geometry.match.left);
     expect(geometry.match.right).toBeLessThanOrEqual(geometry.actions.left);
     expect(geometry.account.right).toBeLessThanOrEqual(geometry.settings.left);
@@ -369,7 +379,7 @@ for (const stale of ['disposed-room:old-token', 'malformed-token']) test(`guest 
 
 test('expired guest reservation in a live room falls back to one fresh guest', async ({ page }) => {
   const observer = await new Client('ws://127.0.0.1:2569').joinOrCreate(ROOM_NAME, { version: VERSION, mode: 'guest' });
-  observer.onMessage('snapshot', () => {});
+  observeSnapshots(observer, () => {});
   observer.reconnection.enabled = false;
   try {
     await page.goto('/'); await expect(page.locator('#guest-play')).toBeEnabled();
