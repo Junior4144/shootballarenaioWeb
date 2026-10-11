@@ -31,6 +31,7 @@ function fixture({ revisions=[sha,sha,sha], adminStatus=401, project='lkgxpgcmsp
       now:()=>now,sleep:async ms=>{now+=ms;},timeoutMs:100000,
       request:async (url,options)=>{
         const u=new URL(url); urls.push(u.href);
+        if(u.pathname==='/release.json') return Response.json({revision:sha,hosting:'vercel-static'});
         if(u.pathname==='/health') { const revision=revisions[Math.min(healthCalls++,revisions.length-1)];if(revision===null)throw new Error('temporary outage');return Response.json({status:'live',revision}); }
         if(u.pathname==='/admin/config')return Response.json({mode:configMode,environment:'production',supabaseUrl:'https://'+project+'.supabase.co',publishableKey:'sb_publishable_fixture'});
         if(u.pathname.startsWith('/admin/v1/')) {
